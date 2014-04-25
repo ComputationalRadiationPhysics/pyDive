@@ -260,6 +260,19 @@ class ndarray(object):
         return dist_math.unary_op(self, '+')
     def __neg__(self):
         return dist_math.unary_op(self, '-')
+    #
+    def __radd__(self, other):
+        return dist_math.binary_rop(self, other, '+')
+    def __rsub__(self, other):
+        return dist_math.binary_rop(self, other, '-')
+    def __rmul__(self, other):
+        return dist_math.binary_rop(self, other, '*')
+    def __rdiv__(self, other):
+        return dist_math.binary_rop(self, other, '/')
+    def __rfloordiv__(self, other):
+        return dist_math.binary_rop(self, other, '//')
+    def __rpow__(self, other):
+        return dist_math.binary_rop(self, other, '**')
     # numerical in-place operators
     def __iadd__(self, other):
         return dist_math.binary_iop(self, other, '+=')
@@ -308,4 +321,4 @@ a[-1,0] = 5.0
 
 a += a**2
 
-print a
+print dist_math.abs(-a)
