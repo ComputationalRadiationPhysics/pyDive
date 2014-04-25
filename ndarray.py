@@ -1,19 +1,9 @@
 import numpy as np
-from IPython.parallel import Client
 import ndarray_helper as helper
+import IPParallelClient as com
+import dist_math
 
 ndarray_id = 0
-
-#init direct view
-view = Client(profile='mpi')[:]
-view.block = True
-view.execute('from numpy import *')
-view.execute('from mpi4py import MPI')
-view.execute('import os')
-view.run('interengine.py')
-
-all_ranks = view.apply(lambda: MPI.COMM_WORLD.Get_rank())
-view['target2rank'] = all_ranks
 
 class ndarray(object):
     def __init__(self, shape, distaxis, dtype=np.float, idx_ranges=None, targets_in_use=None, no_allocation=False):
@@ -253,6 +243,37 @@ class ndarray(object):
 
         return result
 
+    # numerical operators
+    def __add__(self, other):
+        return dist_math.binary_op(self, other, '+')
+    def __sub__(self, other):
+        return dist_math.binary_op(self, other, '-')
+    def __mul__(self, other):
+        return dist_math.binary_op(self, other, '*')
+    def __div__(self, other):
+        return dist_math.binary_op(self, other, '/')
+    def __floordiv__(self, other):
+        return dist_math.binary_op(self, other, '//')
+    def __pow__(self, other):
+        return dist_math.binary_op(self, other, '**')
+    def __pos__(self):
+        return dist_math.unary_op(self, '+')
+    def __neg__(self):
+        return dist_math.unary_op(self, '-')
+    # numerical in-place operators
+    def __iadd__(self, other):
+        return dist_math.binary_iop(self, other, '+=')
+    def __isub__(self, other):
+        return dist_math.binary_iop(self, other, '-=')
+    def __imul__(self, other):
+        return dist_math.binary_iop(self, other, '*=')
+    def __idiv__(self, other):
+        return dist_math.binary_iop(self, other, '/=')
+    def __ifloordiv__(self, other):
+        return dist_math.binary_iop(self, other, '//=')
+    def __ipow__(self, other):
+        return dist_math.binary_iop(self, other, '**=')
+
 def array(array_like, distaxis):
     # numpy array
     if isinstance(array_like, np.ndarray):
@@ -269,6 +290,14 @@ def array(array_like, distaxis):
 
         return result
 
+def empty_like(a):
+    return ndarray(a.shape, a.distaxis, a.dtype, a.idx_ranges, a.targets_in_use)
+
+dist_math.empty_like = empty_like
+dist_math.ndarray = ndarray
+
+com.init()
+view = com.getView()
 a = ndarray((4,3), distaxis=0)
 
 a[:] = np.ones(a.shape) * -1.0
@@ -276,5 +305,7 @@ a[:] = np.ones(a.shape) * -1.0
 a[1:3, 1:3] = np.arange(2*2).reshape((2,2)).astype(a.dtype)
 
 a[-1,0] = 5.0
+
+a += a**2
 
 print a
