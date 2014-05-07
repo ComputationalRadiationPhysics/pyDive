@@ -260,7 +260,7 @@ class ndarray(object):
         return dist_math.unary_op(self, '+')
     def __neg__(self):
         return dist_math.unary_op(self, '-')
-    #
+    # right-handed operators
     def __radd__(self, other):
         return dist_math.binary_rop(self, other, '+')
     def __rsub__(self, other):
@@ -273,7 +273,7 @@ class ndarray(object):
         return dist_math.binary_rop(self, other, '//')
     def __rpow__(self, other):
         return dist_math.binary_rop(self, other, '**')
-    # numerical in-place operators
+    # in-place operators
     def __iadd__(self, other):
         return dist_math.binary_iop(self, other, '+=')
     def __isub__(self, other):
@@ -306,7 +306,11 @@ def array(array_like, distaxis):
 def empty_like(a):
     return ndarray(a.shape, a.distaxis, a.dtype, a.idx_ranges, a.targets_in_use)
 
+def hollow_like(a):
+    return ndarray(a.shape, a.distaxis, a.dtype, a.idx_ranges, a.targets_in_use, no_allocation=True)
+
 dist_math.empty_like = empty_like
+dist_math.hollow_like = hollow_like
 dist_math.ndarray = ndarray
 
 com.init()
@@ -321,4 +325,6 @@ a[-1,0] = 5.0
 
 a += a**2
 
-print dist_math.abs(-a)
+a += 2*a
+
+print dist_math.sin(a)

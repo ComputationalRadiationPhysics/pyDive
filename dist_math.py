@@ -7,52 +7,46 @@ def unary_op(a, op):
     view.execute("%s = %s%s" % (result.name, op, a.name), targets=result.targets_in_use)
     return result
 
-def binary_op(lhs, rhs, op):
-    if isinstance(rhs, ndarray):
-        rhs = rhs.dist_like(lhs)
-        rhs_repr = rhs.name
+def __prepare_operand(operand, target):
+    if isinstance(operand, ndarray):
+        operand = operand.dist_like(target)
+        return operand.name
     else:
-        rhs_repr = repr(rhs)
+        return repr(operand)
+
+def binary_op(lhs, rhs, op):
+    rhs = __prepare_operand(rhs, lhs)
 
     result = empty_like(lhs)
     view = com.getView()
-    view.execute("%s = %s %s %s" % (result.name, lhs.name, op, rhs_repr), targets=result.targets_in_use)
+    view.execute("%s = %s %s %s" % (result.name, lhs.name, op, rhs), targets=result.targets_in_use)
     return result
 
-def binary_rop(lhs, rhs, op):
-    if isinstance(rhs, ndarray):
-        rhs = rhs.dist_like(lhs)
-        rhs_repr = rhs.name
-    else:
-        rhs_repr = repr(rhs)
+def binary_rop(rhs, lhs, op):
+    lhs = __prepare_operand(lhs, rhs)
 
-    result = empty_like(lhs)
+    result = empty_like(rhs)
     view = com.getView()
-    view.execute("%s = %s %s %s" % (result.name, rhs_repr, op, lhs.name), targets=result.targets_in_use)
+    view.execute("%s = %s %s %s" % (result.name, lhs, op, rhs.name), targets=result.targets_in_use)
     return result
 
 def binary_iop(lhs, rhs, iop):
-    if isinstance(rhs, ndarray):
-        rhs = rhs.dist_like(lhs)
-        rhs_repr = rhs.name
-    else:
-        rhs_repr = repr(rhs)
+    rhs = __prepare_operand(rhs, lhs)
 
     view = com.getView()
-    view.execute("%s %s %s" % (lhs.name, iop, rhs_repr), targets=lhs.targets_in_use)
+    view.execute("%s %s %s" % (lhs.name, iop, rhs), targets=lhs.targets_in_use)
     return lhs
 
 def n_ary_fun(fun, *args):
     a = args[0]
-    args_str = a.name
 
-    args_repr = [repr(arg) for arg in args[1:]]
-    for arg in args_repr:
-        args_str += ',' + arg
+    args = [a.name] + [__prepare_operand(arg, a) for arg in args[1:]]
+    args_str = ", ".join(args)
 
-    result = empty_like(a)
+    result = hollow_like(a)
     view = com.getView()
     view.execute("%s = %s(%s)" % (result.name, fun, args_str), targets=result.targets_in_use)
+    #\todo: determine dtype from the result of fun and not from args[0]
     return result
 
 class n_ary_fun_wrapper(object):
@@ -62,8 +56,15 @@ class n_ary_fun_wrapper(object):
     def __call__(self, *args):
         return n_ary_fun(self.fun_name, *args)
 
-math_funs = ('abs', 'exp')
+# math function names
+trigonometric_funs = ('sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan')
+hyperbolic_funs = ('sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh')
+rounding_funs = ('around', 'round', 'rint', 'fix', 'floor', 'ceil', 'trunc')
+exp_log_funs = ('exp', 'expm1', 'exp2', 'log', 'log10', 'log2', 'log1p')
+misc_funs = ('abs', 'sqrt', 'maximum', 'minimum')
+math_funs = trigonometric_funs + hyperbolic_funs + rounding_funs + exp_log_funs + misc_funs
 
+# declare math functions in the namespace of this module
 my_module = sys.modules[__name__]
 for math_fun in math_funs:
     setattr(my_module, math_fun, n_ary_fun_wrapper(math_fun))
