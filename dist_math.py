@@ -2,18 +2,18 @@ import IPParallelClient as com
 import sys
 #import ndarray    # this import is done by the ndarray module itself due to circular dependencies
 
-def unary_op(a, op):
-    result = ndarray.hollow_like(a)
-    view = com.getView()
-    view.execute("%s = %s%s" % (result.name, op, a.name), targets=result.targets_in_use)
-    return result
-
 def __prepare_operand(operand, target):
     if isinstance(operand, ndarray.ndarray):
         operand = operand.dist_like(target)
         return operand.name
     else:
         return repr(operand)
+
+def unary_op(a, op):
+    result = ndarray.hollow_like(a)
+    view = com.getView()
+    view.execute("%s = %s%s" % (result.name, op, a.name), targets=result.targets_in_use)
+    return result
 
 def binary_op(lhs, rhs, op):
     rhs = __prepare_operand(rhs, lhs)
