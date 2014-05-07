@@ -2,6 +2,7 @@ import numpy as np
 import ndarray_helper as helper
 import IPParallelClient as com
 import dist_math
+import sys
 
 ndarray_id = 0
 
@@ -309,9 +310,9 @@ def empty_like(a):
 def hollow_like(a):
     return ndarray(a.shape, a.distaxis, a.dtype, a.idx_ranges, a.targets_in_use, no_allocation=True)
 
-dist_math.empty_like = empty_like
-dist_math.hollow_like = hollow_like
-dist_math.ndarray = ndarray
+# import this module to dist_math module
+my_module = sys.modules[__name__]
+dist_math.ndarray = my_module
 
 com.init()
 view = com.getView()
