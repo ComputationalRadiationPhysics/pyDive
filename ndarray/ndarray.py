@@ -1,5 +1,6 @@
 import numpy as np
 import ndarray_helper as helper
+import ndarray_factories as factories
 import IPParallelClient as com
 import dist_math
 import sys
@@ -11,12 +12,13 @@ class ndarray(object):
         self.shape = list(shape)
         self.dtype = dtype
         self.distaxis = distaxis
+        self.view = com.getView()
 
         assert distaxis >= 0 and distaxis < len(self.shape)
 
         if idx_ranges is None and targets_in_use is None:
             # number of available targets (engines)
-            num_targets_av = len(view.targets)
+            num_targets_av = len(self.view.targets)
 
             # shape of the mpi-local ndarray
             localshape = np.array(self.shape)
@@ -44,19 +46,19 @@ class ndarray(object):
         ndarray_id += 1
 
         if no_allocation:
-            view.push({self.name : None}, targets=self.targets_in_use)
+            self.view.push({self.name : None}, targets=self.targets_in_use)
         else:
             # instanciate an empty ndarray object of the appropriate shape on each target in use
             localshapes = [self.shape[:] for i in range(len(self.targets_in_use))]
             for i in range(len(self.targets_in_use)):
                 localshapes[i][distaxis] = self.idx_ranges[i][1] - self.idx_ranges[i][0]
 
-            view.scatter('localshape', localshapes, targets=self.targets_in_use)
-            view.push({'dtype' : dtype}, targets=self.targets_in_use)
-            view.execute('%s = empty(localshape[0], dtype=dtype)' % self.name, targets=self.targets_in_use)
+            self.view.scatter('localshape', localshapes, targets=self.targets_in_use)
+            self.view.push({'dtype' : dtype}, targets=self.targets_in_use)
+            self.view.execute('%s = empty(localshape[0], dtype=dtype)' % self.name, targets=self.targets_in_use)
 
     def __del__(self):
-        view.execute('del %s' % self.name, targets=self.targets_in_use)
+        self.view.execute('del %s' % self.name, targets=self.targets_in_use)
 
     def __getitem__(self, args):
         # if args is [:] then return a hard copy of the entire ndarray
@@ -68,7 +70,7 @@ class ndarray(object):
 
         assert len(args) == len(self.shape)
 
-        # if args is a list of indices return a single data value
+        # if args is a list of indices then return a single data value
         if all(type(arg) is int for arg in args):
             dist_idx = args[self.distaxis]
             for i in range(len(self.idx_ranges)):
@@ -76,7 +78,7 @@ class ndarray(object):
                 if dist_idx >= end: continue
                 local_idx = list(args)
                 local_idx[self.distaxis] = dist_idx - begin
-                return view.pull("%s%s" % (self.name, repr(local_idx)), targets=self.targets_in_use[i])
+                return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=self.targets_in_use[i])
 
         # shape of the new sliced ndarray
         new_shape = helper.sliceShape(args, self.shape)
@@ -122,8 +124,8 @@ class ndarray(object):
         args = list(args)
         for i in range(len(local_slices)):
             args[self.distaxis] = local_slices[i]
-            view.push({'args' : args}, targets=new_targets_in_use[i])
-        view.execute('%s = %s[args]' % (result.name, self.name), targets=new_targets_in_use)
+            self.view.push({'args' : args}, targets=new_targets_in_use[i])
+        self.view.execute('%s = %s[args]' % (result.name, self.name), targets=new_targets_in_use)
 
         return result
 
@@ -131,9 +133,9 @@ class ndarray(object):
         # if args is [:] then assign value to the entire ndarray
         if key == slice(None):
             if isinstance(value, np.ndarray):
-                value = array(value, self.distaxis)
+                value = factories.array(value, self.distaxis)
             other = value.dist_like(self)
-            view.execute("%s[:] = %s" % (self.name, other.name), targets=self.targets_in_use)
+            self.view.execute("%s[:] = %s" % (self.name, other.name), targets=self.targets_in_use)
             return
 
         if not isinstance(key, list) and not isinstance(key, tuple):
@@ -149,8 +151,8 @@ class ndarray(object):
                 if dist_idx >= end: continue
                 local_idx = list(key)
                 local_idx[self.distaxis] = dist_idx - begin
-                view.push({'value' : value}, targets=self.targets_in_use[i])
-                view.execute("%s%s = value" % (self.name, repr(local_idx)), targets=self.targets_in_use[i])
+                self.view.push({'value' : value}, targets=self.targets_in_use[i])
+                self.view.execute("%s%s = value" % (self.name, repr(local_idx)), targets=self.targets_in_use[i])
                 return
 
         # assign value to sub-array of self
@@ -160,13 +162,16 @@ class ndarray(object):
     def __str__(self):
         return self.gather().__str__()
 
+    def __repr__(self):
+        return self.name
+
     def gather(self):
-        local_arrays = view.pull(self.name, targets=self.targets_in_use)
+        local_arrays = self.view.pull(self.name, targets=self.targets_in_use)
         return np.concatenate(local_arrays, axis=self.distaxis)
 
     def copy(self):
         result = ndarray(self.shape, self.distaxis, self.dtype, self.idx_ranges, self.targets_in_use, True)
-        view.execute("%s = %s[:]" % (result.name, self.name), targets=self.targets_in_use)
+        self.view.execute("%s = %s[:]" % (result.name, self.name), targets=self.targets_in_use)
         return result
 
     def dist_like(self, other):
@@ -223,23 +228,23 @@ class ndarray(object):
             tag += 1
 
         # push communication meta-data to the targets
-        view.scatter('src_targets', src_targets, targets=self.targets_in_use)
-        view.scatter('src_tags', src_tags, targets=self.targets_in_use)
-        view.scatter('src_distaxis_sizes', src_distaxis_sizes, targets=self.targets_in_use)
+        self.view.scatter('src_targets', src_targets, targets=self.targets_in_use)
+        self.view.scatter('src_tags', src_tags, targets=self.targets_in_use)
+        self.view.scatter('src_distaxis_sizes', src_distaxis_sizes, targets=self.targets_in_use)
 
-        view.scatter('dest_targets', dest_targets, targets=other.targets_in_use)
-        view.scatter('dest_tags', dest_tags, targets=other.targets_in_use)
-        view.scatter('dest_distaxis_sizes', dest_distaxis_sizes, targets=other.targets_in_use)
+        self.view.scatter('dest_targets', dest_targets, targets=other.targets_in_use)
+        self.view.scatter('dest_tags', dest_tags, targets=other.targets_in_use)
+        self.view.scatter('dest_distaxis_sizes', dest_distaxis_sizes, targets=other.targets_in_use)
 
         # result ndarray
         result = ndarray(self.shape, self.distaxis, self.dtype, other.idx_ranges, other.targets_in_use)
 
         # send
-        view.execute('scatterArrayMPI_async(%s, src_targets[0], src_tags[0], src_distaxis_sizes[0], %d, target2rank)' \
+        self.view.execute('scatterArrayMPI_async(%s, src_targets[0], src_tags[0], src_distaxis_sizes[0], %d, target2rank)' \
             % (self.name, self.distaxis), targets=self.targets_in_use)
 
         # receive
-        view.execute('gatherArraysMPI_sync(%s, dest_targets[0], dest_tags[0], dest_distaxis_sizes[0], %d, target2rank)' \
+        self.view.execute('gatherArraysMPI_sync(%s, dest_targets[0], dest_tags[0], dest_distaxis_sizes[0], %d, target2rank)' \
             % (result.name, self.distaxis), targets=result.targets_in_use)
 
         return result
@@ -288,44 +293,9 @@ class ndarray(object):
     def __ipow__(self, other):
         return dist_math.binary_iop(self, other, '**=')
 
-def array(array_like, distaxis):
-    # numpy array
-    if isinstance(array_like, np.ndarray):
-        # result ndarray
-        result = ndarray(array_like.shape, distaxis, array_like.dtype, no_allocation=True)
-
-        tmp = np.rollaxis(array_like, distaxis)
-        sub_arrays = [tmp[begin:end] for begin, end in result.idx_ranges]
-        # roll axis back
-        sub_arrays = [np.rollaxis(ar, 0, distaxis+1) for ar in sub_arrays]
-
-        view.scatter('sub_array', sub_arrays, targets=result.targets_in_use)
-        view.execute("%s = sub_array[0].copy()" % result.name, targets=result.targets_in_use)
-
-        return result
-
-def empty_like(a):
-    return ndarray(a.shape, a.distaxis, a.dtype, a.idx_ranges, a.targets_in_use)
-
-def hollow_like(a):
-    return ndarray(a.shape, a.distaxis, a.dtype, a.idx_ranges, a.targets_in_use, no_allocation=True)
-
-# import this module to dist_math module
+# import this module into dist_math and ndarray_factories
 my_module = sys.modules[__name__]
 dist_math.ndarray = my_module
+factories.ndarray = my_module
 
 com.init()
-view = com.getView()
-a = ndarray((4,3), distaxis=0)
-
-a[:] = np.ones(a.shape) * -1.0
-
-a[1:3, 1:3] = np.arange(2*2).reshape((2,2)).astype(a.dtype)
-
-a[-1,0] = 5.0
-
-a += a**2
-
-a += 2*a
-
-print dist_math.sin(a)

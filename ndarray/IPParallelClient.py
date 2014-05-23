@@ -12,7 +12,7 @@ def init():
     view.execute('from numpy import *')
     view.execute('from mpi4py import MPI')
     view.execute('import os')
-    view.run('interengine.py')
+    view.run('ndarray/interengine.py')
 
     get_rank = interactive(lambda: MPI.COMM_WORLD.Get_rank())
     all_ranks = view.apply(get_rank)
