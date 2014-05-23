@@ -35,7 +35,7 @@ class ndarray(object):
             # list of indices of the occupied targets
             self.targets_in_use = list(range(num_targets))
         elif idx_ranges is not None and targets_in_use is not None:
-            self.idx_ranges = idx_ranges[:]
+            self.idx_ranges = idx_ranges.copy[:]
             self.targets_in_use = targets_in_use[:]
         else:
             raise ValueError("either args 'idx_ranges' and 'targets_in_use' have to be given both or not given both.")
@@ -61,10 +61,6 @@ class ndarray(object):
         self.view.execute('del %s' % self.name, targets=self.targets_in_use)
 
     def __getitem__(self, args):
-        # if args is [:] then return a hard copy of the entire ndarray
-        if args == slice(None):
-            return self.copy()
-
         if not isinstance(args, list) and not isinstance(args, tuple):
             args = (args,)
 
@@ -171,7 +167,7 @@ class ndarray(object):
 
     def copy(self):
         result = ndarray(self.shape, self.distaxis, self.dtype, self.idx_ranges, self.targets_in_use, True)
-        self.view.execute("%s = %s[:]" % (result.name, self.name), targets=self.targets_in_use)
+        self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.targets_in_use)
         return result
 
     def dist_like(self, other):
