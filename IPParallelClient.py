@@ -11,6 +11,7 @@ def init():
     view.block = True
     view.execute('from numpy import *')
     view.execute('from mpi4py import MPI')
+    view.execute('import h5py as h5')
     view.execute('import os')
     view.run('ndarray/interengine.py')
 

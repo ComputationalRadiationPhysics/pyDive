@@ -35,7 +35,7 @@ class ndarray(object):
             # list of indices of the occupied targets
             self.targets_in_use = list(range(num_targets))
         elif idx_ranges is not None and targets_in_use is not None:
-            self.idx_ranges = idx_ranges.copy[:]
+            self.idx_ranges = idx_ranges[:]
             self.targets_in_use = targets_in_use[:]
         else:
             raise ValueError("either args 'idx_ranges' and 'targets_in_use' have to be given both or not given both.")
@@ -77,15 +77,10 @@ class ndarray(object):
                 return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=self.targets_in_use[i])
 
         # shape of the new sliced ndarray
-        new_shape = helper.sliceShape(args, self.shape)
+        new_shape, clean_slices = helper.subWindow_of_shape(self.shape, args)
 
-        # create a clean, wrapped slice object for the distributed axis
-        if type(args[self.distaxis]) is int:
-            distaxis_slice = slice(args[self.distaxis], args[self.distaxis]+1)
-        else:
-            distaxis_slice = args[self.distaxis]
-        wrapped_ids = distaxis_slice.indices(self.shape[self.distaxis])
-        distaxis_slice = slice(*wrapped_ids)
+        # clean slice object in the direction of the distributed axis
+        distaxis_slice = clean_slices[self.distaxis]
 
         # determine properties of the new sliced ndarray
         new_idx_ranges = []
