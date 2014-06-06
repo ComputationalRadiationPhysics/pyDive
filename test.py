@@ -6,13 +6,11 @@ from h5_ndarray.h5_ndarray import *
 
 h = h5_ndarray("/home/burau/test.h5", "/data/1000/fields/Density_e", 1)
 
-a = h[32:34, :512:8, :]
+a = h[32:34, :16, :]
 
-c = a + b
+h[32:34, :16, :] = a
 
-#h[32:34, :512:8, :] = 2.0 * a
-
-a = a[:, 1::3, 5::3]
+#a = a[:, 1::3, 5::3]
 
 plt.imshow(a.gather()[0,:,:])
 plt.colorbar()

@@ -27,7 +27,7 @@ class h5_ndarray(object):
         self.dataset_name = self.name + "_dataset"
         self.fileHandle_name = self.name + "_file"
         view = com.getView()
-        view.execute("%s = h5.File('%s', 'r', driver='mpio', comm=MPI.COMM_WORLD)"\
+        view.execute("%s = h5.File('%s', driver='mpio', comm=MPI.COMM_WORLD)"\
             % (self.fileHandle_name, h5_filename))
         view.execute("%s = %s['%s']"\
             % (self.dataset_name, self.fileHandle_name, dataset_path))
@@ -56,24 +56,17 @@ class h5_ndarray(object):
 
         new_shape, clean_slices = helper.subWindow_of_shape(self.shape, args)
 
-        print "new_shape: ", new_shape
-        print "clean_slices: ", clean_slices
-
         # result ndarray
         result = ndarray_factories.hollow(new_shape, self.distaxis, dtype=self.dtype)
 
-        print "result.idx_ranges: ", result.idx_ranges
-
         # create local slice objects for each engine
         local_slices = helper.createLocalSlices(clean_slices, self.distaxis, result.idx_ranges)
-
-        print "local_slices: ", local_slices
 
         # scatter slice objects to the engines
         view = com.getView()
         view.scatter('window', local_slices, targets=result.targets_in_use)
 
-        view.execute('%s = %s[tuple(window[0])]' % (result.name, self.dataset_name), targets=result.targets_in_use)
+        view.execute('%s = %s[tuple(window[0])]' % (repr(result), self.dataset_name), targets=result.targets_in_use)
         return result
 
     def __setitem__(self, key, value):
