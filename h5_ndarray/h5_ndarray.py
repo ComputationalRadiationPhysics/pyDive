@@ -7,16 +7,17 @@ import IPParallelClient as com
 h5_ndarray_id = 0
 
 class h5_ndarray(object):
-    def __init__(self, h5_filename, dataset_path, distaxis, max_elements_node=0):
+    def __init__(self, h5_filename, dataset_path, distaxis, window=None):
         self.h5_filename = h5_filename
         self.dataset_path = dataset_path
 
-        self.dataset = h5.File(h5_filename, 'r')[dataset_path]
-
-        self.shape = list(self.dataset.shape)
+        self.dataset = h5.File(h5_filename)[dataset_path]
         self.distaxis = distaxis
-        self.max_elements_node = max_elements_node
         self.dtype = self.dataset.dtype
+
+        if not window:
+            window = [slice(None)] * len(self.dataset.shape)
+        self.shape, self.window = helper.subWindow_of_shape(self.dataset.shape, window)
 
         # generate a unique variable name used on the target representing this instance
         global h5_ndarray_id
@@ -50,17 +51,20 @@ class h5_ndarray(object):
 
         assert len(self.shape) == len(args)
 
-        # single data access is not allowed
         assert not all(type(arg) is int for arg in args),\
             "single data access is not allowed"
 
-        new_shape, clean_slices = helper.subWindow_of_shape(self.shape, args)
+        result_shape, clean_slices = helper.subWindow_of_shape(self.shape, args)
+
+        total_slices = [slice(self.window[i].start + clean_slices[i].start * self.window[i].step,\
+                              self.window[i].start + clean_slices[i].stop * self.window[i].step,\
+                              self.window[i].step * clean_slices[i].step) for i in range(len(args))]
 
         # result ndarray
-        result = ndarray_factories.hollow(new_shape, self.distaxis, dtype=self.dtype)
+        result = ndarray_factories.hollow(result_shape, self.distaxis, dtype=self.dtype)
 
         # create local slice objects for each engine
-        local_slices = helper.createLocalSlices(clean_slices, self.distaxis, result.idx_ranges)
+        local_slices = helper.createLocalSlices(total_slices, self.distaxis, result.idx_ranges)
 
         # scatter slice objects to the engines
         view = com.getView()
@@ -75,7 +79,6 @@ class h5_ndarray(object):
         if key == slice(None):
             key = [sliceNone] * len(self.shape)
 
-        # singe data access is not allowed
         assert not all(type(key_comp) is int for key_comp in key),\
             "single data access is not allowed"
 
