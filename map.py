@@ -5,6 +5,7 @@ import IPParallelClient as com
 import numpy as np
 from IPython.parallel import interactive
 
+# fraction of the available memory per engine used by the map function for caching hdf5 files
 fraction_of_av_mem_used = 0.5
 
 def __map_wrapper(f, array_names, **kwargs):
@@ -57,7 +58,7 @@ def map(f, *arrays, **kwargs):
                 cache_window[distaxis] = slice(begin, end)
 
                 # for h5_ndarrays and ndarrays do caching and for other types of arrays (cloned_ndarray)
-                # do nothing. Note that for h5_ndarrays the index operator returns a ndarray which is
+                # do nothing. Note that for h5_ndarrays the []-operator returns a ndarray which is
                 # read out in parallel from the hdf5 file.
                 cache_arrays = [a[cache_window] if a in both_ndarrays else a     for a in arrays]
 
