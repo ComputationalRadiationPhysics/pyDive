@@ -11,7 +11,6 @@ class h5_ndarray(object):
     def __init__(self, h5_filename, dataset_path, distaxis, window=None):
         self.h5_filename = h5_filename
         self.dataset_path = dataset_path
-
         self.dataset = h5.File(h5_filename)[dataset_path]
         self.distaxis = distaxis
         self.dtype = self.dataset.dtype
