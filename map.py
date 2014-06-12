@@ -43,7 +43,7 @@ def map(f, *arrays, **kwargs):
             "all ndarrays and h5_ndarrays must have the same shape"
 
         if h5_ndarrays:
-            # calculate the best suitable step size (-> cache size) according the the amount
+            # calculate the best suitable step size (-> cache size) according to the amount
             # of available memory on the engines
             step = __bestStepSize(h5_ndarrays)
 
