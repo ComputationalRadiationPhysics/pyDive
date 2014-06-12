@@ -12,6 +12,7 @@ class ndarray(object):
         self.shape = list(shape)
         self.dtype = dtype
         self.distaxis = distaxis
+        self.nbytes = self.dtype.itemsize * np.prod(self.shape)
         self.view = com.getView()
 
         assert distaxis >= 0 and distaxis < len(self.shape)

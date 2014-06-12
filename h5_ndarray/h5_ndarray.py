@@ -3,6 +3,7 @@ import h5py as h5
 from ndarray import ndarray, ndarray_factories
 from ndarray import ndarray_helper as helper
 import IPParallelClient as com
+import numpy as np
 
 h5_ndarray_id = 0
 
@@ -18,6 +19,8 @@ class h5_ndarray(object):
         if not window:
             window = [slice(None)] * len(self.dataset.shape)
         self.shape, self.window = helper.subWindow_of_shape(self.dataset.shape, window)
+
+        self.nbytes = self.dtype.itemsize * np.prod(self.shape)
 
         # generate a unique variable name used on the target representing this instance
         global h5_ndarray_id
