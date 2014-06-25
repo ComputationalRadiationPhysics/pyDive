@@ -21,7 +21,7 @@ class h5_ndarray(object):
 
         self.nbytes = self.dtype.itemsize * np.prod(self.shape)
 
-        # generate a unique variable name used on the target representing this instance
+        # generate a unique variable name used on target representing this instance
         global h5_ndarray_id
         self.name = 'h5_ndarray' + str(h5_ndarray_id)
         h5_ndarray_id += 1

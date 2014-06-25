@@ -14,7 +14,7 @@ class cloned_ndarray(object):
         if self.targets_in_use == 'all':
             self.targets_in_use = list(self.view.targets)
 
-        # generate a unique variable name used on the target representing this instance
+        # generate a unique variable name used on target representing this instance
         global cloned_ndarray_id
         self.name = 'cloned_ndarray' + str(cloned_ndarray_id)
         cloned_ndarray_id += 1
@@ -23,7 +23,7 @@ class cloned_ndarray(object):
             self.view.push({self.name : None}, targets=self.targets_in_use)
         else:
             self.view.push({'myshape' : self.shape, 'dtype' : self.dtype}, targets=self.targets_in_use)
-            self.view.execute('%s = empty(myshape, dtype=dtype)' % self.name, targets=self.targets_in_use)
+            self.view.execute('%s = np.empty(myshape, dtype=dtype)' % self.name, targets=self.targets_in_use)
 
     def __del__(self):
         self.view.execute('del %s' % self.name, targets=self.targets_in_use)

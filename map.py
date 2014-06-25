@@ -15,12 +15,14 @@ def __map_wrapper(f, array_names, **kwargs):
 def __bestStepSize(h5_ndarrays):
     view = com.getView()
 
-    # memory available and memory needed per engine
+    # minimum amount of memory available and memory needed, both per engine
     get_mem_av = interactive(lambda: psutil.virtual_memory().available)
     mem_av = min(view.apply(get_mem_av))
     mem_needed = sum(a.nbytes for a in h5_ndarrays) / len(view.targets)
 
+    # edge length of the whole h5_ndarray
     edge_length = h5_ndarrays[0].shape[h5_ndarrays[0].distaxis]
+    # maximum edge length on one engine according to the available memory
     step_size = fraction_of_av_mem_used * edge_length * mem_av / mem_needed
 
     if step_size >= edge_length:
@@ -44,7 +46,7 @@ def map(f, *arrays, **kwargs):
             "all ndarrays and h5_ndarrays must have the same shape"
 
         if h5_ndarrays:
-            # calculate the best suitable step size (-> cache size) according to the amount
+            # calculate the best suitable step size (-> cache's edge size) according to the amount
             # of available memory on the engines
             step = __bestStepSize(h5_ndarrays)
 

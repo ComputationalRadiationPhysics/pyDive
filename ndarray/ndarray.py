@@ -41,7 +41,7 @@ class ndarray(object):
         else:
             raise ValueError("either args 'idx_ranges' and 'targets_in_use' have to be given both or not given both.")
 
-        # generate a unique variable name used on the target representing this instance
+        # generate a unique variable name used on target representing this instance
         global ndarray_id
         self.name = 'dist_ndarray' + str(ndarray_id)
         ndarray_id += 1
@@ -56,7 +56,7 @@ class ndarray(object):
 
             self.view.scatter('localshape', localshapes, targets=self.targets_in_use)
             self.view.push({'dtype' : dtype}, targets=self.targets_in_use)
-            self.view.execute('%s = empty(localshape[0], dtype=dtype)' % self.name, targets=self.targets_in_use)
+            self.view.execute('%s = np.empty(localshape[0], dtype=dtype)' % self.name, targets=self.targets_in_use)
 
     def __del__(self):
         self.view.execute('del %s' % self.name, targets=self.targets_in_use)
@@ -65,7 +65,8 @@ class ndarray(object):
         if not isinstance(args, list) and not isinstance(args, tuple):
             args = (args,)
 
-        assert len(args) == len(self.shape)
+        assert len(args) == len(self.shape),\
+            "number of arguments does not correspond to the dimension (%d)" % len(self.shape)
 
         # if args is a list of indices then return a single data value
         if all(type(arg) is int for arg in args):
@@ -285,9 +286,10 @@ class ndarray(object):
     def __ipow__(self, other):
         return dist_math.binary_iop(self, other, '**=')
 
-# import this module into dist_math and ndarray_factories
+# import this module into dist_math, ndarray_factories
 my_module = sys.modules[__name__]
 dist_math.ndarray = my_module
 factories.ndarray = my_module
 
-com.init()
+view = com.getView()
+view.run('ndarray/interengine.py')
