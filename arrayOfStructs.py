@@ -6,14 +6,17 @@ if not onTarget.onTarget:
     from ndarray.ndarray import ndarray as ndarray
 import numpy as np
 
-def replaceTree(tree, expression):
-    # traverse tree
-    for key, value in tree.items():
-        if type(value) is dict:
-            replaceTree(value, expression)
-        else:
-            tree[key] = expression(value)
-    return tree
+def makeTree_like(tree, expression):
+    def traverseTree(outTree, inTree):
+        for key, value in inTree.items():
+            if type(value) is dict:
+                outTree[key] = {}
+                traverseTree(outTree[key], inTree[key])
+            else:
+                outTree[key] = expression(value)
+    outTree = {}
+    traverseTree(outTree, tree)
+    return outTree
 
 def visitTwoTrees(treeA, treeB, visitor):
     # traverse trees
@@ -27,10 +30,11 @@ def visitTwoTrees(treeA, treeB, visitor):
 
 # tree generator object
 def treeItems(tree):
-    # traverse tree
-    for key, value in tree.items():
+    items = list(tree.items())
+    while items:
+        key, value = items.pop()
         if type(value) is dict:
-            treeItems(value)
+            items += list(value.items())
         else:
             yield key, value
 
@@ -46,7 +50,7 @@ class arrayOfStructsClass(object):
             "all arrays in 'structOfArrays' must have the same shape"
 
         self.shape = firstArray.shape
-        self.dtype = replaceTree(structOfArrays.copy(), lambda a: a.dtype)
+        self.dtype = makeTree_like(structOfArrays, lambda a: a.dtype)
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
 
@@ -58,7 +62,7 @@ class arrayOfStructsClass(object):
             self.targets_in_use = firstArray.targets_in_use
             self.idx_ranges = firstArray.idx_ranges
             view = com.getView()
-            self.view = com.getView()
+            self.view = view
 
             # generate a unique variable name used on target representing this instance
             global arrayOfStructs_id
@@ -66,7 +70,7 @@ class arrayOfStructsClass(object):
             arrayOfStructs_id += 1
 
             # create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use
-            names_tree = replaceTree(structOfArrays.copy(), lambda a: repr(a))
+            names_tree = makeTree_like(structOfArrays, lambda a: repr(a))
             view.push({'names_tree' : names_tree}, targets=self.targets_in_use)
             view.execute('''\
                 structOfArrays = arrayOfStructs.replaceTree(names_tree, lambda a_name: globals()[a_name])
@@ -104,7 +108,7 @@ class arrayOfStructsClass(object):
         assert len(args) == len(self.shape),\
             "number of arguments does not correspond to the dimension (%d)" % len(self.shape)
 
-        result = replaceTree(self.structOfArrays.copy(), lambda a: a[args])
+        result = makeTree_like(self.structOfArrays, lambda a: a[args])
 
         # if args is a list of indices then return a single data value tree
         if all(type(arg) is int for arg in args):
