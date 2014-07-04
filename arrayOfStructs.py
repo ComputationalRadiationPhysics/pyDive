@@ -59,8 +59,8 @@ class arrayOfStructsClass(object):
             #    "all ndarrays in structure-of-arrays ('structOfArrays') must have an identical 'targets_in_use' attribute"
 
             self.distaxis = firstArray.distaxis
-            self.targets_in_use = firstArray.targets_in_use
             self.idx_ranges = firstArray.idx_ranges
+            self.targets_in_use = firstArray.targets_in_use
             view = com.getView()
             self.view = view
 
@@ -71,9 +71,12 @@ class arrayOfStructsClass(object):
 
             # create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use
             names_tree = makeTree_like(structOfArrays, lambda a: repr(a))
+
+            #view.execute("if onTarget.onTarget: raise TypeError('haha')",targets=self.targets_in_use)
+
             view.push({'names_tree' : names_tree}, targets=self.targets_in_use)
             view.execute('''\
-                structOfArrays = arrayOfStructs.replaceTree(names_tree, lambda a_name: globals()[a_name])
+                structOfArrays = arrayOfStructs.makeTree_like(names_tree, lambda a_name: type(globals()[a_name]))
                 %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
                 targets=self.targets_in_use)
 
@@ -106,7 +109,8 @@ class arrayOfStructsClass(object):
             args = (args,)
 
         assert len(args) == len(self.shape),\
-            "number of arguments does not correspond to the dimension (%d)" % len(self.shape)
+            "number of arguments (%d) does not correspond to the dimension (%d)"\
+                % (len(args), len(self.shape))
 
         result = makeTree_like(self.structOfArrays, lambda a: a[args])
 
@@ -142,12 +146,13 @@ class arrayOfStructsClass(object):
             args = (args,)
 
         assert len(args) == len(self.shape),\
-            "number of arguments does not correspond to the dimension (%d)" % len(self.shape)
+            "number of arguments (%d) does not correspond to the dimension (%d)"\
+                % (len(args), len(self.shape))
 
         def doArrayAssignmentWithSlice(treeA, treeB, name, arrayA, arrayB):
             treeA[name][args] = arrayB
 
-        visitTwoTrees(self.structOfArrays, other, doArrayAssignmentWithSlice)
+        visitTwoTrees(self.structOfArrays, other.structOfArrays, doArrayAssignmentWithSlice)
 
 def arrayOfStructs(structOfArrays):
     items = [item for item in treeItems(structOfArrays)]

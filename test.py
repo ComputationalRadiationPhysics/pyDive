@@ -15,6 +15,8 @@ a = arrayOfStructs.arrayOfStructs(d)
 
 #print a.structOfArrays
 
-b = a['FieldE/x']
+fieldE = a['FieldE']
+fieldB = a['FieldB']
 
-print type(b)
+fieldE[0,:,:] = fieldB[0,:,:]
+

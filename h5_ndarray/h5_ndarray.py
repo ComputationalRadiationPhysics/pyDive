@@ -95,7 +95,7 @@ class h5_ndarray(object):
         # Applying 'clean_slices' after 'self.window'-slices result in 'total_slices'
         total_slices = [slice(self.window[i].start + clean_slices[i].start * self.window[i].step,\
                               self.window[i].start + clean_slices[i].stop * self.window[i].step,\
-                              self.window[i].step * clean_slices[i].step) for i in range(len(args))]
+                              self.window[i].step * clean_slices[i].step) for i in range(len(key))]
 
         assert new_shape == value.shape
 
