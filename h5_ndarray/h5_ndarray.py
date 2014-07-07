@@ -35,11 +35,6 @@ class h5_ndarray(object):
         view.execute("%s = %s['%s']"\
             % (self.dataset_name, self.fileHandle_name, dataset_path))
 
-        # ndarray representing the cached sub-part of the hdf5 dataset residing in RAM
-        #self.chunk = None
-        # offset of chunk in respect to the hdf5 dataset in the direction of chunkaxis
-        #self.offset = 0
-
     def __del__(self):
         view = com.getView()
         view.execute("%s.close()" % self.fileHandle_name)

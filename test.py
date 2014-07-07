@@ -3,20 +3,18 @@ import IPParallelClient as com
 from matplotlib import pyplot as plt
 import numpy as np
 import arrayOfStructs
-
-import h5_ndarray
+import algorithm
+from h5_ndarray.h5_ndarray import h5_ndarray
 from h5_ndarray import factories
+from ndarray.ndarray import ndarray
 
-d = factories.soa("/home/burau/test.h5", "/data/1000/fields/", 0)
+h = h5_ndarray("/home/burau/test.h5", "/data/1000/fields/FieldE/x", 0, np.s_[0,:,:])
 
-#h = h5_ndarray.h5_ndarray.h5_ndarray("/home/burau/test.h5", "/data/1000/fields/Density_e", 0)
+a = ndarray(h.shape, 0)
 
-a = arrayOfStructs.arrayOfStructs(d)
+def t(a,b):
+    a = b
 
-#print a.structOfArrays
+algorithm.map(t, a, h)
 
-fieldE = a['FieldE']
-fieldB = a['FieldB']
-
-fieldE[0,:,:] = fieldB[0,:,:]
-
+print algorithm.mapReduce(lambda a: a**2, np.add, h)

@@ -1,16 +1,9 @@
 from ndarray import *
-from h5_ndarray import *
-from cloned_ndarray import *
+from h5_ndarray.h5_ndarray import *
 import IPParallelClient as com
-import numpy as np
-from IPython.parallel import interactive
 
-# fraction of the available memory per engine used by the map function for caching hdf5 files
+# fraction of the available memory per engine used for caching hdf5 files during an algorithm.
 fraction_of_av_mem_used = 0.5
-
-def __map_wrapper(f, array_names, **kwargs):
-    arrays = [globals()[array_name] for array_name in array_names]
-    f(*arrays, **kwargs)
 
 def __bestStepSize(h5_ndarrays):
     view = com.getView()
@@ -31,11 +24,9 @@ def __bestStepSize(h5_ndarrays):
     # round 'step_size' down to nearest power of two
     return pow(2, int(math.log(step_size, 2)))
 
-def map(f, *arrays, **kwargs):
-    view = com.getView()
-
+def cache_arrays(*arrays):
     ndarrays = [a for a in arrays if isinstance(a, ndarray.ndarray)]
-    h5_ndarrays = [a for a in arrays if isinstance(a, h5_ndarray.h5_ndarray)]
+    h5_ndarrays = [a for a in arrays if isinstance(a, h5_ndarray)]
     both_ndarrays = ndarrays + h5_ndarrays
 
     if both_ndarrays:
@@ -61,16 +52,8 @@ def map(f, *arrays, **kwargs):
 
                 # for h5_ndarrays and ndarrays do caching and for other types of arrays (cloned_ndarray)
                 # do nothing. Note that for h5_ndarrays the []-operator returns a ndarray which is
-                # read out in parallel from the hdf5 file.
-                cache_arrays = [a[cache_window] if a in both_ndarrays else a     for a in arrays]
-
-                # call this function again but now without h5_ndarrays
-                map(f, *cache_arrays, **kwargs)
+                # read out from the hdf5 file in parallel.
+                yield [a[cache_window] if a in both_ndarrays else a     for a in arrays]
             return
 
-    array_names = [repr(a) for a in arrays]
-
-    tmp_targets = view.targets
-    view.targets = arrays[0].targets_in_use
-    view.apply(interactive(__map_wrapper), f, array_names, **kwargs)
-    view.targets = tmp_targets
+    yield arrays

@@ -12,7 +12,7 @@ class ndarray(object):
         self.shape = list(shape)
         self.dtype = dtype
         self.distaxis = distaxis
-        self.nbytes = self.dtype.itemsize * np.prod(self.shape)
+        self.nbytes = np.dtype(dtype).itemsize * np.prod(self.shape)
         self.view = com.getView()
 
         assert distaxis >= 0 and distaxis < len(self.shape)
@@ -36,8 +36,8 @@ class ndarray(object):
             # list of indices of the occupied targets
             self.targets_in_use = list(range(num_targets))
         elif idx_ranges is not None and targets_in_use is not None:
-            self.idx_ranges = idx_ranges[:]
-            self.targets_in_use = targets_in_use[:]
+            self.idx_ranges = list(idx_ranges)
+            self.targets_in_use = list(targets_in_use)
         else:
             raise ValueError("either args 'idx_ranges' and 'targets_in_use' have to be given both or not given both.")
 
