@@ -4,7 +4,11 @@ import sys
 if not onTarget.onTarget:
     import IPParallelClient as com
     from ndarray.ndarray import ndarray as ndarray
+    from h5_ndarray.h5_ndarray import h5_ndarray as h5_ndarray
+    from IPython.parallel import interactive
+    import debug
 import numpy as np
+
 
 def makeTree_like(tree, expression):
     def traverseTree(outTree, inTree):
@@ -42,6 +46,10 @@ arrayOfStructs_id = 0
 
 class arrayOfStructsClass(object):
     def __init__(self, structOfArrays):
+        if onTarget.onTarget:
+            print "Hallo4"
+            #raise TypeError("Hallo4")
+
         items = [item for item in treeItems(structOfArrays)]
         firstArray = items[0][1]
         assert all(type(a) == type(firstArray) for name, a in items),\
@@ -53,6 +61,7 @@ class arrayOfStructsClass(object):
         self.dtype = makeTree_like(structOfArrays, lambda a: a.dtype)
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
+
 
         if not onTarget.onTarget and isinstance(self, ndarray):
             #assert all(a.targets_in_use == firstArray.targets_in_use for name, a in items),\
@@ -72,13 +81,15 @@ class arrayOfStructsClass(object):
             # create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use
             names_tree = makeTree_like(structOfArrays, lambda a: repr(a))
 
-            #view.execute("if onTarget.onTarget: raise TypeError('haha')",targets=self.targets_in_use)
-
             view.push({'names_tree' : names_tree}, targets=self.targets_in_use)
+
             view.execute('''\
-                structOfArrays = arrayOfStructs.makeTree_like(names_tree, lambda a_name: type(globals()[a_name]))
+                structOfArrays = arrayOfStructs.makeTree_like(names_tree, lambda a_name: globals()[a_name])
                 %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
                 targets=self.targets_in_use)
+
+        if not onTarget.onTarget and isinstance(self, h5_ndarray):
+            self.distaxis = firstArray.distaxis
 
     def __del__(self):
         if not onTarget.onTarget and isinstance(self, ndarray):
@@ -87,6 +98,9 @@ class arrayOfStructsClass(object):
 
     def __repr__(self):
         return self.name
+
+    def __str__(self):
+        print self.structOfArrays
 
     def __getitem__(self, args):
         # component access
@@ -157,14 +171,20 @@ class arrayOfStructsClass(object):
 def arrayOfStructs(structOfArrays):
     items = [item for item in treeItems(structOfArrays)]
     array_type = type(items[0][1])
+
     assert all(type(a) == array_type for name, a in items),\
         "all arrays in 'structOfArrays' must be of the same type"
 
     # create a new class type out of the arrayOfStructsClass that inherits from the arrays' type.
-    my_arrayOfStructsClass = type(array_type.__name__ + "_ArrayOfStructs",\
+    my_arrayOfStructsClass = type("ArrayOfStructs_" + array_type.__module__ + "-" + array_type.__name__,\
         (array_type,), dict(arrayOfStructsClass.__dict__))
 
-    return my_arrayOfStructsClass(structOfArrays)
+    if onTarget.onTarget:
+        # This is a workaround. Instanciation of my_arrayOfStructsClass raises an exception on target.
+        # No idea why.
+        return arrayOfStructsClass(structOfArrays)
+    else:
+        return my_arrayOfStructsClass(structOfArrays)
 
 # make 'arrayOfStructs' applicable for local arrays, like e.g. numpy arrays, on engines
 if not onTarget.onTarget:

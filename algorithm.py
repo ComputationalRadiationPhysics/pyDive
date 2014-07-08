@@ -59,13 +59,14 @@ def reduce(_array, op):
     view.targets = tmp_targets # restore target list
     return result
 
+import debug
+
 def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     def mapReduce_wrapper(map_func, reduce_op, array_names, **kwargs):
         arrays = [globals()[array_name] for array_name in array_names]
         return reduce_op.reduce(map_func(*arrays, **kwargs), axis=None)
 
-        view = com.getView()
-
+    view = com.getView()
     tmp_targets = view.targets # save current target list
 
     result = None
@@ -74,8 +75,10 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
         array_names = [repr(a) for a in cached_arrays]
 
         view.targets = cached_arrays[0].targets_in_use
-        targets_results = view.apply(interactive(mapReduce_wrapper),\
+        ar = view.apply_async(interactive(mapReduce_wrapper),\
             map_func, reduce_op, array_names, **kwargs)
+        debug.wait_watching_stdout(ar)
+        targets_results = ar.get()
 
         chunk_result = reduce_op.reduce(targets_results) # reduce over targets' results
         if result is None:

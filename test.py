@@ -8,13 +8,8 @@ from h5_ndarray.h5_ndarray import h5_ndarray
 from h5_ndarray import factories
 from ndarray.ndarray import ndarray
 
-h = h5_ndarray("/home/burau/test.h5", "/data/1000/fields/FieldE/x", 0, np.s_[0,:,:])
+s = factories.soa("/home/burau/test.h5", "/data/1000/fields/FieldE", 0, np.s_[0,:,:])
+s = arrayOfStructs.arrayOfStructs(s)
 
-a = ndarray(h.shape, 0)
-
-def t(a,b):
-    a = b
-
-algorithm.map(t, a, h)
-
-print algorithm.mapReduce(lambda a: a**2, np.add, h)
+print algorithm.mapReduce(lambda a: a['x']**2 + a['y']**2 + a['z']**2, np.add, s)
+#print algorithm.reduce(s['x'], np.add)
