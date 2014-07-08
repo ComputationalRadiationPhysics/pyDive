@@ -4,7 +4,7 @@ from cloned_ndarray import *
 import IPParallelClient as com
 import numpy as np
 from IPython.parallel import interactive
-import h5caching
+from h5_ndarray import h5caching
 
 def map(f, *arrays, **kwargs):
     def map_wrapper(f, array_names, **kwargs):
@@ -59,8 +59,6 @@ def reduce(_array, op):
     view.targets = tmp_targets # restore target list
     return result
 
-import debug
-
 def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     def mapReduce_wrapper(map_func, reduce_op, array_names, **kwargs):
         arrays = [globals()[array_name] for array_name in array_names]
@@ -75,10 +73,8 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
         array_names = [repr(a) for a in cached_arrays]
 
         view.targets = cached_arrays[0].targets_in_use
-        ar = view.apply_async(interactive(mapReduce_wrapper),\
+        targets_results = view.apply(interactive(mapReduce_wrapper),\
             map_func, reduce_op, array_names, **kwargs)
-        debug.wait_watching_stdout(ar)
-        targets_results = ar.get()
 
         chunk_result = reduce_op.reduce(targets_results) # reduce over targets' results
         if result is None:
