@@ -1,7 +1,8 @@
 from . import h5_ndarray
 import h5py as h5
+import arrayOfStructs
 
-def soa(h5_filename, group_path, distaxis, window=None):
+def fromGroup(h5_filename, group_path, distaxis, window=None):
     hFile = h5.File(h5_filename, 'r')
     group = hFile[group_path]
 
@@ -16,5 +17,5 @@ def soa(h5_filename, group_path, distaxis, window=None):
                 tree[key] = h5_ndarray.h5_ndarray(h5_filename, dataset_path + "/" + key, distaxis, window)
 
     result = {}
-    create_tree(group, result, group_path)
-    return result
+    structOfArrays = create_tree(group, result, group_path)
+    return arrayOfStructs.arrayOfStructs(structOfArrays)
