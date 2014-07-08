@@ -1,7 +1,7 @@
 from mpi4py import MPI
 import h5py as h5
-from ndarray import ndarray, ndarray_factories
-from ndarray import ndarray_helper as helper
+from ndarray import ndarray, factories
+from ndarray import helper
 import IPParallelClient as com
 import numpy as np
 
@@ -59,7 +59,7 @@ class h5_ndarray(object):
                               self.window[i].step * clean_slices[i].step) for i in range(len(args))]
 
         # result ndarray
-        result = ndarray_factories.hollow(result_shape, self.distaxis, dtype=self.dtype)
+        result = factories.hollow(result_shape, self.distaxis, dtype=self.dtype)
 
         # create local slice objects for each engine
         local_slices = helper.createLocalSlices(total_slices, self.distaxis, result.idx_ranges)

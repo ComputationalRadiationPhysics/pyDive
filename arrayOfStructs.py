@@ -180,8 +180,8 @@ def arrayOfStructs(structOfArrays):
         (array_type,), dict(arrayOfStructsClass.__dict__))
 
     if onTarget.onTarget:
-        # This is a workaround. Instanciation of my_arrayOfStructsClass raises an exception on target.
-        # No idea why.
+        # This is a workaround. Instanciation of my_arrayOfStructsClass raises an exception on target
+        # before executing the constructor. No idea why.
         return arrayOfStructsClass(structOfArrays)
     else:
         return my_arrayOfStructsClass(structOfArrays)

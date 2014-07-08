@@ -1,6 +1,6 @@
 import numpy as np
-import ndarray_helper as helper
-import ndarray_factories as factories
+import helper as helper
+import factories as factories
 import IPParallelClient as com
 import dist_math
 import sys
