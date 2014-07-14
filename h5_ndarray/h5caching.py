@@ -1,6 +1,7 @@
 from ndarray import *
 from h5_ndarray import *
 import IPParallelClient as com
+from IPython.parallel import interactive
 
 # fraction of the available memory per engine used for caching hdf5 files during an algorithm.
 fraction_of_av_mem_used = 0.5

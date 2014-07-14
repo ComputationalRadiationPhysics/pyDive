@@ -5,6 +5,8 @@ from ndarray import helper
 import IPParallelClient as com
 import numpy as np
 
+import debug
+
 h5_ndarray_id = 0
 
 class h5_ndarray(object):
@@ -30,7 +32,7 @@ class h5_ndarray(object):
         self.dataset_name = self.name + "_dataset"
         self.fileHandle_name = self.name + "_file"
         view = com.getView()
-        view.execute("%s = h5.File('%s', driver='mpio', comm=MPI.COMM_WORLD)"\
+        view.execute("%s = h5.File('%s', 'r', driver='mpio', comm=MPI.COMM_WORLD)"\
             % (self.fileHandle_name, h5_filename))
         view.execute("%s = %s['%s']"\
             % (self.dataset_name, self.fileHandle_name, dataset_path))
@@ -41,7 +43,7 @@ class h5_ndarray(object):
 
     def __getitem__(self, args):
         if args ==  slice(None):
-            args = (slice(None) for i in range(len(self.shape)))
+            args = (slice(None),) * len(self.shape)
 
         if not isinstance(args, list) and not isinstance(args, tuple):
             args = [args]
@@ -67,8 +69,8 @@ class h5_ndarray(object):
         # scatter slice objects to the engines
         view = com.getView()
         view.scatter('window', local_slices, targets=result.targets_in_use)
-
         view.execute('%s = %s[tuple(window[0])]' % (repr(result), self.dataset_name), targets=result.targets_in_use)
+
         return result
 
     def __setitem__(self, key, value):

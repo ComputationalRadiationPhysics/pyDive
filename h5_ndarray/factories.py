@@ -2,9 +2,13 @@ from . import h5_ndarray
 import h5py as h5
 import arrayOfStructs
 
-def fromGroup(h5_filename, group_path, distaxis, window=None):
+def fromPath(h5_filename, path, distaxis, window=None):
     hFile = h5.File(h5_filename, 'r')
-    group = hFile[group_path]
+    path = path.rstrip("/")
+    group_or_dataset = hFile[path]
+    if type(group_or_dataset) is not h5._hl.group.Group:
+        # dataset
+        return h5_ndarray.h5_ndarray(h5_filename, path, distaxis, window)
 
     def create_tree(group, tree, dataset_path):
         for key, value in group.items():
@@ -16,6 +20,6 @@ def fromGroup(h5_filename, group_path, distaxis, window=None):
             else:
                 tree[key] = h5_ndarray.h5_ndarray(h5_filename, dataset_path + "/" + key, distaxis, window)
 
-    result = {}
-    structOfArrays = create_tree(group, result, group_path)
+    structOfArrays = {}
+    create_tree(group, structOfArrays, group_path)
     return arrayOfStructs.arrayOfStructs(structOfArrays)
