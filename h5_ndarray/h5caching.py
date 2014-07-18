@@ -11,7 +11,7 @@ def __bestStepSize(h5_ndarrays):
 
     # minimum amount of memory available and memory needed, both per engine
     get_mem_av = interactive(lambda: psutil.virtual_memory().available)
-    mem_av = min(view.apply(get_mem_av))
+    mem_av = min(view.apply(get_mem_av)) / 64.0
     mem_needed = sum(a.nbytes for a in h5_ndarrays) / len(view.targets)
 
     # edge length of the whole h5_ndarray

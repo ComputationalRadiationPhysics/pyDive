@@ -20,6 +20,7 @@ def fromPath(h5_filename, path, distaxis, window=None):
             else:
                 tree[key] = h5_ndarray.h5_ndarray(h5_filename, dataset_path + "/" + key, distaxis, window)
 
+    group = group_or_dataset
     structOfArrays = {}
-    create_tree(group, structOfArrays, group_path)
+    create_tree(group, structOfArrays, path)
     return arrayOfStructs.arrayOfStructs(structOfArrays)

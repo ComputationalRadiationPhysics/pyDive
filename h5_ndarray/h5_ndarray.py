@@ -32,7 +32,7 @@ class h5_ndarray(object):
         self.dataset_name = self.name + "_dataset"
         self.fileHandle_name = self.name + "_file"
         view = com.getView()
-        view.execute("%s = h5.File('%s', 'r', driver='mpio', comm=MPI.COMM_WORLD)"\
+        view.execute("%s = h5.File('%s', 'r')"\
             % (self.fileHandle_name, h5_filename))
         view.execute("%s = %s['%s']"\
             % (self.dataset_name, self.fileHandle_name, dataset_path))
