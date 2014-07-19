@@ -1,6 +1,6 @@
 import numpy as np
-import IPParallelClient as com
-import ndarray_helper as helper
+from .. import IPParallelClient as com
+import helper
 #import ndarray    # this import is done by the ndarray module itself due to circular dependencies
 
 def hollow(shape, distaxis, dtype=np.float):

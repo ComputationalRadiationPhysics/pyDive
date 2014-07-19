@@ -1,7 +1,8 @@
-import onTarget
 import sys
+import os
 # check whether this code is executed on target or not
-if not onTarget.onTarget:
+onTarget = os.environ.get("onTarget", 'False')
+if onTarget == 'False':
     import IPParallelClient as com
     from ndarray.ndarray import ndarray as ndarray
     from h5_ndarray.h5_ndarray import h5_ndarray as h5_ndarray
@@ -31,7 +32,7 @@ def visitTwoTrees(treeA, treeB, visitor):
             visitor(treeA, treeB, key, valueA, valueB)
     return treeA, treeB
 
-# tree generator object
+# generator object which iterates the tree's leafs
 def treeItems(tree):
     items = list(tree.items())
     while items:
@@ -45,10 +46,6 @@ arrayOfStructs_id = 0
 
 class arrayOfStructsClass(object):
     def __init__(self, structOfArrays):
-        if onTarget.onTarget:
-            print "Hallo4"
-            #raise TypeError("Hallo4")
-
         items = [item for item in treeItems(structOfArrays)]
         firstArray = items[0][1]
         assert all(type(a) == type(firstArray) for name, a in items),\
@@ -61,8 +58,7 @@ class arrayOfStructsClass(object):
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
 
-
-        if not onTarget.onTarget and isinstance(self, ndarray):
+        if onTarget == 'False' and isinstance(self, ndarray):
             #assert all(a.targets_in_use == firstArray.targets_in_use for name, a in items),\
             #    "all ndarrays in structure-of-arrays ('structOfArrays') must have an identical 'targets_in_use' attribute"
 
@@ -87,11 +83,11 @@ class arrayOfStructsClass(object):
                 %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
                 targets=self.targets_in_use)
 
-        if not onTarget.onTarget and isinstance(self, h5_ndarray):
+        if onTarget == 'False' and isinstance(self, h5_ndarray):
             self.distaxis = firstArray.distaxis
 
     def __del__(self):
-        if not onTarget.onTarget and isinstance(self, ndarray):
+        if onTarget == 'False' and isinstance(self, ndarray):
             # delete remote arrayOfStructs object
             self.view.execute('del %s' % self.name, targets=self.targets_in_use)
 
@@ -178,7 +174,7 @@ def arrayOfStructs(structOfArrays):
     my_arrayOfStructsClass = type("ArrayOfStructs_" + array_type.__module__ + "-" + array_type.__name__,\
         (array_type,), dict(arrayOfStructsClass.__dict__))
 
-    if onTarget.onTarget:
+    if onTarget == 'True':
         # This is a workaround. Instanciation of my_arrayOfStructsClass raises an exception on target
         # before executing the constructor. No idea why.
         return arrayOfStructsClass(structOfArrays)
@@ -186,6 +182,6 @@ def arrayOfStructs(structOfArrays):
         return my_arrayOfStructsClass(structOfArrays)
 
 # make 'arrayOfStructs' applicable for local arrays, like e.g. numpy arrays, on engines
-if not onTarget.onTarget:
+if onTarget == 'False':
     view = com.getView()
-    view.execute('import arrayOfStructs')
+    view.execute('from pyDive import arrayOfStructs')

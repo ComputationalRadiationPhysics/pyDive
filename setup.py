@@ -19,8 +19,8 @@ def read(*filenames, **kwargs):
             buf.append(f.read())
     return sep.join(buf)
 
-long_description = read('README.md')#, 'CHANGES.txt')
-requirements = [line.rstrip('\n') for line in open('requirements.txt')]
+long_description = None#read('README.md')#, 'CHANGES.txt')
+requirements = []#[line.rstrip('\n') for line in open('requirements.txt')]
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -36,7 +36,7 @@ class PyTest(TestCommand):
 setup(
     name='pyDive',
     version=pyDive.__version__,
-    url='http://github.com/ComputationalRadiationPhysics/pyDive',
+    #url='http://github.com/ComputationalRadiationPhysics/pyDive',
     license='GNU Affero General Public License v3',
     author='Heiko Burau',
     #tests_require=['pytest'],
@@ -61,6 +61,5 @@ setup(
         'Topic :: Scientific/Engineering :: Information Analysis'
         ],
     #extras_require={
-    #    'testing': ['pytest'],
-    }
+    #    'testing': ['pytest'],}
 )

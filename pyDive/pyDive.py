@@ -11,11 +11,11 @@ empty_like = ndarray.factories.empty_like
 array = ndarray.factories.array
 
 # h5_ndarray
-from h5_ndarray import factories
+import h5_ndarray.factories
 h5 = h5_ndarray.factories
 
 # cloned_ndarray
-from cloned_ndarray import factories
+import cloned_ndarray.factories
 cloned = cloned_ndarray.factories
 
 # algorithm
@@ -25,9 +25,9 @@ reduce = algorithm.reduce
 mapReduce = algorithm.mapReduce
 
 # particle-mesh mappings
-import mappings
-mesh2particles = mappings.mesh2particles
-particles2mesh = mappings.particles2mesh
+#import mappings
+#mesh2particles = mappings.mesh2particles
+#particles2mesh = mappings.particles2mesh
 
 # arrayOfStructs
 import arrayOfStructs

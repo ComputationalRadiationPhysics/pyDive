@@ -19,8 +19,7 @@ def init():
         import os, sys
         import psutil
         import math
-        import onTarget
-        onTarget.onTarget = True''')
+        os.environ["onTarget"] = 'True' ''')
 
     get_rank = interactive(lambda: MPI.COMM_WORLD.Get_rank())
     all_ranks = view.apply(get_rank)

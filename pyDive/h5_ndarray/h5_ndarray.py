@@ -1,8 +1,8 @@
 from mpi4py import MPI
 import h5py as h5
-from ndarray import ndarray, factories
-from ndarray import helper
-import IPParallelClient as com
+from ..ndarray import ndarray, factories
+from ..ndarray import helper
+from .. import IPParallelClient as com
 import numpy as np
 
 import debug

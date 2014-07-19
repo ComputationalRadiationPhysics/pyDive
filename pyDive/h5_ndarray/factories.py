@@ -1,6 +1,6 @@
 from . import h5_ndarray
 import h5py as h5
-import arrayOfStructs
+from .. import arrayOfStructs
 
 def fromPath(h5_filename, path, distaxis, window=None):
     hFile = h5.File(h5_filename, 'r')

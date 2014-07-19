@@ -1,5 +1,5 @@
 from numpy import *
-from numba import jit, vectorize
+#from numba import jit, vectorize
 
 class NGP:
     support = 1.0

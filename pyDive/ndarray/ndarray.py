@@ -1,7 +1,7 @@
 import numpy as np
 import helper as helper
 import factories as factories
-import IPParallelClient as com
+from .. import IPParallelClient as com
 import dist_math
 import sys
 
@@ -233,11 +233,11 @@ class ndarray(object):
         result = ndarray(self.shape, self.distaxis, self.dtype, other.idx_ranges, other.targets_in_use)
 
         # send
-        self.view.execute('scatterArrayMPI_async(%s, src_targets[0], src_tags[0], src_distaxis_sizes[0], %d, target2rank)' \
+        self.view.execute('interengine.scatterArrayMPI_async(%s, src_targets[0], src_tags[0], src_distaxis_sizes[0], %d, target2rank)' \
             % (self.name, self.distaxis), targets=self.targets_in_use)
 
         # receive
-        self.view.execute('gatherArraysMPI_sync(%s, dest_targets[0], dest_tags[0], dest_distaxis_sizes[0], %d, target2rank)' \
+        self.view.execute('interengine.gatherArraysMPI_sync(%s, dest_targets[0], dest_tags[0], dest_distaxis_sizes[0], %d, target2rank)' \
             % (result.name, self.distaxis), targets=result.targets_in_use)
 
         return result
@@ -286,10 +286,10 @@ class ndarray(object):
     def __ipow__(self, other):
         return dist_math.binary_iop(self, other, '**=')
 
-# import this module into dist_math, ndarray_factories
+# import this module into dist_math and factories
 my_module = sys.modules[__name__]
 dist_math.ndarray = my_module
 factories.ndarray = my_module
 
 view = com.getView()
-view.run('ndarray/interengine.py')
+view.execute('from pyDive.ndarray import interengine')

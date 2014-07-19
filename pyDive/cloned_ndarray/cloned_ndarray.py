@@ -1,4 +1,4 @@
-import IPParallelClient as com
+from .. import IPParallelClient as com
 import numpy as np
 
 cloned_ndarray_id = 0

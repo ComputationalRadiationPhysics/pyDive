@@ -1,5 +1,5 @@
-import cloned_ndarray
-import IPParallelClient as com
+from .. import cloned_ndarray
+from .. import IPParallelClient as com
 
 def empty_targets_like(shape, dtype, a):
     return cloned_ndarray.cloned_ndarray(shape, dtype, a.targets_in_use)
