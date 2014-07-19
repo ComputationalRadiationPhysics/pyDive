@@ -32,3 +32,7 @@ mapReduce = algorithm.mapReduce
 # arrayOfStructs
 import arrayOfStructs
 arrayOfStructs = arrayOfStructs.arrayOfStructs
+
+# picongpu
+import picongpu
+picongpu = picongpu

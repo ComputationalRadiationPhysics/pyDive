@@ -47,13 +47,13 @@ arrayOfStructs_id = 0
 class arrayOfStructsClass(object):
     def __init__(self, structOfArrays):
         items = [item for item in treeItems(structOfArrays)]
-        firstArray = items[0][1]
-        assert all(type(a) == type(firstArray) for name, a in items),\
+        self.firstArray = items[0][1]
+        assert all(type(a) == type(self.firstArray) for name, a in items),\
             "all arrays in 'structOfArrays' must be of the same type"
-        assert all(a.shape == firstArray.shape for name, a in items),\
+        assert all(a.shape == self.firstArray.shape for name, a in items),\
             "all arrays in 'structOfArrays' must have the same shape"
 
-        self.shape = firstArray.shape
+        self.shape = self.firstArray.shape
         self.dtype = makeTree_like(structOfArrays, lambda a: a.dtype)
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
@@ -62,9 +62,9 @@ class arrayOfStructsClass(object):
             #assert all(a.targets_in_use == firstArray.targets_in_use for name, a in items),\
             #    "all ndarrays in structure-of-arrays ('structOfArrays') must have an identical 'targets_in_use' attribute"
 
-            self.distaxis = firstArray.distaxis
-            self.idx_ranges = firstArray.idx_ranges
-            self.targets_in_use = firstArray.targets_in_use
+            self.distaxis = self.firstArray.distaxis
+            self.idx_ranges = self.firstArray.idx_ranges
+            self.targets_in_use = self.firstArray.targets_in_use
             view = com.getView()
             self.view = view
 
@@ -84,7 +84,7 @@ class arrayOfStructsClass(object):
                 targets=self.targets_in_use)
 
         if onTarget == 'False' and isinstance(self, h5_ndarray):
-            self.distaxis = firstArray.distaxis
+            self.distaxis = self.firstArray.distaxis
 
     def __del__(self):
         if onTarget == 'False' and isinstance(self, ndarray):
@@ -95,7 +95,17 @@ class arrayOfStructsClass(object):
         return self.name
 
     def __str__(self):
-        print self.structOfArrays
+        def printTree(tree, indent, result):
+            for key, value in tree.items():
+                if type(value) is dict:
+                    result += indent + key + ":\n"
+                    result = printTree(tree[key], indent + "  ", result)
+                else:
+                    result += indent + key + " -> " + str(value) + "\n"
+            return result
+
+        result = "StructOfArrays of type " + str(type(self.firstArray)) + ":\n"
+        return printTree(self.structOfArrays, "  ", result)
 
     def __getitem__(self, args):
         # component access

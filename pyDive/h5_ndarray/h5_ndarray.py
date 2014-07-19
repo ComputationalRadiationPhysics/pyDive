@@ -106,3 +106,6 @@ class h5_ndarray(object):
         # write 'value' to disk in parallel
         view.execute('%s[tuple(window[0])] = %s' % (self.dataset_name, repr(value)), \
             targets=value.targets_in_use)
+
+    def __str__(self):
+        return "<hdf5 dset: " + self.dataset_path + ", " + str(self.shape) + ">"
