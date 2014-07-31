@@ -6,5 +6,6 @@ Distributed Interactive Visualization and Exploration
 ## Dive in!
 
 ```python
-import numpy as np
+import pyDive as pd
+pd.init(profile='mpi')
 ```
