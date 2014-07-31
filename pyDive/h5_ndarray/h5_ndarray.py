@@ -10,17 +10,43 @@ import debug
 h5_ndarray_id = 0
 
 class h5_ndarray(object):
+    """Represents a single hdf5-dataset like a virtual, cluster-wide array.
+        Data access goes through array slicing where data is written to respectively read from
+        :class:`pyDive.ndarray.ndarray.ndarray` objects in parallel using all engines.
+
+        Example: ::
+
+            h5_data = pyDive.h5.fromPath(<file_path>, "/data/0/fields/FieldB/x", distaxis=0)
+            data = h5_data[:] # read the entire dataset into engine-memory
+            data = data**2
+            h5_data[:] = data # write everything back
+
+    """
     def __init__(self, h5_filename, dataset_path, distaxis, window=None):
+        """Creates an :class:`pyDive.h5_ndarray.h5_ndarray.h5_ndarray` instance.
+        By using this method you may only load a single dataset. If you want to
+        load a *structure* of datasets at once see :func:`pyDive.h5_ndarray.factories.fromPath`.
+
+        :param str h5_filename: Path of the hdf5-file
+        :param str dataset_path: Path to the dataset within the hdf5-file
+        :param int distaxis: axis on which dataset is to be distributed over during data-access
+        :param window: This param let you specify a sub-part of the array as a virtual container.
+            Example: window=np.s_[:,:,::2]
+        :type window: list of slice objects (:ref:`numpy.s_`).
+        """
         self.h5_filename = h5_filename
         self.dataset_path = dataset_path
         self.dataset = h5.File(h5_filename)[dataset_path]
+        #: axis of element-distribution
         self.distaxis = distaxis
+        #: datatype of a single data value
         self.dtype = self.dataset.dtype
 
         if not window:
             window = [slice(None)] * len(self.dataset.shape)
         self.shape, self.window = helper.subWindow_of_shape(self.dataset.shape, window)
 
+        #: total bytes consumed by the elements of the array.
         self.nbytes = self.dtype.itemsize * np.prod(self.shape)
 
         # generate a unique variable name used on target representing this instance
@@ -108,4 +134,4 @@ class h5_ndarray(object):
             targets=value.targets_in_use)
 
     def __str__(self):
-        return "<hdf5 dset: " + self.dataset_path + ", " + str(self.shape) + ">"
+        return "<hdf5 dset: " + self.dataset_path + ", " + str(self.shape) + ", " + str(self.dtype) + ">"

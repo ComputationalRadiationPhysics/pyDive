@@ -3,6 +3,8 @@ import h5py as h5
 from .. import arrayOfStructs
 
 def fromPath(h5_filename, datapath, distaxis, window=None):
+    """
+    """
     hFile = h5.File(h5_filename, 'r')
     datapath = datapath.rstrip("/")
     group_or_dataset = hFile[datapath]

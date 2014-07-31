@@ -8,10 +8,54 @@ import sys
 ndarray_id = 0
 
 class ndarray(object):
+    """Represents a cluster-wide, multidimensional, homogenous array of fixed-size elements.
+    *cluster-wide* means that its elements are distributed across :term:`IPython.parallel-engines <engine>`.
+    The distribution is done in one dimension along a user-specified axis. The user can optionally specify
+    which engine maps to which index range or leave the default that persuits an uniform distribution
+    across all engines.
+
+    The implementation is based on *IPython.parallel* and local *numpy-arrays*. The design goal is
+    to forward every *numpy-array* method onto the cluster-wide level. Currently :class:`pyDive.ndarray.ndarray.ndarray`
+    supports basic arithmetic operations (+ - * / ** //) as well as most of the numpy-*math*
+    functions like sin, cos, abs, sqrt, ... (see :mod:`pyDive.ndarray.dist_math`)
+
+    Note that array slicing is a cheap operation since no memory is copied. However this can easily
+    lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
+    Therefore call :meth:`pyDive.ndarray.ndarray.ndarray.dist_like` first before doing any manual
+    stuff on their local *numpy-arrays*.
+
+    Every cluster-wide array operation first equalizes the distribution of all involved arrays if necessary.
+    """
     def __init__(self, shape, distaxis, dtype=np.float, idx_ranges=None, targets_in_use=None, no_allocation=False):
+        """Creates an :class:`pyDive.ndarray.ndarray.ndarray` instance. This is a low-level method for instanciating
+        an array. Arrays should  be constructed using 'empty', 'zeros'
+        or 'array' (see :mod:`pyDive.ndarray.factories`).
+
+        :param shape: size of the array on each axis
+        :type shape: tuple of ints
+        :param int distaxis: axis on which memory is distributed across the :term:`engines <engine>`
+        :param numpy-dtype dtype: datatype of a single data value
+        :param idx_ranges: list of (begin, end) pairs indicating the index range the corresponding
+            :term:`engine` (see :ref:`targets_in_use`) is associated with
+        :type idx_ranges: tuple/list of (int, int)
+        :param targets_in_use: list of :term:`engine`-ids that share this array.
+        :type targets_in_use: tuple/list of ints
+        :param bool no_allocation: if ``True`` no actual memory, i.e. *numpy-array*, will be
+            allocated on :term:`engine`. Useful when you want to assign an existing numpy array manually.
+        :raises ValueError: if just *idx_ranges* is given and *targets_in_use* not or vice versa
+
+        If *idx_ranges* and * targets_in_use* are both ``None`` they will be auto-generated
+        so that the memory will be equally distributed across all :term:`engines <engine>` at its best.
+        This means that the last engine may get less memory than the others.
+        """
+
+        #: size of the array on each axis
         self.shape = list(shape)
+        #: datatype of a single data value
         self.dtype = dtype
+        #: axis on which memory is distributed across the :term:`engines <engine>`
         self.distaxis = distaxis
+        #: total bytes consumed by the elements of the array.
         self.nbytes = np.dtype(dtype).itemsize * np.prod(self.shape)
         self.view = com.getView()
 
@@ -29,11 +73,11 @@ class ndarray(object):
             # number of occupied targets by this ndarray instance
             num_targets = (self.shape[distaxis] - 1) / localshape[distaxis] + 1
 
-            # list of pairs on which each pair stores the range of indices [begin, end) for the distributed axis on each target
-            # this is the decomposition of the distributed axis
+            #: list of pairs on which each pair stores the range of indices [begin, end) for the distributed axis on each engine
+            #: this is the decomposition of the distributed axis
             self.idx_ranges = [(r * tmp, (r+1) * tmp) for r in range(0, num_targets-1)]
             self.idx_ranges += [((num_targets-1) * tmp, self.shape[distaxis])]
-            # list of indices of the occupied targets
+            #: list of indices of the occupied engines
             self.targets_in_use = list(range(num_targets))
         elif idx_ranges is not None and targets_in_use is not None:
             self.idx_ranges = list(idx_ranges)
@@ -43,6 +87,8 @@ class ndarray(object):
 
         # generate a unique variable name used on target representing this instance
         global ndarray_id
+        #: Unique variable name of the local *numpy-array* on *engine*.
+        #: Unless you do manual stuff on the *engines* there is no need for dealing with this attribute.
         self.name = 'dist_ndarray' + str(ndarray_id)
         ndarray_id += 1
 
@@ -159,19 +205,38 @@ class ndarray(object):
         return self.name
 
     def gather(self):
+        """Gathers the local *numpy-arrays* from the *engines*, concatenates them and returns
+        the result.
+
+        :return: numpy-array
+        """
         local_arrays = self.view.pull(self.name, targets=self.targets_in_use)
         return np.concatenate(local_arrays, axis=self.distaxis)
 
     def copy(self):
+        """Returns a hard copy of this array.
+        """
         result = ndarray(self.shape, self.distaxis, self.dtype, self.idx_ranges, self.targets_in_use, True)
         self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.targets_in_use)
         return result
 
     def dist_like(self, other):
+        """Redistributes a copy of this array (*self*) like *other* and returns the result.
+        Checks whether redistribution is necessary and returns *self* if not.
+
+        Redistribution involves inter-engine communication via MPI.
+
+        :param other: target array
+        :type other: :class:`pyDive.ndarray.ndarray.ndarray`
+        :raises AssertionError: if the shapes of *self* and *other* don't match.
+        :raises AssertionError: if *self* and *other* are distributed along distinct axes.
+        :return: new array with the same content as *self* but distributed like *other*.
+            If *self* is already distributed like *other* nothing is done and *self* is returned.
+        """
         assert self.shape == other.shape
         assert self.distaxis == other.distaxis # todo: add this feature
 
-        # if self is already distributed like other do nothing
+        # if self is already distributed like *other* do nothing
         if self.targets_in_use == other.targets_in_use:
             if self.idx_ranges == other.idx_ranges:
                 return self
@@ -292,4 +357,5 @@ dist_math.ndarray = my_module
 factories.ndarray = my_module
 
 view = com.getView()
-view.execute('from pyDive.ndarray import interengine')
+if view is not None:
+    view.execute('from pyDive.ndarray import interengine')
