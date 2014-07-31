@@ -7,7 +7,8 @@ Distributed Interactive Visualization and Exploration of large datasets.
 
 Use pyDive to work with homogeneous, n-dimensional arrays that are too big to fit into your local machine's memory.
 pyDive provides array-interfaces representing virtual containers whose elements may be distributed across an MPI-cluster or stored in
-a large hdf5-file. If you feel like working with numpy arrays pyDive has reached the goal!
+a large hdf5-file. All computation and data-access is then done in parallel by the cluster nodes in the background. 
+If you feel like working with numpy arrays pyDive is happy!
 
 Designed to ease the analysis of simulation data coming from the picongpu project pyDive also holds functions for particle-mesh mapping
 and supports structured datatypes.
