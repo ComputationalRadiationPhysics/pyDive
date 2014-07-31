@@ -190,9 +190,3 @@ def arrayOfStructs(structOfArrays):
         return arrayOfStructsClass(structOfArrays)
     else:
         return my_arrayOfStructsClass(structOfArrays)
-
-# make 'arrayOfStructs' applicable for local arrays, like e.g. numpy arrays, on engines
-if onTarget == 'False':
-    view = com.getView()
-    if view is not None:
-        view.execute('from pyDive import arrayOfStructs')

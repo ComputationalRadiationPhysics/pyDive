@@ -4,11 +4,11 @@ import sys
 
 view = None
 
-def init():
+def init(profile='mpi'):
     #init direct view
     global view
 
-    client = Client(profile='mpi')
+    client = Client(profile=profile)
     client.clear()
     view = client[:]
     view.block = True
@@ -19,7 +19,9 @@ def init():
         import os, sys
         import psutil
         import math
-        os.environ["onTarget"] = 'True' ''')
+        os.environ["onTarget"] = 'True'
+        from pyDive import arrayOfStructs
+         ''')
 
     get_rank = interactive(lambda: MPI.COMM_WORLD.Get_rank())
     all_ranks = view.apply(get_rank)
@@ -28,5 +30,3 @@ def init():
 def getView():
     global view
     return view
-
-init()

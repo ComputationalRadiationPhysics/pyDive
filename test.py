@@ -1,6 +1,8 @@
 import pyDive as pd
 import numpy as np
 
+pd.init()
+
 h5fieldB = pd.picongpu.loadSteps([0], "/net/cns/projects/HPL/electrons/burau/KHI_dev/simOutput", "fields/FieldB", 0)
 h5fieldB = h5fieldB.next()[1]
 print h5fieldB

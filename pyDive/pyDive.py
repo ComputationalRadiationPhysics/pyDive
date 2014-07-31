@@ -36,3 +36,7 @@ arrayOfStructs = arrayOfStructs.arrayOfStructs
 # picongpu
 import picongpu
 picongpu = picongpu
+
+# init
+import IPParallelClient as com
+init = com.init
