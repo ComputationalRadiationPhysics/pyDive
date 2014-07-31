@@ -194,4 +194,5 @@ def arrayOfStructs(structOfArrays):
 # make 'arrayOfStructs' applicable for local arrays, like e.g. numpy arrays, on engines
 if onTarget == 'False':
     view = com.getView()
-    view.execute('from pyDive import arrayOfStructs')
+    if view is not None:
+        view.execute('from pyDive import arrayOfStructs')

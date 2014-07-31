@@ -8,17 +8,17 @@ def getFirstSubIdx(slice_obj, begin, end):
     return idx
 
 def subWindow_of_shape(shape, window):
-    new_shape = list(shape)
-    window = list(window)
+    new_shape = []
     clean_slices = list(window)
     for i in range(len(window)):
         if type(window[i]) is int:
-            window[i] = slice(window[i], window[i]+1)
+            clean_slices[i] = slice(window[i], window[i]+1, 1)
+            continue
         # create a clean, wrapped slice object
         wrapped_ids = window[i].indices(shape[i])
         clean_slices[i] = slice(*wrapped_ids)
         # new size of axis i
-        new_shape[i] = (clean_slices[i].stop-1 - clean_slices[i].start) / clean_slices[i].step + 1
+        new_shape.append((clean_slices[i].stop-1 - clean_slices[i].start) / clean_slices[i].step + 1)
     return new_shape, clean_slices
 
 def createLocalSlices(slices, distaxis, idx_ranges):

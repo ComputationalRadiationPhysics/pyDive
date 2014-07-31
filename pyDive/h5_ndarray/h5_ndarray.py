@@ -81,7 +81,7 @@ class h5_ndarray(object):
 
         result_shape, clean_slices = helper.subWindow_of_shape(self.shape, args)
 
-        # Applying 'clean_slices' after 'self.window'-slices result in 'total_slices'
+        # Applying 'clean_slices' after 'self.window' results in 'total_slices'
         total_slices = [slice(self.window[i].start + clean_slices[i].start * self.window[i].step,\
                               self.window[i].start + clean_slices[i].stop * self.window[i].step,\
                               self.window[i].step * clean_slices[i].step) for i in range(len(args))]
