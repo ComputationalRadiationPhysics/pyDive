@@ -31,11 +31,11 @@ class cloned_ndarray(object):
     def __repr__(self):
         return self.name
 
-    def reduce(self, op):
+    def merge(self, op):
         result = self.view.pull(self.name, targets=self.targets_in_use[0])
         for target in self.targets_in_use[1:]:
             result = op(result, self.view.pull(self.name, targets=target))
         return result
 
     def sum(self):
-        return self.reduce(lambda x, y: x+y)
+        return self.merge(lambda x, y: x+y)
