@@ -1,3 +1,40 @@
+"""The *arrayOfStructs* module addresses the common problem when dealing with
+structured data: While the user likes an array-of-structures layout the machine prefers a structure-of-arrays.
+In pyDive the method of choice is a *virtual* *array-of-structures*-object. It holds array-like attributes
+such as shape and dtype and allows for slicing but is operating on a structure-of-arrays internally.
+
+Example: ::
+
+    ...
+    treeOfArrays = {"FieldE" :
+                        {"x" : fielde_x,
+                         "y" : fielde_y,
+                         "z" : fielde_z},
+                    "FieldB" :
+                        {"x" : fieldb_x,
+                         "y" : fieldb_y,
+                         "z" : fieldb_z}
+                    }
+
+    fields = pyDive.arrayOfStructs(treeOfArrays)
+
+    half = fields[::2]["FieldE/x"]
+    # equivalent to
+    half = fields["FieldE/x"][::2]
+    # equivalent to
+    half = fields["FieldE"]["x"][::2]
+    # equivalent to
+    half = fields["FieldE"][::2]["x"]
+
+The example shows that in fact *fields* can be treated as an array-of-structures
+**or** a structure-of-arrays depending on what is more appropriate.
+
+The goal is to make the virtual *array-of-structs*-object look like a real array even ready for passing
+to foreign functions that expect a "real" array which at least inherits e.g. from a numpy-array.
+Therefore the virtual *array-of-structs*-object inherits from the class type of its arrays.
+This makes it for instance compatible to :mod:`pyDive.algorithm`.
+"""
+
 import sys
 import os
 # check whether this code is executed on target or not
@@ -7,7 +44,6 @@ if onTarget == 'False':
     from ndarray.ndarray import ndarray as ndarray
     from h5_ndarray.h5_ndarray import h5_ndarray as h5_ndarray
     from IPython.parallel import interactive
-    import debug
 import numpy as np
 
 def makeTree_like(tree, expression):
@@ -174,6 +210,17 @@ class arrayOfStructsClass(object):
         visitTwoTrees(self.structOfArrays, other.structOfArrays, doArrayAssignmentWithSlice)
 
 def arrayOfStructs(structOfArrays):
+    """Convert a *structure-of-arrays* into a virtual *array-of-structures*.
+
+    :param structOfArrays: tree-like dictionary of arrays.
+    :raises AssertionError: if the *arrays-types* do not match. Datatypes may differ.
+    :raises AssertionError: if the shapes do not match.
+    :return: Custom object representing a virtual array whose elements have the same tree-like structure
+        as *structOfArrays*. It inherits from *array-type*.
+
+    Known Issues:
+        - If executed on :term:`engine` the virtual array will not inherit from *array-type*.
+    """
     items = [item for item in treeItems(structOfArrays)]
     array_type = type(items[0][1])
 

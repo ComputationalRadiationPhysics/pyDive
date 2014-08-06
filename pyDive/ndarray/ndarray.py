@@ -21,7 +21,7 @@ class ndarray(object):
 
     Note that array slicing is a cheap operation since no memory is copied. However this can easily
     lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
-    Therefore call :meth:`pyDive.ndarray.ndarray.ndarray.dist_like` first before doing any manual
+    Therefore call :meth:`dist_like` first before doing any manual
     stuff on their local *numpy-arrays*.
 
     Every cluster-wide array operation first equalizes the distribution of all involved arrays if necessary.
@@ -44,7 +44,7 @@ class ndarray(object):
             allocated on :term:`engine`. Useful when you want to assign an existing numpy array manually.
         :raises ValueError: if just *idx_ranges* is given and *targets_in_use* not or vice versa
 
-        If *idx_ranges* and * targets_in_use* are both ``None`` they will be auto-generated
+        If *idx_ranges* and *targets_in_use* are both ``None`` they will be auto-generated
         so that the memory will be equally distributed across all :term:`engines <engine>` at its best.
         This means that the last engine may get less memory than the others.
         """

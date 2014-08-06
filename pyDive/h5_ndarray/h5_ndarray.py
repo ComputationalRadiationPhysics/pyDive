@@ -5,8 +5,6 @@ from ..ndarray import helper
 from .. import IPParallelClient as com
 import numpy as np
 
-import debug
-
 h5_ndarray_id = 0
 
 class h5_ndarray(object):

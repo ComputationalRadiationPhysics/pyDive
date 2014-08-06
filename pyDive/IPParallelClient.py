@@ -5,6 +5,11 @@ import sys
 view = None
 
 def init(profile='mpi'):
+    """Initialize pyDive.
+
+    :param str profile: The name of the cluster profile of *IPython.parallel*. Has to be an MPI-profile.\
+        Defaults to 'mpi'.
+    """
     #init direct view
     global view
 

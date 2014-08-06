@@ -69,3 +69,12 @@ math_funs = trigonometric_funs + hyperbolic_funs + rounding_funs + exp_log_funs 
 my_module = sys.modules[__name__]
 for math_fun in math_funs:
     setattr(my_module, math_fun, n_ary_fun_wrapper(math_fun))
+
+# module doc
+__doc__ = \
+"Mathematical functions supporting :class:`pyDive.ndarray.ndarray.ndarray`:\n\n" +\
+"**trigonometric**:\n\n" + ", ".join(trigonometric_funs) + "\n\n" +\
+"**hyperbolic**:\n\n" + ", ".join(hyperbolic_funs) + "\n\n" +\
+"**rounding**:\n\n" + ", ".join(rounding_funs) + "\n\n" +\
+"**exponential and logarithmic**:\n\n" + ", ".join(exp_log_funs) + "\n\n" +\
+"**misc**:\n\n" + ", ".join(misc_funs)

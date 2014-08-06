@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pyDive'
-copyright = u'2014, Author'
+copyright = u'2014, Heiko Burau'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
