@@ -19,7 +19,7 @@ and the GNU Lesser General Public License along with pyDive.
 If not, see <http://www.gnu.org/licenses/>.
 """
 
-from mpi4py import MPI
+#from mpi4py import MPI
 import h5py as h5
 from ..ndarray import ndarray, factories
 from ..ndarray import helper
