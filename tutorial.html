@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Tutorials &mdash; pyDive  documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyDive  documentation" href="index.html" />
+    <link rel="next" title="Reference" href="reference.html" />
+    <link rel="prev" title="Getting started" href="start.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reference.html" title="Reference"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="start.html" title="Getting started"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pyDive  documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="tutorials">
+<h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="example-1-total-field-energy">
+<h2>Example 1: Total field energy<a class="headerlink" href="#example-1-total-field-energy" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s suppose we have a hdf5-file containing a 3D array representing an electric field and we want to compute
+its total energy. This means squaring and summing or in pyDive&#8217;s words:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyDive</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">pyDive</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+<span class="n">h5field</span> <span class="o">=</span> <span class="n">pdDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="s">&quot;field.h5&quot;</span><span class="p">,</span> <span class="s">&quot;FieldE&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">field</span> <span class="o">=</span> <span class="n">h5field</span><span class="p">[:]</span> <span class="c"># read out the entire array into cluster memory in parallel</span>
+
+<span class="n">energy_field</span> <span class="o">=</span> <span class="n">field</span><span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">field</span><span class="p">[</span><span class="s">&quot;y&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">field</span><span class="p">[</span><span class="s">&quot;z&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="n">total_energy</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">energy_field</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now what happens if <em>h5field</em> is too large to be stored in the cluster&#8217;s memory? The line <tt class="docutils literal"><span class="pre">field</span> <span class="pre">=</span> <span class="pre">h5field[:]</span></tt> will crash.
+In this case we want to load the hdf5 data piece by piece. The functions in <a class="reference internal" href="modules.html#module-pyDive.algorithm" title="pyDive.algorithm"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.algorithm</span></tt></a> help us doing so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyDive</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">pyDive</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+<span class="n">h5field</span> <span class="o">=</span> <span class="n">pdDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="s">&quot;field.h5&quot;</span><span class="p">,</span> <span class="s">&quot;FieldE&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">square_field</span><span class="p">(</span><span class="n">npfield</span><span class="p">):</span>
+  <span class="k">return</span> <span class="n">npfield</span><span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">npfield</span><span class="p">[</span><span class="s">&quot;y&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">npfield</span><span class="p">[</span><span class="s">&quot;z&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="n">total_energy</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mapReduce</span><span class="p">(</span><span class="n">square_field</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">h5field</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><em>square_field</em> is called on each <em class="xref std std-term">engine</em> where <em>npfield</em> is a structure (<a class="reference internal" href="modules.html#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a>) of numpy-arrays representing a sub part of the big <em>h5field</em>.
+<a class="reference internal" href="modules.html#pyDive.algorithm.mapReduce" title="pyDive.algorithm.mapReduce"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.algorithm.mapReduce()</span></tt></a> can be called with an arbitrary number of arrays including
+<tt class="xref py py-obj docutils literal"><span class="pre">pyDive.ndarrays</span></tt>, <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarrays</span></tt> and <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.cloned_ndarrays</span></tt>. If there are <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarrays</span></tt> it will
+check whether they fit into the cluster memory as a whole and loads them piece by piece if not.</p>
+<p>Now let&#8217;s say our dataset is really big and we just want to get a first estimate of the total energy:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="o">...</span>
+<span class="n">total_energy</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mapReduce</span><span class="p">(</span><span class="n">square_field</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">h5field</span><span class="p">[::</span><span class="mi">10</span><span class="p">,</span> <span class="p">::</span><span class="mi">10</span><span class="p">,</span> <span class="p">::</span><span class="mi">10</span><span class="p">])</span> <span class="o">*</span> <span class="mf">10.0</span><span class="o">**</span><span class="mi">3</span>
+</pre></div>
+</div>
+<p>This is valid if <em>h5field[::10, ::10, ::10]</em> fits into the cluster&#8217;s memory. Note that slicing on a <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarray</span></tt> always
+means reading or writing from hdf5 to respectively from memory. So if it doesn&#8217;t fit we have to apply the slicing somewhere else in fact
+at the time when instanciating <em>h5field</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyDive</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">pyDive</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+<span class="n">h5field</span> <span class="o">=</span> <span class="n">pdDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="s">&quot;field.h5&quot;</span><span class="p">,</span> <span class="s">&quot;FieldE&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">s_</span><span class="p">[::</span><span class="mi">10</span><span class="p">,</span> <span class="p">::</span><span class="mi">10</span><span class="p">,</span> <span class="p">::</span><span class="mi">10</span><span class="p">])</span>
+
+<span class="k">def</span> <span class="nf">square_field</span><span class="p">(</span><span class="n">npfield</span><span class="p">):</span>
+  <span class="k">return</span> <span class="n">npfield</span><span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">npfield</span><span class="p">[</span><span class="s">&quot;y&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">npfield</span><span class="p">[</span><span class="s">&quot;z&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="n">total_energy</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mapReduce</span><span class="p">(</span><span class="n">square_field</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">h5field</span><span class="p">)</span> <span class="o">*</span> <span class="mf">10.0</span><span class="o">**</span><span class="mi">3</span>
+</pre></div>
+</div>
+<p>This way the hdf5 data is sliced without involving file i/o.</p>
+<p>If you use <a class="reference external" href="https://github.com/ComputationalRadiationPhysics/picongpu">picongpu</a>
+here is an example of how to get the total field energy for each timestep:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyDive</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">pyDive</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">square_field</span><span class="p">(</span><span class="n">npfield</span><span class="p">):</span>
+  <span class="k">return</span> <span class="n">npfield</span><span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">npfield</span><span class="p">[</span><span class="s">&quot;y&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">npfield</span><span class="p">[</span><span class="s">&quot;z&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">h5field</span> <span class="ow">in</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">picongpu</span><span class="o">.</span><span class="n">loadAllSteps</span><span class="p">(</span><span class="s">&quot;/.../simOutput&quot;</span><span class="p">,</span> <span class="s">&quot;fields/FieldE&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+  <span class="n">total_energy</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mapReduce</span><span class="p">(</span><span class="n">square_field</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">h5field</span><span class="p">)</span>
+
+  <span class="k">print</span> <span class="n">step</span><span class="p">,</span> <span class="n">total_energy</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-2-particle-density-field-picongpu">
+<h2>Example 2: Particle density field (picongpu)<a class="headerlink" href="#example-2-particle-density-field-picongpu" title="Permalink to this headline">¶</a></h2>
+<p>Given a huge list of particles in a hdf5-file we want to create a 3D density field out of it. We assume that the particle
+positions are distributed randomly. This means although each engine is loading a separate part of all particles it needs to
+write to the entire density field. Therefore the density field must have a whole representation on each participating engine.
+This is the job of <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.cloned_ndarray</span></tt>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyDive</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">pyDive</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+<span class="n">shape</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">]</span>
+<span class="n">density</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">cloned</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+
+<span class="n">filename</span> <span class="o">=</span> <span class="s">&quot;/.../simOutput/h5_1000.h5&quot;</span>
+<span class="n">globalCellIdx</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;/data/1000/particles/e/globalCellIdx&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">position</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;/data/1000/particles/e/position&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">weighting</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;/data/1000/particles/e/weighting&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">particles2density</span><span class="p">(</span><span class="n">globalCellIdx</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">weighting</span><span class="p">,</span> <span class="n">density</span><span class="p">):</span>
+  <span class="n">total_pos_x</span> <span class="o">=</span> <span class="n">globalCellIdx</span><span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">dtype</span><span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">pos</span><span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">]</span>
+  <span class="n">total_pos_y</span> <span class="o">=</span> <span class="n">globalCellIdx</span><span class="p">[</span><span class="s">&quot;y&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">dtype</span><span class="p">[</span><span class="s">&quot;y&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">pos</span><span class="p">[</span><span class="s">&quot;y&quot;</span><span class="p">]</span>
+  <span class="n">total_pos_z</span> <span class="o">=</span> <span class="n">globalCellIdx</span><span class="p">[</span><span class="s">&quot;z&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">pos</span><span class="o">.</span><span class="n">dtype</span><span class="p">[</span><span class="s">&quot;z&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="n">pos</span><span class="p">[</span><span class="s">&quot;z&quot;</span><span class="p">]</span>
+
+  <span class="c"># convert total_pos_x, total_pos_y and total_pos_z to an (N, 3) shaped array</span>
+  <span class="n">total_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">total_pos_x</span><span class="p">[:,</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span>
+                         <span class="n">total_pos_y</span><span class="p">[:,</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">],</span>
+                         <span class="n">total_pos_z</span><span class="p">[:,</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]))</span>
+
+  <span class="kn">import</span> <span class="nn">pyDive.mappings</span>
+  <span class="n">pyDive</span><span class="o">.</span><span class="n">mappings</span><span class="o">.</span><span class="n">particles2mesh</span><span class="p">(</span><span class="n">density</span><span class="p">,</span> <span class="n">weighting</span><span class="p">,</span> <span class="n">total_pos</span><span class="p">,</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mappings</span><span class="o">.</span><span class="n">CIC</span><span class="p">)</span>
+
+<span class="n">pyDive</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">particles2density</span><span class="p">,</span> <span class="n">globalCellIdx</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">weighting</span><span class="p">,</span> <span class="n">density</span><span class="p">)</span>
+
+<span class="n">final_density</span> <span class="o">=</span> <span class="n">density</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="c"># add up all local copies</span>
+</pre></div>
+</div>
+<p>Here, as in the example above, <em>particles2density</em> is a function executed on the <em class="xref std std-term">engines</em> by <a class="reference internal" href="modules.html#pyDive.algorithm.map" title="pyDive.algorithm.map"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.algorithm.map()</span></tt></a>.
+All of its arguments are numpy-arrays or structures (<a class="reference internal" href="modules.html#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a>) of numpy-arrays.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Tutorials</a><ul>
+<li><a class="reference internal" href="#example-1-total-field-energy">Example 1: Total field energy</a></li>
+<li><a class="reference internal" href="#example-2-particle-density-field-picongpu">Example 2: Particle density field (picongpu)</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="start.html"
+                        title="previous chapter">Getting started</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="reference.html"
+                        title="next chapter">Reference</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/tutorial.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reference.html" title="Reference"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="start.html" title="Getting started"
+             >previous</a> |</li>
+        <li><a href="index.html">pyDive  documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

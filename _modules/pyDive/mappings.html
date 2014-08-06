@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.mappings &mdash; pyDive  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pyDive.mappings</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Copyright 2014 Heiko Burau</span>
+
+<span class="sd">This file is part of pyDive.</span>
+
+<span class="sd">pyDive is free software: you can redistribute it and/or modify</span>
+<span class="sd">it under the terms of of either the GNU General Public License or</span>
+<span class="sd">the GNU Lesser General Public License as published by</span>
+<span class="sd">the Free Software Foundation, either version 3 of the License, or</span>
+<span class="sd">(at your option) any later version.</span>
+<span class="sd">pyDive is distributed in the hope that it will be useful,</span>
+<span class="sd">but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="sd">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="sd">GNU General Public License and the GNU Lesser General Public License</span>
+<span class="sd">for more details.</span>
+
+<span class="sd">You should have received a copy of the GNU General Public License</span>
+<span class="sd">and the GNU Lesser General Public License along with pyDive.</span>
+<span class="sd">If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__doc__</span><span class="o">=</span>\
+<span class="sd">&quot;&quot;&quot;If `numba &lt;http://numba.pydata.org/&gt;`_ is installed the particle shape functions will</span>
+<span class="sd">be compiled which gives an appreciable speedup.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">numba</span> <span class="kn">import</span> <span class="n">vectorize</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">vectorize</span> <span class="o">=</span> <span class="bp">None</span>
+
+<div class="viewcode-block" id="NGP"><a class="viewcode-back" href="../../modules.html#pyDive.mappings.NGP">[docs]</a><span class="k">class</span> <span class="nc">NGP</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Nearest-Grid-Point</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">support</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+</div>
+<div class="viewcode-block" id="CIC"><a class="viewcode-back" href="../../modules.html#pyDive.mappings.CIC">[docs]</a><span class="k">class</span> <span class="nc">CIC</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Cloud-in-Cell</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">support</span> <span class="o">=</span> <span class="mf">2.0</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mf">0.0</span>
+</div>
+<span class="k">def</span> <span class="nf">__apply_MapOp</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">particles_pos</span><span class="p">,</span> <span class="n">shape_function</span><span class="p">,</span> <span class="n">mapOp</span><span class="p">):</span>
+    <span class="n">half_supp</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">shape_function</span><span class="o">.</span><span class="n">support</span>
+    <span class="n">num_coeffs_per_axis</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">shape_function</span><span class="o">.</span><span class="n">support</span><span class="p">))</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">mesh</span><span class="p">))</span>
+
+    <span class="c"># ndarray which holds the non-zero particle assignment values of one particle</span>
+    <span class="n">coeffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="n">num_coeffs_per_axis</span><span class="p">]</span> <span class="o">*</span> <span class="n">dim</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">vectorize</span><span class="p">:</span>
+        <span class="c"># vectorize shape function to a compiled ufunc</span>
+        <span class="n">v_shape_function</span> <span class="o">=</span> <span class="n">vectorize</span><span class="p">([</span><span class="s">&#39;f4(f4)&#39;</span><span class="p">,</span> <span class="s">&#39;f8(f8)&#39;</span><span class="p">])(</span><span class="n">shape_function</span><span class="o">.</span><span class="n">__call__</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># numpy fallback</span>
+        <span class="n">v_shape_function</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">shape_function</span><span class="o">.</span><span class="n">__call__</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">particles_pos</span><span class="p">):</span>
+        <span class="c"># lowest mesh indices that contributes to the mapping</span>
+        <span class="n">begin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">pos</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">half_supp</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="c"># rearrange mapping area if it overlaps the border</span>
+        <span class="n">begin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+        <span class="n">begin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="n">half_supp</span><span class="p">)</span>
+
+        <span class="c"># compute coefficients (particle assignment values)</span>
+        <span class="k">for</span> <span class="n">coeff_idx</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">coeffs</span><span class="p">)):</span>
+            <span class="n">rel_vec</span> <span class="o">=</span> <span class="n">begin</span> <span class="o">+</span> <span class="n">coeff_idx</span> <span class="o">-</span> <span class="n">pos</span>
+            <span class="n">coeffs</span><span class="p">[</span><span class="n">coeff_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">v_shape_function</span><span class="p">(</span><span class="n">rel_vec</span><span class="p">))</span>
+
+        <span class="c"># do the actual mapping</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="n">begin</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">begin</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">num_coeffs_per_axis</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dim</span><span class="p">)]</span>
+        <span class="n">mapOp</span><span class="p">(</span><span class="n">mesh</span><span class="p">[</span><span class="n">window</span><span class="p">],</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="mesh2particles"><a class="viewcode-back" href="../../modules.html#pyDive.mappings.mesh2particles">[docs]</a><span class="k">def</span> <span class="nf">mesh2particles</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">particles_pos</span><span class="p">,</span> <span class="n">shape_function</span><span class="o">=</span><span class="n">CIC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map mesh values to particles according to a particle shape function.</span>
+
+<span class="sd">    :param array-like mesh: n-dimensional array.</span>
+<span class="sd">        Dimension of *mesh* has to be greater or equal to the number of particle position components.</span>
+<span class="sd">    :param particles_pos:</span>
+<span class="sd">        &#39;d&#39;-dim tuples for &#39;N&#39; particle positions. The positions can be float32 or float64 and</span>
+<span class="sd">        must be within the shape of *mesh*.</span>
+<span class="sd">    :type particles_pos: (N, d)</span>
+<span class="sd">    :param shape_function:</span>
+<span class="sd">        Callable object returning the particle assignment value for a given param &#39;x&#39;.</span>
+<span class="sd">        Has to provide a &#39;support&#39; float attribute which defines the width of the non-zero area.</span>
+<span class="sd">        Defaults to cloud-in-cell.</span>
+<span class="sd">    :type shape_function: callable, optional</span>
+<span class="sd">    :return: Mapped mesh values for each particle.</span>
+<span class="sd">    :type return: ndarray(N, dtype=&#39;f&#39;)</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - The particle shape function is not evaluated outside the mesh.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># resulting ndarray</span>
+    <span class="n">particles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">particles_pos</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;f&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">mapOp</span><span class="p">(</span><span class="n">sub_mesh</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">particle_idx</span><span class="p">):</span>
+        <span class="n">particles</span><span class="p">[</span><span class="n">particle_idx</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sub_mesh</span> <span class="o">*</span> <span class="n">coeffs</span><span class="p">)</span>
+
+    <span class="n">__apply_MapOp</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">particles_pos</span><span class="p">,</span> <span class="n">shape_function</span><span class="p">,</span> <span class="n">mapOp</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">particles</span>
+</div>
+<div class="viewcode-block" id="particles2mesh"><a class="viewcode-back" href="../../modules.html#pyDive.mappings.particles2mesh">[docs]</a><span class="k">def</span> <span class="nf">particles2mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">particles</span><span class="p">,</span> <span class="n">particles_pos</span><span class="p">,</span> <span class="n">shape_function</span><span class="o">=</span><span class="n">CIC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map particle values to mesh according to a particle shape function.</span>
+<span class="sd">    Particle values are added to the mesh.</span>
+
+<span class="sd">    :param array-like mesh: n-dimensional array.</span>
+<span class="sd">        Dimension of *mesh* has to be greater or equal to the number of particle position components.</span>
+<span class="sd">    :param particles: particle data.</span>
+<span class="sd">        len(*particles*) has to be the same as len(*particles_pos*)</span>
+<span class="sd">    :type particles: array_like (1 dim)</span>
+<span class="sd">    :param particles_pos:</span>
+<span class="sd">        &#39;d&#39;-dim tuples for &#39;N&#39; particle positions. The positions can be float32 or float64 and</span>
+<span class="sd">        must be within the shape of *mesh*.</span>
+<span class="sd">    :type particles_pos: (N, d)</span>
+<span class="sd">    :param shape_function:</span>
+<span class="sd">        Callable object returning the particle assignment value for a given param &#39;x&#39;.</span>
+<span class="sd">        Has to provide a &#39;support&#39; float attribute which defines the width of the non-zero area.</span>
+<span class="sd">        Defaults to cloud-in-cell.</span>
+<span class="sd">    :type shape_function: callable, optional</span>
+<span class="sd">    :return: *mesh*</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - The particle shape function is not evaluated outside the mesh.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">mapOp</span><span class="p">(</span><span class="n">sub_mesh</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">particle_idx</span><span class="p">):</span>
+        <span class="n">sub_mesh</span> <span class="o">+=</span> <span class="n">particles</span><span class="p">[</span><span class="n">particle_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">coeffs</span>
+
+    <span class="n">__apply_MapOp</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">particles_pos</span><span class="p">,</span> <span class="n">shape_function</span><span class="p">,</span> <span class="n">mapOp</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mesh</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

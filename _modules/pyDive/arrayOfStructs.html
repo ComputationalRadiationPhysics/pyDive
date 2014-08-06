@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.arrayOfStructs &mdash; pyDive  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pyDive.arrayOfStructs</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Copyright 2014 Heiko Burau</span>
+
+<span class="sd">This file is part of pyDive.</span>
+
+<span class="sd">pyDive is free software: you can redistribute it and/or modify</span>
+<span class="sd">it under the terms of of either the GNU General Public License or</span>
+<span class="sd">the GNU Lesser General Public License as published by</span>
+<span class="sd">the Free Software Foundation, either version 3 of the License, or</span>
+<span class="sd">(at your option) any later version.</span>
+<span class="sd">pyDive is distributed in the hope that it will be useful,</span>
+<span class="sd">but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="sd">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="sd">GNU General Public License and the GNU Lesser General Public License</span>
+<span class="sd">for more details.</span>
+
+<span class="sd">You should have received a copy of the GNU General Public License</span>
+<span class="sd">and the GNU Lesser General Public License along with pyDive.</span>
+<span class="sd">If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__doc__</span> <span class="o">=</span>\
+<span class="sd">&quot;&quot;&quot;The *arrayOfStructs* module addresses the common problem when dealing with</span>
+<span class="sd">structured data: While the user likes an array-of-structures layout the machine prefers a structure-of-arrays.</span>
+<span class="sd">In pyDive the method of choice is a *virtual* *array-of-structures*-object. It holds array-like attributes</span>
+<span class="sd">such as shape and dtype and allows for slicing but is operating on a structure-of-arrays internally.</span>
+
+<span class="sd">Example: ::</span>
+
+<span class="sd">    ...</span>
+<span class="sd">    treeOfArrays = {&quot;FieldE&quot; :</span>
+<span class="sd">                        {&quot;x&quot; : fielde_x,</span>
+<span class="sd">                         &quot;y&quot; : fielde_y,</span>
+<span class="sd">                         &quot;z&quot; : fielde_z},</span>
+<span class="sd">                    &quot;FieldB&quot; :</span>
+<span class="sd">                        {&quot;x&quot; : fieldb_x,</span>
+<span class="sd">                         &quot;y&quot; : fieldb_y,</span>
+<span class="sd">                         &quot;z&quot; : fieldb_z}</span>
+<span class="sd">                    }</span>
+
+<span class="sd">    fields = pyDive.arrayOfStructs(treeOfArrays)</span>
+
+<span class="sd">    half = fields[::2][&quot;FieldE/x&quot;]</span>
+<span class="sd">    # equivalent to</span>
+<span class="sd">    half = fields[&quot;FieldE/x&quot;][::2]</span>
+<span class="sd">    # equivalent to</span>
+<span class="sd">    half = fields[&quot;FieldE&quot;][&quot;x&quot;][::2]</span>
+<span class="sd">    # equivalent to</span>
+<span class="sd">    half = fields[&quot;FieldE&quot;][::2][&quot;x&quot;]</span>
+
+<span class="sd">The example shows that in fact *fields* can be treated as an array-of-structures</span>
+<span class="sd">**or** a structure-of-arrays depending on what is more appropriate.</span>
+
+<span class="sd">The goal is to make the virtual *array-of-structs*-object look like a real array even ready for passing</span>
+<span class="sd">to foreign functions that expect a &quot;real&quot; array which at least inherits e.g. from a numpy-array.</span>
+<span class="sd">Therefore the virtual *array-of-structs*-object inherits from the class type of its arrays.</span>
+<span class="sd">This makes it for instance compatible to :mod:`pyDive.algorithm`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="c"># check whether this code is executed on target or not</span>
+<span class="n">onTarget</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;onTarget&quot;</span><span class="p">,</span> <span class="s">&#39;False&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
+    <span class="kn">from</span> <span class="nn">ndarray.ndarray</span> <span class="kn">import</span> <span class="n">ndarray</span> <span class="k">as</span> <span class="n">ndarray</span>
+    <span class="kn">from</span> <span class="nn">h5_ndarray.h5_ndarray</span> <span class="kn">import</span> <span class="n">h5_ndarray</span> <span class="k">as</span> <span class="n">h5_ndarray</span>
+    <span class="kn">from</span> <span class="nn">IPython.parallel</span> <span class="kn">import</span> <span class="n">interactive</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="k">def</span> <span class="nf">makeTree_like</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">expression</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">traverseTree</span><span class="p">(</span><span class="n">outTree</span><span class="p">,</span> <span class="n">inTree</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">inTree</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">traverseTree</span><span class="p">(</span><span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">inTree</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">expression</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="n">outTree</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">traverseTree</span><span class="p">(</span><span class="n">outTree</span><span class="p">,</span> <span class="n">tree</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">outTree</span>
+
+<span class="k">def</span> <span class="nf">visitTwoTrees</span><span class="p">(</span><span class="n">treeA</span><span class="p">,</span> <span class="n">treeB</span><span class="p">,</span> <span class="n">visitor</span><span class="p">):</span>
+    <span class="c"># traverse trees</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">valueA</span> <span class="ow">in</span> <span class="n">treeA</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">valueB</span> <span class="o">=</span> <span class="n">treeB</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">valueA</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="n">visitTwoTrees</span><span class="p">(</span><span class="n">valueA</span><span class="p">,</span> <span class="n">valueB</span><span class="p">,</span> <span class="n">visitor</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">visitor</span><span class="p">(</span><span class="n">treeA</span><span class="p">,</span> <span class="n">treeB</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">valueA</span><span class="p">,</span> <span class="n">valueB</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">treeA</span><span class="p">,</span> <span class="n">treeB</span>
+
+<span class="c"># generator object which iterates the tree&#39;s leafs</span>
+<span class="k">def</span> <span class="nf">treeItems</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="k">while</span> <span class="n">items</span><span class="p">:</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">items</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+            <span class="n">items</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
+
+<span class="n">arrayOfStructs_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">class</span> <span class="nc">arrayOfStructsClass</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structOfArrays</span><span class="p">):</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">treeItems</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">),</span>\
+            <span class="s">&quot;all arrays in &#39;structOfArrays&#39; must be of the same type&quot;</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">),</span>\
+            <span class="s">&quot;all arrays in &#39;structOfArrays&#39; must have the same shape&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">makeTree_like</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">nbytes</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">structOfArrays</span>
+
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">):</span>
+            <span class="c">#assert all(a.targets_in_use == firstArray.targets_in_use for name, a in items),\</span>
+            <span class="c">#    &quot;all ndarrays in structure-of-arrays (&#39;structOfArrays&#39;) must have an identical &#39;targets_in_use&#39; attribute&quot;</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">distaxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">distaxis</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">idx_ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">idx_ranges</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">targets_in_use</span>
+            <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="o">=</span> <span class="n">view</span>
+
+            <span class="c"># generate a unique variable name used on target representing this instance</span>
+            <span class="k">global</span> <span class="n">arrayOfStructs_id</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;arrayOfStructsObj&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">arrayOfStructs_id</span><span class="p">)</span>
+            <span class="n">arrayOfStructs_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c"># create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use</span>
+            <span class="n">names_tree</span> <span class="o">=</span> <span class="n">makeTree_like</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+
+            <span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="s">&#39;names_tree&#39;</span> <span class="p">:</span> <span class="n">names_tree</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+
+            <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
+<span class="s">                structOfArrays = arrayOfStructs.makeTree_like(names_tree, lambda a_name: globals()[a_name])</span>
+<span class="s">                </span><span class="si">%s</span><span class="s"> = arrayOfStructs.arrayOfStructs(structOfArrays)&#39;&#39;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>\
+                <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h5_ndarray</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distaxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">distaxis</span>
+
+    <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">):</span>
+            <span class="c"># delete remote arrayOfStructs object</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;del </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">printTree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">indent</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                    <span class="n">result</span> <span class="o">+=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&quot;:</span><span class="se">\n</span><span class="s">&quot;</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="n">printTree</span><span class="p">(</span><span class="n">tree</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">indent</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">result</span> <span class="o">+=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&quot; -&gt; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="s">&quot;StructOfArrays of type &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">))</span> <span class="o">+</span> <span class="s">&quot;:</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="k">return</span> <span class="n">printTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="s">&quot;  &quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c"># component access</span>
+        <span class="c"># ----------------</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span> <span class="c"># root node</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">node_name</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="c"># node</span>
+                <span class="k">return</span> <span class="n">arrayOfStructs</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># leaf</span>
+                <span class="k">return</span> <span class="n">node</span>
+
+        <span class="c"># slicing</span>
+        <span class="c"># -------</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="p">,)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>\
+            <span class="s">&quot;number of arguments (</span><span class="si">%d</span><span class="s">) does not correspond to the dimension (</span><span class="si">%d</span><span class="s">)&quot;</span>\
+                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">makeTree_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="p">[</span><span class="n">args</span><span class="p">])</span>
+
+        <span class="c"># if args is a list of indices then return a single data value tree</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">return</span> <span class="n">arrayOfStructs</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="c"># component access</span>
+        <span class="c"># ----------------</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span> <span class="c"># root node</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">node_name</span> <span class="ow">in</span> <span class="n">path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span>
+            <span class="n">last_node_name</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="n">last_node_name</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="c"># node</span>
+                <span class="k">def</span> <span class="nf">doArrayAssignment</span><span class="p">(</span><span class="n">treeA</span><span class="p">,</span> <span class="n">treeB</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">arrayA</span><span class="p">,</span> <span class="n">arrayB</span><span class="p">):</span>
+                    <span class="n">treeA</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">arrayB</span>
+
+                <span class="n">visitTwoTrees</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="n">last_node_name</span><span class="p">],</span> <span class="n">other</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">doArrayAssignment</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># leaf</span>
+                <span class="n">node</span><span class="p">[</span><span class="n">last_node_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">other</span>
+            <span class="k">return</span>
+
+        <span class="c"># slicing</span>
+        <span class="c"># -------</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="p">,)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>\
+            <span class="s">&quot;number of arguments (</span><span class="si">%d</span><span class="s">) does not correspond to the dimension (</span><span class="si">%d</span><span class="s">)&quot;</span>\
+                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">doArrayAssignmentWithSlice</span><span class="p">(</span><span class="n">treeA</span><span class="p">,</span> <span class="n">treeB</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">arrayA</span><span class="p">,</span> <span class="n">arrayB</span><span class="p">):</span>
+            <span class="n">treeA</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">args</span><span class="p">]</span> <span class="o">=</span> <span class="n">arrayB</span>
+
+        <span class="n">visitTwoTrees</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">doArrayAssignmentWithSlice</span><span class="p">)</span>
+
+<div class="viewcode-block" id="arrayOfStructs"><a class="viewcode-back" href="../../modules.html#pyDive.arrayOfStructs.arrayOfStructs">[docs]</a><span class="k">def</span> <span class="nf">arrayOfStructs</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a *structure-of-arrays* into a virtual *array-of-structures*.</span>
+
+<span class="sd">    :param structOfArrays: tree-like dictionary of arrays.</span>
+<span class="sd">    :raises AssertionError: if the *arrays-types* do not match. Datatypes may differ.</span>
+<span class="sd">    :raises AssertionError: if the shapes do not match.</span>
+<span class="sd">    :return: Custom object representing a virtual array whose elements have the same tree-like structure</span>
+<span class="sd">        as *structOfArrays*. It inherits from *array-type*.</span>
+
+<span class="sd">    Known Issues:</span>
+<span class="sd">        - If executed on :term:`engine` the virtual array will not inherit from *array-type*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">treeItems</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)]</span>
+    <span class="n">array_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="n">array_type</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">),</span>\
+        <span class="s">&quot;all arrays in &#39;structOfArrays&#39; must be of the same type&quot;</span>
+
+    <span class="c"># create a new class type out of the arrayOfStructsClass that inherits from the arrays&#39; type.</span>
+    <span class="n">my_arrayOfStructsClass</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="s">&quot;ArrayOfStructs_&quot;</span> <span class="o">+</span> <span class="n">array_type</span><span class="o">.</span><span class="n">__module__</span> <span class="o">+</span> <span class="s">&quot;-&quot;</span> <span class="o">+</span> <span class="n">array_type</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>\
+        <span class="p">(</span><span class="n">array_type</span><span class="p">,),</span> <span class="nb">dict</span><span class="p">(</span><span class="n">arrayOfStructsClass</span><span class="o">.</span><span class="n">__dict__</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;True&#39;</span><span class="p">:</span>
+        <span class="c"># This is a workaround. Instanciation of my_arrayOfStructsClass raises an exception on target</span>
+        <span class="c"># before executing the constructor. No idea why.</span>
+        <span class="k">return</span> <span class="n">arrayOfStructsClass</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">my_arrayOfStructsClass</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

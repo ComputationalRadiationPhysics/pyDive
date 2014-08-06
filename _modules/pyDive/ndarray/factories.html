@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.ndarray.factories &mdash; pyDive  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pyDive.ndarray.factories</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Copyright 2014 Heiko Burau</span>
+
+<span class="sd">This file is part of pyDive.</span>
+
+<span class="sd">pyDive is free software: you can redistribute it and/or modify</span>
+<span class="sd">it under the terms of of either the GNU General Public License or</span>
+<span class="sd">the GNU Lesser General Public License as published by</span>
+<span class="sd">the Free Software Foundation, either version 3 of the License, or</span>
+<span class="sd">(at your option) any later version.</span>
+<span class="sd">pyDive is distributed in the hope that it will be useful,</span>
+<span class="sd">but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="sd">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="sd">GNU General Public License and the GNU Lesser General Public License</span>
+<span class="sd">for more details.</span>
+
+<span class="sd">You should have received a copy of the GNU General Public License</span>
+<span class="sd">and the GNU Lesser General Public License along with pyDive.</span>
+<span class="sd">If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__doc__</span><span class="o">=</span>\
+<span class="sd">&quot;&quot;&quot;This module holds high-level functions for instanciating :ref:`pyDive.ndarrays &lt;pyDive.ndarray&gt;`.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">IPParallelClient</span> <span class="k">as</span> <span class="n">com</span>
+<span class="kn">import</span> <span class="nn">helper</span>
+<span class="c">#import ndarray    # this import is done by the ndarray module itself due to circular dependencies</span>
+
+<div class="viewcode-block" id="hollow"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.hollow">[docs]</a><span class="k">def</span> <span class="nf">hollow</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines &lt;engine&gt;` without allocating a local</span>
+<span class="sd">        *numpy-array*.</span>
+
+<span class="sd">    :param ints shape: shape of the array</span>
+<span class="sd">    :param int distaxis: axis on which memory is distributed across the :term:`engines &lt;engine&gt;`</span>
+<span class="sd">    :param numpy-dtype dtype: datatype of a single data value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="empty"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.empty">[docs]</a><span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines &lt;engine&gt;` without initializing elements.</span>
+
+<span class="sd">    :param ints shape: shape of the array</span>
+<span class="sd">    :param int distaxis: axis on which memory is distributed across the :term:`engines &lt;engine&gt;`</span>
+<span class="sd">    :param numpy-dtype dtype: datatype of a single data value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="zeros"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.zeros">[docs]</a><span class="k">def</span> <span class="nf">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines &lt;engine&gt;` filled with zeros.</span>
+
+<span class="sd">    :param ints shape: shape of the array</span>
+<span class="sd">    :param int distaxis: axis on which memory is distributed across the :term:`engines &lt;engine&gt;`</span>
+<span class="sd">    :param numpy-dtype dtype: datatype of a single data value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">hollow</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> = np.zeros(</span><span class="si">%s</span><span class="s">.shape, </span><span class="si">%s</span><span class="s">.dtype)&quot;</span> <span class="o">%</span> <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="ones"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.ones">[docs]</a><span class="k">def</span> <span class="nf">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines &lt;engine&gt;` filled with ones.</span>
+
+<span class="sd">    :param ints shape: shape of the array</span>
+<span class="sd">    :param int distaxis: axis on which memory is distributed across the :term:`engines &lt;engine&gt;`</span>
+<span class="sd">    :param numpy-dtype dtype: datatype of a single data value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">hollow</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> = np.ones(</span><span class="si">%s</span><span class="s">.shape, </span><span class="si">%s</span><span class="s">.dtype)&quot;</span> <span class="o">%</span> <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="hollow_like"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.hollow_like">[docs]</a><span class="k">def</span> <span class="nf">hollow_like</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` with the same shape, distribution and type as *a* without allocating</span>
+<span class="sd">    a local *numpy-array*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">distaxis</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">idx_ranges</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="empty_like"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.empty_like">[docs]</a><span class="k">def</span> <span class="nf">empty_like</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` with the same shape, distribution and type as *a* without initializing elements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">distaxis</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">idx_ranges</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="zeros_like"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.zeros_like">[docs]</a><span class="k">def</span> <span class="nf">zeros_like</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` with the same shape, distribution and type as *a* filled with zeros.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">hollow_like</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> = np.zeros(</span><span class="si">%s</span><span class="s">.shape, </span><span class="si">%s</span><span class="s">.dtype)&quot;</span> <span class="o">%</span> <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="ones_like"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.ones_like">[docs]</a><span class="k">def</span> <span class="nf">ones_like</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` with the same shape, distribution and type as *a* filled with ones.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">hollow_like</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> = np.ones(</span><span class="si">%s</span><span class="s">.shape, </span><span class="si">%s</span><span class="s">.dtype)&quot;</span> <span class="o">%</span> <span class="p">[</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="array"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.array">[docs]</a><span class="k">def</span> <span class="nf">array</span><span class="p">(</span><span class="n">array_like</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` from an array-like object.</span>
+
+<span class="sd">    :param array-like array_like: Any object exposing the array interface, e.g. numpy-array, python sequence, ...</span>
+<span class="sd">    :param int distaxis: axis on which memory is distributed across the :term:`engines &lt;engine&gt;`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># numpy array</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">array_like</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="c"># result ndarray</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="n">array_like</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">array_like</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">array_like</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">)</span>
+        <span class="n">sub_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">tmp</span><span class="p">[</span><span class="n">begin</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="k">for</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">idx_ranges</span><span class="p">]</span>
+        <span class="c"># roll axis back</span>
+        <span class="n">sub_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">ar</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">ar</span> <span class="ow">in</span> <span class="n">sub_arrays</span><span class="p">]</span>
+
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&#39;sub_array&#39;</span><span class="p">,</span> <span class="n">sub_arrays</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> = sub_array[0].copy()&quot;</span> <span class="o">%</span> <span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">array_like</span><span class="p">),</span> <span class="n">distaxis</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

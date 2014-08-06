@@ -1,0 +1,248 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.h5_ndarray.h5_ndarray &mdash; pyDive  documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive  documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pyDive.h5_ndarray.h5_ndarray</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Copyright 2014 Heiko Burau</span>
+
+<span class="sd">This file is part of pyDive.</span>
+
+<span class="sd">pyDive is free software: you can redistribute it and/or modify</span>
+<span class="sd">it under the terms of of either the GNU General Public License or</span>
+<span class="sd">the GNU Lesser General Public License as published by</span>
+<span class="sd">the Free Software Foundation, either version 3 of the License, or</span>
+<span class="sd">(at your option) any later version.</span>
+<span class="sd">pyDive is distributed in the hope that it will be useful,</span>
+<span class="sd">but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="sd">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="sd">GNU General Public License and the GNU Lesser General Public License</span>
+<span class="sd">for more details.</span>
+
+<span class="sd">You should have received a copy of the GNU General Public License</span>
+<span class="sd">and the GNU Lesser General Public License along with pyDive.</span>
+<span class="sd">If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c">#from mpi4py import MPI</span>
+<span class="kn">import</span> <span class="nn">h5py</span> <span class="kn">as</span> <span class="nn">h5</span>
+<span class="kn">from</span> <span class="nn">..ndarray</span> <span class="kn">import</span> <span class="n">ndarray</span><span class="p">,</span> <span class="n">factories</span>
+<span class="kn">from</span> <span class="nn">..ndarray</span> <span class="kn">import</span> <span class="n">helper</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">IPParallelClient</span> <span class="k">as</span> <span class="n">com</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="n">h5_ndarray_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="h5_ndarray"><a class="viewcode-back" href="../../../pyDive.h5_ndarray.html#pyDive.h5_ndarray.h5_ndarray.h5_ndarray">[docs]</a><span class="k">class</span> <span class="nc">h5_ndarray</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represents a single hdf5-dataset like a virtual, cluster-wide array.</span>
+<span class="sd">        Data access goes through array slicing where data is written to respectively read from</span>
+<span class="sd">        :class:`pyDive.ndarray.ndarray.ndarray` objects in parallel using all engines.</span>
+
+<span class="sd">        Example: ::</span>
+
+<span class="sd">            h5_data = pyDive.h5.fromPath(&lt;file_path&gt;, &quot;/data/0/fields/FieldB/x&quot;, distaxis=0)</span>
+<span class="sd">            data = h5_data[:] # read the entire dataset into engine-memory</span>
+<span class="sd">            data = data**2</span>
+<span class="sd">            h5_data[:] = data # write everything back</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="h5_ndarray.__init__"><a class="viewcode-back" href="../../../pyDive.h5_ndarray.html#pyDive.h5_ndarray.h5_ndarray.h5_ndarray.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h5_filename</span><span class="p">,</span> <span class="n">dataset_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates an :class:`pyDive.h5_ndarray.h5_ndarray.h5_ndarray` instance.</span>
+<span class="sd">        By using this method you may only load a single dataset. If you want to</span>
+<span class="sd">        load a *structure* of datasets at once see :func:`pyDive.h5_ndarray.factories.fromPath`.</span>
+
+<span class="sd">        :param str h5_filename: Path of the hdf5-file</span>
+<span class="sd">        :param str dataset_path: Path to the dataset within the hdf5-file</span>
+<span class="sd">        :param int distaxis: axis on which dataset is to be distributed over during data-access</span>
+<span class="sd">        :param window: This param let you specify a sub-part of the array as a virtual container.</span>
+<span class="sd">            Example: window=np.s_[:,:,::2]</span>
+<span class="sd">        :type window: list of slice objects (:ref:`numpy.s_`).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h5_filename</span> <span class="o">=</span> <span class="n">h5_filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset_path</span> <span class="o">=</span> <span class="n">dataset_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">h5</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">h5_filename</span><span class="p">)[</span><span class="n">dataset_path</span><span class="p">]</span>
+        <span class="c">#: axis of element-distribution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distaxis</span> <span class="o">=</span> <span class="n">distaxis</span>
+        <span class="c">#: datatype of a single data value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">dtype</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">window</span><span class="p">:</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">subWindow_of_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+
+        <span class="c">#: total bytes consumed by the elements of the array.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="c"># generate a unique variable name used on target representing this instance</span>
+        <span class="k">global</span> <span class="n">h5_ndarray_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;h5_ndarray&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">h5_ndarray_id</span><span class="p">)</span>
+        <span class="n">h5_ndarray_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># create dataset object on each target</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s">&quot;_dataset&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fileHandle_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s">&quot;_file&quot;</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> = h5.File(&#39;</span><span class="si">%s</span><span class="s">&#39;, &#39;r&#39;)&quot;</span>\
+            <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileHandle_name</span><span class="p">,</span> <span class="n">h5_filename</span><span class="p">))</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> = </span><span class="si">%s</span><span class="s">[&#39;</span><span class="si">%s</span><span class="s">&#39;]&quot;</span>\
+            <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileHandle_name</span><span class="p">,</span> <span class="n">dataset_path</span><span class="p">))</span>
+</div>
+    <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">.close()&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileHandle_name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">args</span> <span class="o">==</span>  <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">),)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="p">]</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">),</span>\
+            <span class="s">&quot;single data access is not allowed&quot;</span>
+
+        <span class="n">result_shape</span><span class="p">,</span> <span class="n">clean_slices</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">subWindow_of_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="c"># Applying &#39;clean_slices&#39; after &#39;self.window&#39; results in &#39;total_slices&#39;</span>
+        <span class="n">total_slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">clean_slices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">start</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>\
+                              <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">clean_slices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">stop</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>\
+                              <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">step</span> <span class="o">*</span> <span class="n">clean_slices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">step</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">))]</span>
+
+        <span class="c"># result ndarray</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">factories</span><span class="o">.</span><span class="n">hollow</span><span class="p">(</span><span class="n">result_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="c"># create local slice objects for each engine</span>
+        <span class="n">local_slices</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">createLocalSlices</span><span class="p">(</span><span class="n">total_slices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxis</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">idx_ranges</span><span class="p">)</span>
+
+        <span class="c"># scatter slice objects to the engines</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&#39;window&#39;</span><span class="p">,</span> <span class="n">local_slices</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> = </span><span class="si">%s</span><span class="s">[tuple(window[0])]&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span> <span class="s">&quot;assigned array has to be a pyDive ndarray&quot;</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="n">sliceNone</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">key_comp</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">for</span> <span class="n">key_comp</span> <span class="ow">in</span> <span class="n">key</span><span class="p">),</span>\
+            <span class="s">&quot;single data access is not allowed&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">new_shape</span><span class="p">,</span> <span class="n">clean_slices</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">subWindow_of_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+        <span class="c"># Applying &#39;clean_slices&#39; after &#39;self.window&#39;-slices result in &#39;total_slices&#39;</span>
+        <span class="n">total_slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">clean_slices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">start</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>\
+                              <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">clean_slices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">stop</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>\
+                              <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">step</span> <span class="o">*</span> <span class="n">clean_slices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">step</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">))]</span>
+
+        <span class="k">assert</span> <span class="n">new_shape</span> <span class="o">==</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="c"># create local slice objects for each engine</span>
+        <span class="n">local_slices</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">createLocalSlices</span><span class="p">(</span><span class="n">clean_slices</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">distaxis</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">idx_ranges</span><span class="p">)</span>
+
+        <span class="c"># scatter slice objects to the engines</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&#39;window&#39;</span><span class="p">,</span> <span class="n">local_slices</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+
+        <span class="c"># write &#39;value&#39; to disk in parallel</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">[tuple(window[0])] = </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">)),</span> \
+            <span class="n">targets</span><span class="o">=</span><span class="n">value</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;&lt;hdf5 dset: &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_path</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;, &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;&gt;&quot;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

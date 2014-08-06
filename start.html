@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Getting started &mdash; pyDive  documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyDive  documentation" href="index.html" />
+    <link rel="next" title="Tutorials" href="tutorial.html" />
+    <link rel="prev" title="Welcome to pyDive’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Tutorials"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pyDive’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pyDive  documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="getting-started">
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="quickstart">
+<h2>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
+<p>pyDive is built on top of <em>IPython.parallel</em>, <em>numpy</em>, <em>mpi4py</em> and <em>h5py</em>. Running <tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></tt> will install
+pyDive with these and other required packages from <cite>requirements.txt</cite>.</p>
+<p>Basic code example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyDive</span>
+<span class="n">pyDive</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+<span class="n">arrayA</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">arrayB</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">arrayA</span><span class="p">)</span>
+
+<span class="c"># do some array operations, + - * / sin cos, ..., slicing, etc...</span>
+<span class="o">...</span>
+
+<span class="c"># get numpy-array</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">arrayC</span><span class="o">.</span><span class="n">gather</span><span class="p">()</span>
+<span class="c"># plot result</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>Before actually running this script there has to be an IPython.parallel cluster started (see section below) otherwise <cite>pyDive.init()</cite> fails.</p>
+<p>To keep things simple pyDive distributes array memory only along <strong>one</strong> user-specified axis. This axis is given by the <cite>distaxis</cite>
+parameter at array instanciating. It should usually be the largest axis in order to have the best surface-to-volume ratio.
+But keep in mind that during arithmetic operations both arrays have to be distributed along the <em>same</em> axis.</p>
+<p>Although the array elements are stored on the cluster nodes you have full access through indexing. If you want to have a numpy-array
+anyway you can call <a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.ndarray.ndarray.gather" title="pyDive.ndarray.ndarray.ndarray.gather"><tt class="xref py py-meth docutils literal"><span class="pre">pyDive.ndarray.ndarray.ndarray.gather()</span></tt></a> knowing that your pyDive array has been sliced down to fit
+into your local machine&#8217;s memory.</p>
+</div>
+<div class="section" id="setup-an-ipython-parallel-cluster-configuration">
+<h2>Setup an IPython.parallel cluster configuration<a class="headerlink" href="#setup-an-ipython-parallel-cluster-configuration" title="Permalink to this headline">¶</a></h2>
+<p>The first step is to create an IPython.parallel profile in MPI-mode: <a class="reference external" href="http://ipython.org/ipython-doc/2/parallel/parallel_process.html">http://ipython.org/ipython-doc/2/parallel/parallel_process.html</a> .
+The name of this profile is the argument of <tt class="xref py py-func docutils literal"><span class="pre">pyDive.init()</span></tt>. It defaults to <tt class="docutils literal"><span class="pre">&quot;mpi&quot;</span></tt>.
+Starting the cluster is then the second and last step:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ ipcluster start -n 4 --profile=mpi
+</pre></div>
+</div>
+</div>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>pyDive knows three kinds of arrays associated to a separate python package respectively:</dt>
+<dd><ul class="first last simple">
+<li><tt class="xref py py-obj docutils literal"><span class="pre">pyDive.ndarray</span></tt> -&gt; Stores array elements in cluster nodes&#8217; memory.</li>
+<li><tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarray</span></tt> -&gt; Stores array elements in a hdf5-file.</li>
+<li><tt class="xref py py-obj docutils literal"><span class="pre">pyDive.cloned_ndarray</span></tt> -&gt; Holds independent copies of one array on cluster nodes.</li>
+</ul>
+</dd>
+<dt>Among these three packages there are a few modules:</dt>
+<dd><ul class="first last simple">
+<li><a class="reference internal" href="modules.html#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a> -&gt; structured datatypes</li>
+<li><a class="reference internal" href="modules.html#module-pyDive.algorithm" title="pyDive.algorithm"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.algorithm</span></tt></a> -&gt; map, reduce, mapReduce</li>
+<li><a class="reference internal" href="modules.html#module-pyDive.mappings" title="pyDive.mappings"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.mappings</span></tt></a> -&gt; particle-mesh mappings</li>
+<li><a class="reference internal" href="modules.html#module-pyDive.picongpu" title="pyDive.picongpu"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.picongpu</span></tt></a> -&gt; helper functions for picongpu-users</li>
+<li><a class="reference internal" href="modules.html#module-pyDive.pyDive" title="pyDive.pyDive"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.pyDive</span></tt></a> -&gt; shortcuts for most used functions</li>
+</ul>
+</dd>
+</dl>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Getting started</a><ul>
+<li><a class="reference internal" href="#quickstart">Quickstart</a></li>
+<li><a class="reference internal" href="#setup-an-ipython-parallel-cluster-configuration">Setup an IPython.parallel cluster configuration</a></li>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to pyDive&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tutorial.html"
+                        title="next chapter">Tutorials</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/start.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Tutorials"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pyDive’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">pyDive  documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

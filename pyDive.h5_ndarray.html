@@ -1,0 +1,216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.h5_ndarray package &mdash; pyDive  documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyDive  documentation" href="index.html" />
+    <link rel="up" title="Reference" href="reference.html" />
+    <link rel="next" title="pyDive.cloned_ndarray package" href="pyDive.cloned_ndarray.html" />
+    <link rel="prev" title="pyDive.ndarray package" href="pyDive.ndarray.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyDive.cloned_ndarray.html" title="pyDive.cloned_ndarray package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pyDive.ndarray.html" title="pyDive.ndarray package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="reference.html" accesskey="U">Reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="pydive-h5-ndarray-package">
+<h1>pyDive.h5_ndarray package<a class="headerlink" href="#pydive-h5-ndarray-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="pydive-h5-ndarray-h5-ndarray-module">
+<h2>pyDive.h5_ndarray.h5_ndarray module<a class="headerlink" href="#pydive-h5-ndarray-h5-ndarray-module" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pyDive.h5_ndarray.h5_ndarray.h5_ndarray">
+<em class="property">class </em><tt class="descclassname">pyDive.h5_ndarray.h5_ndarray.</tt><tt class="descname">h5_ndarray</tt><big>(</big><em>h5_filename</em>, <em>dataset_path</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/h5_ndarray.html#h5_ndarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.h5_ndarray.h5_ndarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a single hdf5-dataset like a virtual, cluster-wide array.
+Data access goes through array slicing where data is written to respectively read from
+<a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.ndarray.ndarray" title="pyDive.ndarray.ndarray.ndarray"><tt class="xref py py-class docutils literal"><span class="pre">pyDive.ndarray.ndarray.ndarray</span></tt></a> objects in parallel using all engines.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre>h5_data = pyDive.h5.fromPath(&lt;file_path&gt;, &quot;/data/0/fields/FieldB/x&quot;, distaxis=0)
+data = h5_data[:] # read the entire dataset into engine-memory
+data = data**2
+h5_data[:] = data # write everything back
+</pre></div>
+</div>
+<dl class="method">
+<dt id="pyDive.h5_ndarray.h5_ndarray.h5_ndarray.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>h5_filename</em>, <em>dataset_path</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/h5_ndarray.html#h5_ndarray.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.h5_ndarray.h5_ndarray.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an <a class="reference internal" href="#pyDive.h5_ndarray.h5_ndarray.h5_ndarray" title="pyDive.h5_ndarray.h5_ndarray.h5_ndarray"><tt class="xref py py-class docutils literal"><span class="pre">pyDive.h5_ndarray.h5_ndarray.h5_ndarray</span></tt></a> instance.
+By using this method you may only load a single dataset. If you want to
+load a <em>structure</em> of datasets at once see <a class="reference internal" href="#pyDive.h5_ndarray.factories.fromPath" title="pyDive.h5_ndarray.factories.fromPath"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.h5_ndarray.factories.fromPath()</span></tt></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>h5_filename</strong> (<em>str</em>) &#8211; Path of the hdf5-file</li>
+<li><strong>dataset_path</strong> (<em>str</em>) &#8211; Path to the dataset within the hdf5-file</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which dataset is to be distributed over during data-access</li>
+<li><strong>window</strong> (list of slice objects (<em class="xref std std-ref">numpy.s_</em>).) &#8211; This param let you specify a sub-part of the array as a virtual container.
+Example: window=np.s_[:,:,::2]</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyDive.h5_ndarray.factories">
+<span id="pydive-h5-ndarray-factories-module"></span><h2>pyDive.h5_ndarray.factories module<a class="headerlink" href="#module-pyDive.h5_ndarray.factories" title="Permalink to this headline">¶</a></h2>
+<p>Copyright 2014 Heiko Burau</p>
+<p>This file is part of pyDive.</p>
+<p>pyDive is free software: you can redistribute it and/or modify
+it under the terms of of either the GNU General Public License or
+the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+pyDive is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License and the GNU Lesser General Public License
+for more details.</p>
+<p>You should have received a copy of the GNU General Public License
+and the GNU Lesser General Public License along with pyDive.
+If not, see &lt;<a class="reference external" href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>&gt;.</p>
+<dl class="function">
+<dt id="pyDive.h5_ndarray.factories.fromPath">
+<tt class="descclassname">pyDive.h5_ndarray.factories.</tt><tt class="descname">fromPath</tt><big>(</big><em>h5_filename</em>, <em>datapath</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/factories.html#fromPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.factories.fromPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a <em class="xref std std-ref">pyDive.h5_ndarray</em> or structure of <em class="xref std std-ref">pyDive.h5_ndarrays</em>
+from a hdf5-dataset respectively a hdf5-group.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>h5_filename</strong> (<em>str</em>) &#8211; hdf5-filename</li>
+<li><strong>datapath</strong> (<em>str</em>) &#8211; path within the hdf5-file to a dataset or a group</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <em class="xref std std-term">engines</em></li>
+<li><strong>window</strong> (list of slice objects (<em class="xref std std-ref">numpy.s_</em>)) &#8211; This param let you specify a sub-part of the array as a virtual container.
+Example: window=np.s_[:,:,::2]</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarray</span></tt> or structure of <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarrays</span></tt>            (<a class="reference internal" href="modules.html#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyDive.h5_ndarray package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#pydive-h5-ndarray-h5-ndarray-module">pyDive.h5_ndarray.h5_ndarray module</a></li>
+<li><a class="reference internal" href="#module-pyDive.h5_ndarray.factories">pyDive.h5_ndarray.factories module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pyDive.ndarray.html"
+                        title="previous chapter">pyDive.ndarray package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pyDive.cloned_ndarray.html"
+                        title="next chapter">pyDive.cloned_ndarray package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/pyDive.h5_ndarray.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyDive.cloned_ndarray.html" title="pyDive.cloned_ndarray package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pyDive.ndarray.html" title="pyDive.ndarray package"
+             >previous</a> |</li>
+        <li><a href="index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="reference.html" >Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

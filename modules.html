@@ -1,0 +1,492 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.arrayOfStructs module &mdash; pyDive  documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyDive  documentation" href="index.html" />
+    <link rel="up" title="Reference" href="reference.html" />
+    <link rel="prev" title="pyDive.cloned_ndarray package" href="pyDive.cloned_ndarray.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyDive.cloned_ndarray.html" title="pyDive.cloned_ndarray package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="reference.html" accesskey="U">Reference</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pyDive.arrayOfStructs">
+<span id="pydive-arrayofstructs-module"></span><h1>pyDive.arrayOfStructs module<a class="headerlink" href="#module-pyDive.arrayOfStructs" title="Permalink to this headline">¶</a></h1>
+<p>The <em>arrayOfStructs</em> module addresses the common problem when dealing with
+structured data: While the user likes an array-of-structures layout the machine prefers a structure-of-arrays.
+In pyDive the method of choice is a <em>virtual</em> <em>array-of-structures</em>-object. It holds array-like attributes
+such as shape and dtype and allows for slicing but is operating on a structure-of-arrays internally.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="o">...</span>
+<span class="n">treeOfArrays</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;FieldE&quot;</span> <span class="p">:</span>
+                    <span class="p">{</span><span class="s">&quot;x&quot;</span> <span class="p">:</span> <span class="n">fielde_x</span><span class="p">,</span>
+                     <span class="s">&quot;y&quot;</span> <span class="p">:</span> <span class="n">fielde_y</span><span class="p">,</span>
+                     <span class="s">&quot;z&quot;</span> <span class="p">:</span> <span class="n">fielde_z</span><span class="p">},</span>
+                <span class="s">&quot;FieldB&quot;</span> <span class="p">:</span>
+                    <span class="p">{</span><span class="s">&quot;x&quot;</span> <span class="p">:</span> <span class="n">fieldb_x</span><span class="p">,</span>
+                     <span class="s">&quot;y&quot;</span> <span class="p">:</span> <span class="n">fieldb_y</span><span class="p">,</span>
+                     <span class="s">&quot;z&quot;</span> <span class="p">:</span> <span class="n">fieldb_z</span><span class="p">}</span>
+                <span class="p">}</span>
+
+<span class="n">fields</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">arrayOfStructs</span><span class="p">(</span><span class="n">treeOfArrays</span><span class="p">)</span>
+
+<span class="n">half</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[::</span><span class="mi">2</span><span class="p">][</span><span class="s">&quot;FieldE/x&quot;</span><span class="p">]</span>
+<span class="c"># equivalent to</span>
+<span class="n">half</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="s">&quot;FieldE/x&quot;</span><span class="p">][::</span><span class="mi">2</span><span class="p">]</span>
+<span class="c"># equivalent to</span>
+<span class="n">half</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="s">&quot;FieldE&quot;</span><span class="p">][</span><span class="s">&quot;x&quot;</span><span class="p">][::</span><span class="mi">2</span><span class="p">]</span>
+<span class="c"># equivalent to</span>
+<span class="n">half</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="s">&quot;FieldE&quot;</span><span class="p">][::</span><span class="mi">2</span><span class="p">][</span><span class="s">&quot;x&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The example shows that in fact <em>fields</em> can be treated as an array-of-structures
+<strong>or</strong> a structure-of-arrays depending on what is more appropriate.</p>
+<p>The goal is to make the virtual <em>array-of-structs</em>-object look like a real array even ready for passing
+to foreign functions that expect a &#8220;real&#8221; array which at least inherits e.g. from a numpy-array.
+Therefore the virtual <em>array-of-structs</em>-object inherits from the class type of its arrays.
+This makes it for instance compatible to <a class="reference internal" href="#module-pyDive.algorithm" title="pyDive.algorithm"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.algorithm</span></tt></a>.</p>
+<dl class="function">
+<dt id="pyDive.arrayOfStructs.arrayOfStructs">
+<tt class="descclassname">pyDive.arrayOfStructs.</tt><tt class="descname">arrayOfStructs</tt><big>(</big><em>structOfArrays</em><big>)</big><a class="reference internal" href="_modules/pyDive/arrayOfStructs.html#arrayOfStructs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrayOfStructs.arrayOfStructs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a <em>structure-of-arrays</em> into a virtual <em>array-of-structures</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>structOfArrays</strong> &#8211; tree-like dictionary of arrays.</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first simple">
+<li><strong>AssertionError</strong> &#8211; if the <em>arrays-types</em> do not match. Datatypes may differ.</li>
+<li><strong>AssertionError</strong> &#8211; if the shapes do not match.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Custom object representing a virtual array whose elements have the same tree-like structure
+as <em>structOfArrays</em>. It inherits from <em>array-type</em>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Known Issues:</dt>
+<dd><ul class="first last simple">
+<li>If executed on <em class="xref std std-term">engine</em> the virtual array will not inherit from <em>array-type</em>.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyDive.algorithm">
+<span id="pydive-algorithm-module"></span><h1>pyDive.algorithm module<a class="headerlink" href="#module-pyDive.algorithm" title="Permalink to this headline">¶</a></h1>
+<p>Copyright 2014 Heiko Burau</p>
+<p>This file is part of pyDive.</p>
+<p>pyDive is free software: you can redistribute it and/or modify
+it under the terms of of either the GNU General Public License or
+the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+pyDive is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License and the GNU Lesser General Public License
+for more details.</p>
+<p>You should have received a copy of the GNU General Public License
+and the GNU Lesser General Public License along with pyDive.
+If not, see &lt;<a class="reference external" href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>&gt;.</p>
+<dl class="function">
+<dt id="pyDive.algorithm.map">
+<tt class="descclassname">pyDive.algorithm.</tt><tt class="descname">map</tt><big>(</big><em>f</em>, <em>*arrays</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/pyDive/algorithm.html#map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.algorithm.map" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls <em>f</em> on <em class="xref std std-term">engine</em> with local numpy-arrays related to <em>arrays</em>.
+Example:</p>
+<div class="highlight-python"><div class="highlight"><pre>cluster_array = pyDive.ones(shape=[100], distaxis=0)
+
+cluster_array *= 2.0
+# equivalent to
+pyDive.map(lambda a: a *= 2.0, cluster_array) # a is the local numpy-array of *cluster_array*
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>f</strong> (<em>callable</em>) &#8211; function to be called on <em class="xref std std-term">engine</em>. Has to accept <em>numpy-arrays</em> and <em>kwargs</em></li>
+<li><strong>arrays</strong> &#8211; list of arrays including <em>pyDive.ndarrays</em>, <em>pyDive.h5_ndarrays</em> or <em>pyDive.cloned_ndarrays</em></li>
+<li><strong>kwargs</strong> &#8211; user-specified keyword arguments passed to <em>f</em></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><strong>AssertionError</strong> &#8211; if the <em>shapes</em> of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
+<li><strong>AssertionError</strong> &#8211; if the <em>distaxis</em> attributes of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Notes:</dt>
+<dd><ul class="first last simple">
+<li>If the hdf5 data exceeds the memory limit (see <em class="xref std std-ref">fraction_of_av_mem_used</em>)            the data will be read block-wise so that a block fits into memory.</li>
+<li><em>map</em> chooses the list of <em>engines</em> from the <strong>first</strong> element of <em>arrays</em>. On these engines <em>f</em> is called.            If the first array is a <em>pyDive.h5_ndarray</em> all engines will be used.</li>
+<li><em>map</em> is not writing data back to a <em>pyDive.h5_ndarray</em> yet.</li>
+<li><em>map</em> does not equalize the element distribution of <em>pyDive.ndarrays</em> before execution.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.algorithm.mapReduce">
+<tt class="descclassname">pyDive.algorithm.</tt><tt class="descname">mapReduce</tt><big>(</big><em>map_func</em>, <em>reduce_op</em>, <em>*arrays</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/pyDive/algorithm.html#mapReduce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.algorithm.mapReduce" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls <em>map_func</em> on <em class="xref std std-term">engine</em> with local numpy-arrays related to <em>arrays</em>
+and reduces its result.
+Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster_array</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">],</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mapReduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">cluster_array</span><span class="p">)</span> <span class="c"># a is the local numpy-array of *cluster_array*</span>
+<span class="k">assert</span> <span class="n">s</span> <span class="o">==</span> <span class="mi">100</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>f</strong> (<em>callable</em>) &#8211; function to be called on <em class="xref std std-term">engine</em>. Has to accept <em>numpy-arrays</em> and <em>kwargs</em></li>
+<li><strong>reduce_op</strong> (<em>numpy-ufunc</em>) &#8211; reduce operation, e.g. <em>numpy.add</em>.</li>
+<li><strong>arrays</strong> &#8211; list of arrays including <em>pyDive.ndarrays</em>, <em>pyDive.h5_ndarrays</em> or <em>pyDive.cloned_ndarrays</em></li>
+<li><strong>kwargs</strong> &#8211; user-specified keyword arguments passed to <em>f</em></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
+<li><strong>AssertionError</strong> &#8211; if the <em>shapes</em> of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
+<li><strong>AssertionError</strong> &#8211; if the <em>distaxis</em> attributes of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Notes:</dt>
+<dd><ul class="first last simple">
+<li>If the hdf5 data exceeds the memory limit (see <em class="xref std std-ref">fraction_of_av_mem_used</em>)            the data will be read block-wise so that a block fits into memory.</li>
+<li><em>mapReduce</em> chooses the list of <em>engines</em> from the <strong>first</strong> element of <em>arrays</em>. On these engines the mapReduce will be executed.            If the first array is a <em>pyDive.h5_ndarray</em> all engines will be used.</li>
+<li><em>mapReduce</em> is not writing data back to a <em>pyDive.h5_ndarray</em> yet.</li>
+<li><em>mapReduce</em> does not equalize the element distribution of <em>pyDive.ndarrays</em> before execution.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.algorithm.reduce">
+<tt class="descclassname">pyDive.algorithm.</tt><tt class="descname">reduce</tt><big>(</big><em>_array</em>, <em>op</em><big>)</big><a class="reference internal" href="_modules/pyDive/algorithm.html#reduce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.algorithm.reduce" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a reduction over all axes of <em>_array</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_array</strong> &#8211; <em>pyDive.ndarray</em>, <em>pyDive.h5_ndarray</em> or <em>pyDive.cloned_ndarray</em> to be reduced</li>
+<li><strong>op</strong> (<em>numpy-ufunc</em>) &#8211; reduce operation, e.g. <em>numpy.add</em>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If the hdf5 data exceeds the memory limit (see <em class="xref std std-ref">fraction_of_av_mem_used</em>)    the data will be read block-wise so that a block fits into memory.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyDive.mappings">
+<span id="pydive-mappings-module"></span><h1>pyDive.mappings module<a class="headerlink" href="#module-pyDive.mappings" title="Permalink to this headline">¶</a></h1>
+<p>If <a class="reference external" href="http://numba.pydata.org/">numba</a> is installed the particle shape functions will
+be compiled which gives an appreciable speedup.</p>
+<dl class="class">
+<dt id="pyDive.mappings.CIC">
+<em class="property">class </em><tt class="descclassname">pyDive.mappings.</tt><tt class="descname">CIC</tt><a class="reference internal" href="_modules/pyDive/mappings.html#CIC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.CIC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cloud-in-Cell</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pyDive.mappings.NGP">
+<em class="property">class </em><tt class="descclassname">pyDive.mappings.</tt><tt class="descname">NGP</tt><a class="reference internal" href="_modules/pyDive/mappings.html#NGP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.NGP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Nearest-Grid-Point</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.mappings.mesh2particles">
+<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">mesh2particles</tt><big>(</big><em>mesh</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x7f8821d9ece8&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#mesh2particles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.mesh2particles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map mesh values to particles according to a particle shape function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mesh</strong> (<em>array-like</em>) &#8211; n-dimensional array.
+Dimension of <em>mesh</em> has to be greater or equal to the number of particle position components.</li>
+<li><strong>particles_pos</strong> (<em>(N, d)</em>) &#8211; &#8216;d&#8217;-dim tuples for &#8216;N&#8217; particle positions. The positions can be float32 or float64 and
+must be within the shape of <em>mesh</em>.</li>
+<li><strong>shape_function</strong> (<em>callable, optional</em>) &#8211; Callable object returning the particle assignment value for a given param &#8216;x&#8217;.
+Has to provide a &#8216;support&#8217; float attribute which defines the width of the non-zero area.
+Defaults to cloud-in-cell.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Mapped mesh values for each particle.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Notes:</dt>
+<dd><ul class="first last simple">
+<li>The particle shape function is not evaluated outside the mesh.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.mappings.particles2mesh">
+<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">particles2mesh</tt><big>(</big><em>mesh</em>, <em>particles</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x7f8821d9ece8&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#particles2mesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.particles2mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map particle values to mesh according to a particle shape function.
+Particle values are added to the mesh.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mesh</strong> (<em>array-like</em>) &#8211; n-dimensional array.
+Dimension of <em>mesh</em> has to be greater or equal to the number of particle position components.</li>
+<li><strong>particles</strong> (<em>array_like (1 dim)</em>) &#8211; particle data.
+len(<em>particles</em>) has to be the same as len(<em>particles_pos</em>)</li>
+<li><strong>particles_pos</strong> (<em>(N, d)</em>) &#8211; &#8216;d&#8217;-dim tuples for &#8216;N&#8217; particle positions. The positions can be float32 or float64 and
+must be within the shape of <em>mesh</em>.</li>
+<li><strong>shape_function</strong> (<em>callable, optional</em>) &#8211; Callable object returning the particle assignment value for a given param &#8216;x&#8217;.
+Has to provide a &#8216;support&#8217; float attribute which defines the width of the non-zero area.
+Defaults to cloud-in-cell.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><em>mesh</em></p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Notes:</dt>
+<dd><ul class="first last simple">
+<li>The particle shape function is not evaluated outside the mesh.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyDive.picongpu">
+<span id="pydive-picongpu-module"></span><h1>pyDive.picongpu module<a class="headerlink" href="#module-pyDive.picongpu" title="Permalink to this headline">¶</a></h1>
+<p>This module holds convenient functions for those who use pyDive together with <a class="reference external" href="http://www.github.com/ComputationalRadiationPhysics/picongpu">picongpu</a>.</p>
+<dl class="function">
+<dt id="pyDive.picongpu.getSteps">
+<tt class="descclassname">pyDive.picongpu.</tt><tt class="descname">getSteps</tt><big>(</big><em>folder_path</em><big>)</big><a class="reference internal" href="_modules/pyDive/picongpu.html#getSteps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.picongpu.getSteps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all timesteps in <em>folder_path</em>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.picongpu.loadAllSteps">
+<tt class="descclassname">pyDive.picongpu.</tt><tt class="descname">loadAllSteps</tt><big>(</big><em>folder_path</em>, <em>data_path</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/picongpu.html#loadAllSteps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.picongpu.loadAllSteps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Python generator object looping hdf5-data of all timesteps found in <em>folder_path</em>.</p>
+<p>This generator doesn&#8217;t read or write any data elements from hdf5 but returns dataset-handles
+covered by <em>pyDive.h5_ndarray</em> objects.</p>
+<p>All datasets inside <em>data_path</em> must have the same shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>folder_path</strong> (<em>str</em>) &#8211; Path of the folder containing the hdf5-files</li>
+<li><strong>data_path</strong> (<em>str</em>) &#8211; Relative path starting from &#8220;/data/&lt;timestep&gt;/&#8221; within hdf5-file to the dataset or group of datasets</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which datasets are distributed over when once loaded into memory.</li>
+<li><strong>window</strong> (list of slice objects (<em class="xref std std-ref">numpy.s_</em>).) &#8211; This param let you specify a sub-part of the array as a virtual container.
+Example: window=np.s_[:,:,::2]</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">tuple of timestep and a <em class="xref std std-ref">pyDive.h5_ndarray</em>
+or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a>). Ordering is done by timestep.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.picongpu.loadSteps">
+<tt class="descclassname">pyDive.picongpu.</tt><tt class="descname">loadSteps</tt><big>(</big><em>steps</em>, <em>folder_path</em>, <em>data_path</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/picongpu.html#loadSteps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.picongpu.loadSteps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Python generator object looping all hdf5-data found in <em>folder_path</em>
+from timesteps appearing in <em>steps</em>.</p>
+<p>This generator doesn&#8217;t read or write any data elements from hdf5 but returns dataset-handles
+covered by <em>pyDive.h5_ndarray</em> objects.</p>
+<p>All datasets inside <em>data_path</em> must have the same shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>steps</strong> (<em>ints</em>) &#8211; list of timesteps to loop</li>
+<li><strong>folder_path</strong> (<em>str</em>) &#8211; Path of the folder containing the hdf5-files</li>
+<li><strong>data_path</strong> (<em>str</em>) &#8211; Relative path starting from &#8220;/data/&lt;timestep&gt;/&#8221; within hdf5-file to the dataset or group of datasets</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which datasets are distributed over when once loaded into memory.</li>
+<li><strong>window</strong> (list of slice objects (<em class="xref std std-ref">numpy.s_</em>).) &#8211; This param let you specify a sub-part of the array as a virtual container.
+Example: window=np.s_[:,:,::2]</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">tuple of timestep and a <em class="xref std std-ref">pyDive.h5_ndarray</em>
+or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a>). Ordering is done by timestep.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pyDive.pyDive">
+<span id="pydive-pydive-module"></span><h1>pyDive.pyDive module<a class="headerlink" href="#module-pyDive.pyDive" title="Permalink to this headline">¶</a></h1>
+<p>Make most used functions and modules directly accessable from pyDive.</p>
+<p><strong>Functions</strong>:</p>
+<p><a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.factories.array" title="pyDive.ndarray.factories.array"><tt class="xref py py-obj docutils literal"><span class="pre">array</span></tt></a></p>
+<p><a class="reference internal" href="#pyDive.arrayOfStructs.arrayOfStructs" title="pyDive.arrayOfStructs.arrayOfStructs"><tt class="xref py py-obj docutils literal"><span class="pre">arrayOfStructs</span></tt></a></p>
+<p><a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.factories.empty" title="pyDive.ndarray.factories.empty"><tt class="xref py py-obj docutils literal"><span class="pre">empty</span></tt></a></p>
+<p><a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.factories.empty_like" title="pyDive.ndarray.factories.empty_like"><tt class="xref py py-obj docutils literal"><span class="pre">empty_like</span></tt></a></p>
+<p><a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.factories.hollow" title="pyDive.ndarray.factories.hollow"><tt class="xref py py-obj docutils literal"><span class="pre">hollow</span></tt></a></p>
+<p><a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.factories.hollow_like" title="pyDive.ndarray.factories.hollow_like"><tt class="xref py py-obj docutils literal"><span class="pre">hollow_like</span></tt></a></p>
+<p><tt class="xref py py-obj docutils literal"><span class="pre">init</span></tt></p>
+<p><a class="reference internal" href="#pyDive.algorithm.map" title="pyDive.algorithm.map"><tt class="xref py py-obj docutils literal"><span class="pre">map</span></tt></a></p>
+<p><a class="reference internal" href="#pyDive.algorithm.mapReduce" title="pyDive.algorithm.mapReduce"><tt class="xref py py-obj docutils literal"><span class="pre">mapReduce</span></tt></a></p>
+<p><a class="reference internal" href="#pyDive.mappings.mesh2particles" title="pyDive.mappings.mesh2particles"><tt class="xref py py-obj docutils literal"><span class="pre">mesh2particles</span></tt></a></p>
+<p><a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.factories.ones" title="pyDive.ndarray.factories.ones"><tt class="xref py py-obj docutils literal"><span class="pre">ones</span></tt></a></p>
+<p><a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.factories.ones_like" title="pyDive.ndarray.factories.ones_like"><tt class="xref py py-obj docutils literal"><span class="pre">ones_like</span></tt></a></p>
+<p><a class="reference internal" href="#pyDive.mappings.particles2mesh" title="pyDive.mappings.particles2mesh"><tt class="xref py py-obj docutils literal"><span class="pre">particles2mesh</span></tt></a></p>
+<p><a class="reference internal" href="#pyDive.algorithm.reduce" title="pyDive.algorithm.reduce"><tt class="xref py py-obj docutils literal"><span class="pre">reduce</span></tt></a></p>
+<p><a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.factories.zeros" title="pyDive.ndarray.factories.zeros"><tt class="xref py py-obj docutils literal"><span class="pre">zeros</span></tt></a></p>
+<p><a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.factories.zeros_like" title="pyDive.ndarray.factories.zeros_like"><tt class="xref py py-obj docutils literal"><span class="pre">zeros_like</span></tt></a></p>
+<p><strong>Modules</strong>:</p>
+<p><tt class="xref py py-mod docutils literal"><span class="pre">IPParallelClient</span></tt></p>
+<p><a class="reference internal" href="#module-pyDive.algorithm" title="pyDive.algorithm"><tt class="xref py py-mod docutils literal"><span class="pre">algorithm</span></tt></a></p>
+<p><a class="reference internal" href="pyDive.cloned_ndarray.html#module-pyDive.cloned_ndarray.factories" title="pyDive.cloned_ndarray.factories"><tt class="xref py py-mod docutils literal"><span class="pre">cloned</span></tt></a></p>
+<p><tt class="xref py py-mod docutils literal"><span class="pre">cloned_ndarray</span></tt></p>
+<p><a class="reference internal" href="pyDive.h5_ndarray.html#module-pyDive.h5_ndarray.factories" title="pyDive.h5_ndarray.factories"><tt class="xref py py-mod docutils literal"><span class="pre">h5</span></tt></a></p>
+<p><tt class="xref py py-mod docutils literal"><span class="pre">h5_ndarray</span></tt></p>
+<p><a class="reference internal" href="#module-pyDive.mappings" title="pyDive.mappings"><tt class="xref py py-mod docutils literal"><span class="pre">mappings</span></tt></a></p>
+<p><tt class="xref py py-mod docutils literal"><span class="pre">ndarray</span></tt></p>
+<p><a class="reference internal" href="#module-pyDive.picongpu" title="pyDive.picongpu"><tt class="xref py py-mod docutils literal"><span class="pre">picongpu</span></tt></a></p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyDive.arrayOfStructs module</a></li>
+<li><a class="reference internal" href="#module-pyDive.algorithm">pyDive.algorithm module</a></li>
+<li><a class="reference internal" href="#module-pyDive.mappings">pyDive.mappings module</a></li>
+<li><a class="reference internal" href="#module-pyDive.picongpu">pyDive.picongpu module</a></li>
+<li><a class="reference internal" href="#module-pyDive.pyDive">pyDive.pyDive module</a></li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pyDive.cloned_ndarray.html"
+                        title="previous chapter">pyDive.cloned_ndarray package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/modules.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyDive.cloned_ndarray.html" title="pyDive.cloned_ndarray package"
+             >previous</a> |</li>
+        <li><a href="index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="reference.html" >Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.algorithm &mdash; pyDive  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pyDive.algorithm</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Copyright 2014 Heiko Burau</span>
+
+<span class="sd">This file is part of pyDive.</span>
+
+<span class="sd">pyDive is free software: you can redistribute it and/or modify</span>
+<span class="sd">it under the terms of of either the GNU General Public License or</span>
+<span class="sd">the GNU Lesser General Public License as published by</span>
+<span class="sd">the Free Software Foundation, either version 3 of the License, or</span>
+<span class="sd">(at your option) any later version.</span>
+<span class="sd">pyDive is distributed in the hope that it will be useful,</span>
+<span class="sd">but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="sd">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="sd">GNU General Public License and the GNU Lesser General Public License</span>
+<span class="sd">for more details.</span>
+
+<span class="sd">You should have received a copy of the GNU General Public License</span>
+<span class="sd">and the GNU Lesser General Public License along with pyDive.</span>
+<span class="sd">If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">ndarray</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">h5_ndarray.h5_ndarray</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">cloned_ndarray</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">IPython.parallel</span> <span class="kn">import</span> <span class="n">interactive</span>
+<span class="kn">from</span> <span class="nn">h5_ndarray</span> <span class="kn">import</span> <span class="n">h5caching</span>
+
+<div class="viewcode-block" id="map"><a class="viewcode-back" href="../../modules.html#pyDive.algorithm.map">[docs]</a><span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calls *f* on :term:`engine` with local numpy-arrays related to *arrays*.</span>
+<span class="sd">    Example: ::</span>
+
+<span class="sd">        cluster_array = pyDive.ones(shape=[100], distaxis=0)</span>
+
+<span class="sd">        cluster_array *= 2.0</span>
+<span class="sd">        # equivalent to</span>
+<span class="sd">        pyDive.map(lambda a: a *= 2.0, cluster_array) # a is the local numpy-array of *cluster_array*</span>
+
+<span class="sd">    :param callable f: function to be called on :term:`engine`. Has to accept *numpy-arrays* and *kwargs*</span>
+<span class="sd">    :param arrays: list of arrays including *pyDive.ndarrays*, *pyDive.h5_ndarrays* or *pyDive.cloned_ndarrays*</span>
+<span class="sd">    :param kwargs: user-specified keyword arguments passed to *f*</span>
+<span class="sd">    :raises AssertionError: if the *shapes* of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
+<span class="sd">    :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - If the hdf5 data exceeds the memory limit (see :ref:`fraction_of_av_mem_used &lt;pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used&gt;`)\</span>
+<span class="sd">            the data will be read block-wise so that a block fits into memory.</span>
+<span class="sd">        - *map* chooses the list of *engines* from the **first** element of *arrays*. On these engines *f* is called.\</span>
+<span class="sd">            If the first array is a *pyDive.h5_ndarray* all engines will be used.</span>
+<span class="sd">        - *map* is not writing data back to a *pyDive.h5_ndarray* yet.</span>
+<span class="sd">        - *map* does not equalize the element distribution of *pyDive.ndarrays* before execution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">map_wrapper</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">arrays</span> <span class="o">=</span> <span class="p">[</span><span class="nb">globals</span><span class="p">()[</span><span class="n">array_name</span><span class="p">]</span> <span class="k">for</span> <span class="n">array_name</span> <span class="ow">in</span> <span class="n">array_names</span><span class="p">]</span>
+        <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+
+    <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="c"># save current target list</span>
+
+    <span class="c"># loop all cache chunks</span>
+    <span class="k">for</span> <span class="n">cached_arrays</span> <span class="ow">in</span> <span class="n">h5caching</span><span class="o">.</span><span class="n">cache_arrays</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">):</span>
+        <span class="n">array_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cached_arrays</span><span class="p">]</span>
+
+        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">cached_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">targets_in_use</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">map_wrapper</span><span class="p">),</span> <span class="n">f</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">tmp_targets</span> <span class="c"># restore target list</span>
+</div>
+<div class="viewcode-block" id="reduce"><a class="viewcode-back" href="../../modules.html#pyDive.algorithm.reduce">[docs]</a><span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="n">_array</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Performs a reduction over all axes of *_array*.</span>
+
+<span class="sd">    :param _array: *pyDive.ndarray*, *pyDive.h5_ndarray* or *pyDive.cloned_ndarray* to be reduced</span>
+<span class="sd">    :param numpy-ufunc op: reduce operation, e.g. *numpy.add*.</span>
+
+<span class="sd">    If the hdf5 data exceeds the memory limit (see :ref:`fraction_of_av_mem_used &lt;pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used&gt;`)\</span>
+<span class="sd">    the data will be read block-wise so that a block fits into memory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">reduce_wrapper</span><span class="p">(</span><span class="n">array_name</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="n">_array</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">array_name</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">_array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span> <span class="c"># reduce over all axes</span>
+
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+
+    <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="c"># save current target list</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="c"># loop all cache chunks</span>
+    <span class="k">for</span> <span class="n">cached_arrays</span> <span class="ow">in</span> <span class="n">h5caching</span><span class="o">.</span><span class="n">cache_arrays</span><span class="p">(</span><span class="n">_array</span><span class="p">):</span>
+        <span class="n">cached_array</span> <span class="o">=</span> <span class="n">cached_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c"># there is just one array in the list</span>
+        <span class="n">array_name</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">cached_array</span><span class="p">)</span>
+
+        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">cached_array</span><span class="o">.</span><span class="n">targets_in_use</span>
+        <span class="n">targets_results</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">reduce_wrapper</span><span class="p">),</span> <span class="n">array_name</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+        <span class="n">chunk_result</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">chunk_result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">chunk_result</span><span class="p">)</span>
+
+    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">tmp_targets</span> <span class="c"># restore target list</span>
+    <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="mapReduce"><a class="viewcode-back" href="../../modules.html#pyDive.algorithm.mapReduce">[docs]</a><span class="k">def</span> <span class="nf">mapReduce</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Calls *map_func* on :term:`engine` with local numpy-arrays related to *arrays*</span>
+<span class="sd">    and reduces its result.</span>
+<span class="sd">    Example: ::</span>
+
+<span class="sd">        cluster_array = pyDive.ones(shape=[100], distaxis=0)</span>
+
+<span class="sd">        s = pyDive.mapReduce(lambda a: a**2, np.add, cluster_array) # a is the local numpy-array of *cluster_array*</span>
+<span class="sd">        assert s == 100</span>
+
+<span class="sd">    :param callable f: function to be called on :term:`engine`. Has to accept *numpy-arrays* and *kwargs*</span>
+<span class="sd">    :param numpy-ufunc reduce_op: reduce operation, e.g. *numpy.add*.</span>
+<span class="sd">    :param arrays: list of arrays including *pyDive.ndarrays*, *pyDive.h5_ndarrays* or *pyDive.cloned_ndarrays*</span>
+<span class="sd">    :param kwargs: user-specified keyword arguments passed to *f*</span>
+<span class="sd">    :raises AssertionError: if the *shapes* of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
+<span class="sd">    :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - If the hdf5 data exceeds the memory limit (see :ref:`fraction_of_av_mem_used &lt;pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used&gt;`)\</span>
+<span class="sd">            the data will be read block-wise so that a block fits into memory.</span>
+<span class="sd">        - *mapReduce* chooses the list of *engines* from the **first** element of *arrays*. On these engines the mapReduce will be executed.\</span>
+<span class="sd">            If the first array is a *pyDive.h5_ndarray* all engines will be used.</span>
+<span class="sd">        - *mapReduce* is not writing data back to a *pyDive.h5_ndarray* yet.</span>
+<span class="sd">        - *mapReduce* does not equalize the element distribution of *pyDive.ndarrays* before execution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">mapReduce_wrapper</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">arrays</span> <span class="o">=</span> <span class="p">[</span><span class="nb">globals</span><span class="p">()[</span><span class="n">array_name</span><span class="p">]</span> <span class="k">for</span> <span class="n">array_name</span> <span class="ow">in</span> <span class="n">array_names</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">reduce_op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">map_func</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+    <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="c"># save current target list</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="c"># loop all cache chunks</span>
+    <span class="k">for</span> <span class="n">cached_arrays</span> <span class="ow">in</span> <span class="n">h5caching</span><span class="o">.</span><span class="n">cache_arrays</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">):</span>
+        <span class="n">array_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cached_arrays</span><span class="p">]</span>
+
+        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">cached_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">targets_in_use</span>
+        <span class="n">targets_results</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">mapReduce_wrapper</span><span class="p">),</span>\
+            <span class="n">map_func</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">chunk_result</span> <span class="o">=</span> <span class="n">reduce_op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">chunk_result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">reduce_op</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">chunk_result</span><span class="p">)</span>
+
+    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">tmp_targets</span> <span class="c"># restore target list</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pyDive  documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
