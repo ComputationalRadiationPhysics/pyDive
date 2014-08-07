@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 and the GNU Lesser General Public License along with pyDive.
 If not, see <http://www.gnu.org/licenses/>.
 """
+__doc__ = None
 
 def gatherArraysMPI_sync(out_array, targets, tags, distaxis_sizes, distaxis, target2rank):
     window = [slice(None)] * len(shape(out_array))

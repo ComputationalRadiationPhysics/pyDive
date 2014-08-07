@@ -30,4 +30,13 @@ ones = pyDive.ones_like(h5field)
 h5field[1:] = h5field[1:] - h5field[:-1] + 5.0 * ones[1:]
 ```
 
-## Documentation
+## Getting started
+
+In our [Online Documentation](http://ComputationalRadiationPhysics.github.io/pyDive/) you can find 
+detailed information on all interfaces as well as some [Tutorials](http://computationalradiationphysics.github.io/pyDive/tutorial.html)
+and a [Quickstart](http://computationalradiationphysics.github.io/pyDive/start.html).
+
+## Software License
+
+pyDive is licensed under the **GPLv3+ and LGPLv3+** (it is *dual licensed*).
+Licences can be found in [GPL](COPYING) or [LGPL](COPYING.LESSER), respectively.

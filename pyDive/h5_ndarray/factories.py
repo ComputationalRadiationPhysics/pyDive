@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 and the GNU Lesser General Public License along with pyDive.
 If not, see <http://www.gnu.org/licenses/>.
 """
+__doc__ = None
 
 from . import h5_ndarray
 import h5py as h5
