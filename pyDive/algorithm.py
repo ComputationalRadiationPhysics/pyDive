@@ -45,7 +45,7 @@ def map(f, *arrays, **kwargs):
     :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
 
     Notes:
-        - If the hdf5 data exceeds the memory limit (see :ref:`fraction_of_av_mem_used <pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used>`)\
+        - If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\
             the data will be read block-wise so that a block fits into memory.
         - *map* chooses the list of *engines* from the **first** element of *arrays*. On these engines *f* is called.\
             If the first array is a *pyDive.h5_ndarray* all engines will be used.
@@ -75,7 +75,7 @@ def reduce(_array, op):
     :param _array: *pyDive.ndarray*, *pyDive.h5_ndarray* or *pyDive.cloned_ndarray* to be reduced
     :param numpy-ufunc op: reduce operation, e.g. *numpy.add*.
 
-    If the hdf5 data exceeds the memory limit (see :ref:`fraction_of_av_mem_used <pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used>`)\
+    If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\
     the data will be read block-wise so that a block fits into memory.
     """
     def reduce_wrapper(array_name, op):
@@ -121,7 +121,7 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
 
     Notes:
-        - If the hdf5 data exceeds the memory limit (see :ref:`fraction_of_av_mem_used <pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used>`)\
+        - If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\
             the data will be read block-wise so that a block fits into memory.
         - *mapReduce* chooses the list of *engines* from the **first** element of *arrays*. On these engines the mapReduce will be executed.\
             If the first array is a *pyDive.h5_ndarray* all engines will be used.

@@ -42,8 +42,22 @@ Now let's say our dataset is really big and we just want to get a first estimate
   ...
   total_energy = pyDive.mapReduce(square_field, np.add, h5field[::10, ::10, ::10]) * 10.0**3
 
-This is valid if *h5field[::10, ::10, ::10]* fits into the cluster's memory. Note that slicing on a :obj:`pyDive.h5_ndarray` always
-means reading or writing from hdf5 to respectively from memory. So if it doesn't fit we have to apply the slicing somewhere else in fact
+This is valid if *h5field[::10, ::10, ::10]* fits into the cluster's memory. So we could also use the very first version: ::
+
+  import pyDive
+  import numpy as np
+  pyDive.init()
+
+  h5field = pdDive.h5.fromPath("field.h5", "FieldE", distaxis=0)
+  field = h5field[::10, ::10, ::10]
+
+  energy_field = field["x"]**2 + field["y"]**2 + field["z"]**2
+  
+  total_energy = pyDive.reduce(energy_field, np.add)
+
+Note that slicing on a :obj:`pyDive.h5_ndarray` always
+means reading or writing from hdf5 to respectively from memory. 
+But if *h5field[::10, ::10, ::10]* doesn't fit we have to apply the slicing somewhere else in fact
 at the time when instanciating *h5field*: ::
 
   import pyDive

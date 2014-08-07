@@ -43,7 +43,7 @@ class h5_ndarray(object):
 
     """
     def __init__(self, h5_filename, dataset_path, distaxis, window=None):
-        """Creates an :class:`pyDive.h5_ndarray.h5_ndarray.h5_ndarray` instance.
+        """Creates an :class:`h5_ndarray` instance.
         By using this method you may only load a single dataset. If you want to
         load a *structure* of datasets at once see :func:`pyDive.h5_ndarray.factories.fromPath`.
 
@@ -52,7 +52,7 @@ class h5_ndarray(object):
         :param int distaxis: axis on which dataset is to be distributed over during data-access
         :param window: This param let you specify a sub-part of the array as a virtual container.
             Example: window=np.s_[:,:,::2]
-        :type window: list of slice objects (:ref:`numpy.s_`).
+        :type window: list of slice objects (:obj:`numpy.s_`).
         """
         self.h5_filename = h5_filename
         self.dataset_path = dataset_path

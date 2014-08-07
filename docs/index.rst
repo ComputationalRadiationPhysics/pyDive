@@ -23,3 +23,10 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
+.. glossary::
+   
+   engine
+    The cluster nodes of *IPython.parallel* are called *engines*. Sometimes they are also called *targets*.
+    They are the workers of pyDive performing all the computation and file i/o and they hold the actual array-memory.
+    From the user perspective you don't to deal with them directly.
+
