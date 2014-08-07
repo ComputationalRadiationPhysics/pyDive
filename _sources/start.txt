@@ -23,9 +23,9 @@ Basic code example: ::
   # plot result
   ...
 
-Before actually running this script there has to be an IPython.parallel cluster started (see section below) otherwise `pyDive.init()` fails.
+Before actually running this script there must have been an IPython.parallel cluster started (see section below) otherwise `pyDive.init()` fails.
 
-To keep things simple pyDive distributes array memory only along **one** user-specified axis. This axis is given by the `distaxis`
+To keep things simple pyDive distributes array-memory only along **one** user-specified axis. This axis is given by the `distaxis`
 parameter at array instanciating. It should usually be the largest axis in order to have the best surface-to-volume ratio. 
 But keep in mind that during arithmetic operations both arrays have to be distributed along the *same* axis.
 

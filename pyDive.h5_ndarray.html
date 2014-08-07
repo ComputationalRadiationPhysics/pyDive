@@ -77,7 +77,7 @@ h5_data[:] = data # write everything back
 <dl class="method">
 <dt id="pyDive.h5_ndarray.h5_ndarray.h5_ndarray.__init__">
 <tt class="descname">__init__</tt><big>(</big><em>h5_filename</em>, <em>dataset_path</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/h5_ndarray.html#h5_ndarray.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.h5_ndarray.h5_ndarray.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates an <a class="reference internal" href="#pyDive.h5_ndarray.h5_ndarray.h5_ndarray" title="pyDive.h5_ndarray.h5_ndarray.h5_ndarray"><tt class="xref py py-class docutils literal"><span class="pre">pyDive.h5_ndarray.h5_ndarray.h5_ndarray</span></tt></a> instance.
+<dd><p>Creates an <tt class="xref py py-class docutils literal"><span class="pre">h5_ndarray</span></tt> instance.
 By using this method you may only load a single dataset. If you want to
 load a <em>structure</em> of datasets at once see <a class="reference internal" href="#pyDive.h5_ndarray.factories.fromPath" title="pyDive.h5_ndarray.factories.fromPath"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.h5_ndarray.factories.fromPath()</span></tt></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -88,7 +88,7 @@ load a <em>structure</em> of datasets at once see <a class="reference internal" 
 <li><strong>h5_filename</strong> (<em>str</em>) &#8211; Path of the hdf5-file</li>
 <li><strong>dataset_path</strong> (<em>str</em>) &#8211; Path to the dataset within the hdf5-file</li>
 <li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which dataset is to be distributed over during data-access</li>
-<li><strong>window</strong> (list of slice objects (<em class="xref std std-ref">numpy.s_</em>).) &#8211; This param let you specify a sub-part of the array as a virtual container.
+<li><strong>window</strong> (list of slice objects (<tt class="xref py py-obj docutils literal"><span class="pre">numpy.s_</span></tt>).) &#8211; This param let you specify a sub-part of the array as a virtual container.
 Example: window=np.s_[:,:,::2]</li>
 </ul>
 </td>
@@ -102,21 +102,6 @@ Example: window=np.s_[:,:,::2]</li>
 </div>
 <div class="section" id="module-pyDive.h5_ndarray.factories">
 <span id="pydive-h5-ndarray-factories-module"></span><h2>pyDive.h5_ndarray.factories module<a class="headerlink" href="#module-pyDive.h5_ndarray.factories" title="Permalink to this headline">¶</a></h2>
-<p>Copyright 2014 Heiko Burau</p>
-<p>This file is part of pyDive.</p>
-<p>pyDive is free software: you can redistribute it and/or modify
-it under the terms of of either the GNU General Public License or
-the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-pyDive is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License and the GNU Lesser General Public License
-for more details.</p>
-<p>You should have received a copy of the GNU General Public License
-and the GNU Lesser General Public License along with pyDive.
-If not, see &lt;<a class="reference external" href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>&gt;.</p>
 <dl class="function">
 <dt id="pyDive.h5_ndarray.factories.fromPath">
 <tt class="descclassname">pyDive.h5_ndarray.factories.</tt><tt class="descname">fromPath</tt><big>(</big><em>h5_filename</em>, <em>datapath</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/factories.html#fromPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.factories.fromPath" title="Permalink to this definition">¶</a></dt>
@@ -129,7 +114,7 @@ from a hdf5-dataset respectively a hdf5-group.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>h5_filename</strong> (<em>str</em>) &#8211; hdf5-filename</li>
 <li><strong>datapath</strong> (<em>str</em>) &#8211; path within the hdf5-file to a dataset or a group</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <em class="xref std std-term">engines</em></li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
 <li><strong>window</strong> (list of slice objects (<em class="xref std std-ref">numpy.s_</em>)) &#8211; This param let you specify a sub-part of the array as a virtual container.
 Example: window=np.s_[:,:,::2]</li>
 </ul>
@@ -140,6 +125,15 @@ Example: window=np.s_[:,:,::2]</li>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+</div>
+<div class="section" id="pydive-h5-ndarray-h5caching-module">
+<h2>pyDive.h5_ndarray.h5caching module<a class="headerlink" href="#pydive-h5-ndarray-h5caching-module" title="Permalink to this headline">¶</a></h2>
+<dl class="data">
+<dt id="pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used">
+<tt class="descclassname">pyDive.h5_ndarray.h5caching.</tt><tt class="descname">fraction_of_av_mem_used</tt><em class="property"> = 0.25</em><a class="headerlink" href="#pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used" title="Permalink to this definition">¶</a></dt>
+<dd><p>fraction of the available memory per engine used for caching hdf5 files.</p>
 </dd></dl>
 
 </div>
@@ -157,6 +151,7 @@ Example: window=np.s_[:,:,::2]</li>
 <li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#pydive-h5-ndarray-h5-ndarray-module">pyDive.h5_ndarray.h5_ndarray module</a></li>
 <li><a class="reference internal" href="#module-pyDive.h5_ndarray.factories">pyDive.h5_ndarray.factories module</a></li>
+<li><a class="reference internal" href="#pydive-h5-ndarray-h5caching-module">pyDive.h5_ndarray.h5caching module</a></li>
 </ul>
 </li>
 </ul>

@@ -84,7 +84,7 @@ In this case we want to load the hdf5 data piece by piece. The functions in <a c
 <span class="n">total_energy</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mapReduce</span><span class="p">(</span><span class="n">square_field</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">h5field</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><em>square_field</em> is called on each <em class="xref std std-term">engine</em> where <em>npfield</em> is a structure (<a class="reference internal" href="modules.html#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a>) of numpy-arrays representing a sub part of the big <em>h5field</em>.
+<p><em>square_field</em> is called on each <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a> where <em>npfield</em> is a structure (<a class="reference internal" href="modules.html#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a>) of numpy-arrays representing a sub part of the big <em>h5field</em>.
 <a class="reference internal" href="modules.html#pyDive.algorithm.mapReduce" title="pyDive.algorithm.mapReduce"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.algorithm.mapReduce()</span></tt></a> can be called with an arbitrary number of arrays including
 <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.ndarrays</span></tt>, <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarrays</span></tt> and <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.cloned_ndarrays</span></tt>. If there are <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarrays</span></tt> it will
 check whether they fit into the cluster memory as a whole and loads them piece by piece if not.</p>
@@ -93,8 +93,22 @@ check whether they fit into the cluster memory as a whole and loads them piece b
 <span class="n">total_energy</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mapReduce</span><span class="p">(</span><span class="n">square_field</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">h5field</span><span class="p">[::</span><span class="mi">10</span><span class="p">,</span> <span class="p">::</span><span class="mi">10</span><span class="p">,</span> <span class="p">::</span><span class="mi">10</span><span class="p">])</span> <span class="o">*</span> <span class="mf">10.0</span><span class="o">**</span><span class="mi">3</span>
 </pre></div>
 </div>
-<p>This is valid if <em>h5field[::10, ::10, ::10]</em> fits into the cluster&#8217;s memory. Note that slicing on a <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarray</span></tt> always
-means reading or writing from hdf5 to respectively from memory. So if it doesn&#8217;t fit we have to apply the slicing somewhere else in fact
+<p>This is valid if <em>h5field[::10, ::10, ::10]</em> fits into the cluster&#8217;s memory. So we could also use the very first version:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyDive</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="n">pyDive</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+
+<span class="n">h5field</span> <span class="o">=</span> <span class="n">pdDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="s">&quot;field.h5&quot;</span><span class="p">,</span> <span class="s">&quot;FieldE&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">field</span> <span class="o">=</span> <span class="n">h5field</span><span class="p">[::</span><span class="mi">10</span><span class="p">,</span> <span class="p">::</span><span class="mi">10</span><span class="p">,</span> <span class="p">::</span><span class="mi">10</span><span class="p">]</span>
+
+<span class="n">energy_field</span> <span class="o">=</span> <span class="n">field</span><span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">field</span><span class="p">[</span><span class="s">&quot;y&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">field</span><span class="p">[</span><span class="s">&quot;z&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="n">total_energy</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">energy_field</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that slicing on a <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.h5_ndarray</span></tt> always
+means reading or writing from hdf5 to respectively from memory.
+But if <em>h5field[::10, ::10, ::10]</em> doesn&#8217;t fit we have to apply the slicing somewhere else in fact
 at the time when instanciating <em>h5field</em>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyDive</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
@@ -161,7 +175,7 @@ This is the job of <tt class="xref py py-obj docutils literal"><span class="pre"
 <span class="n">final_density</span> <span class="o">=</span> <span class="n">density</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="c"># add up all local copies</span>
 </pre></div>
 </div>
-<p>Here, as in the example above, <em>particles2density</em> is a function executed on the <em class="xref std std-term">engines</em> by <a class="reference internal" href="modules.html#pyDive.algorithm.map" title="pyDive.algorithm.map"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.algorithm.map()</span></tt></a>.
+<p>Here, as in the example above, <em>particles2density</em> is a function executed on the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> by <a class="reference internal" href="modules.html#pyDive.algorithm.map" title="pyDive.algorithm.map"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.algorithm.map()</span></tt></a>.
 All of its arguments are numpy-arrays or structures (<a class="reference internal" href="modules.html#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a>) of numpy-arrays.</p>
 </div>
 </div>

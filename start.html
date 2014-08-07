@@ -74,8 +74,8 @@ pyDive with these and other required packages from <cite>requirements.txt</cite>
 <span class="o">...</span>
 </pre></div>
 </div>
-<p>Before actually running this script there has to be an IPython.parallel cluster started (see section below) otherwise <cite>pyDive.init()</cite> fails.</p>
-<p>To keep things simple pyDive distributes array memory only along <strong>one</strong> user-specified axis. This axis is given by the <cite>distaxis</cite>
+<p>Before actually running this script there must have been an IPython.parallel cluster started (see section below) otherwise <cite>pyDive.init()</cite> fails.</p>
+<p>To keep things simple pyDive distributes array-memory only along <strong>one</strong> user-specified axis. This axis is given by the <cite>distaxis</cite>
 parameter at array instanciating. It should usually be the largest axis in order to have the best surface-to-volume ratio.
 But keep in mind that during arithmetic operations both arrays have to be distributed along the <em>same</em> axis.</p>
 <p>Although the array elements are stored on the cluster nodes you have full access through indexing. If you want to have a numpy-array

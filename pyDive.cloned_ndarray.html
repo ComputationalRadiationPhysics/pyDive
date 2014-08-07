@@ -65,7 +65,7 @@
 <dt id="pyDive.cloned_ndarray.cloned_ndarray.cloned_ndarray">
 <em class="property">class </em><tt class="descclassname">pyDive.cloned_ndarray.cloned_ndarray.</tt><tt class="descname">cloned_ndarray</tt><big>(</big><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>targets_in_use='all'</em>, <em>no_allocation=False</em><big>)</big><a class="reference internal" href="_modules/pyDive/cloned_ndarray/cloned_ndarray.html#cloned_ndarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.cloned_ndarray.cloned_ndarray.cloned_ndarray" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a multidimensional, homogenous array of fixed-size elements which is cloned
-on the cluster nodes. <em>Cloned</em> means that every participating <em class="xref std std-term">engine</em> holds an independent, local numpy-array
+on the cluster nodes. <em>Cloned</em> means that every participating <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a> holds an independent, local numpy-array
 of the user-defined shape. The user can then do e.g. some manual stuff on the local arrays or
 some computation with <a class="reference internal" href="modules.html#module-pyDive.algorithm" title="pyDive.algorithm"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.algorithm</span></tt></a> on them.</p>
 <p>Note that there exists no &#8216;original&#8217; array as the name might suggest but something like that can be
@@ -84,9 +84,9 @@ or &#8216;empty_targets_like&#8217; (see <a class="reference internal" href="#mo
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; size of the array on each axis</li>
 <li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
-<li><strong>targets_in_use</strong> (<em>ints</em>) &#8211; list of <em class="xref std std-term">engine</em>-ids that share this array.            Or &#8216;all&#8217; for all engines.</li>
+<li><strong>targets_in_use</strong> (<em>ints</em>) &#8211; list of <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a>-ids that share this array.            Or &#8216;all&#8217; for all engines.</li>
 <li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> no actual memory, i.e. <em>numpy-array</em>, will be
-allocated on <em class="xref std std-term">engine</em>. Useful when you want to assign an existing numpy array manually.</li>
+allocated on <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a>. Useful when you want to assign an existing numpy array manually.</li>
 </ul>
 </td>
 </tr>

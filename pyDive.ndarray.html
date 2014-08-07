@@ -65,7 +65,7 @@
 <dt id="pyDive.ndarray.ndarray.ndarray">
 <em class="property">class </em><tt class="descclassname">pyDive.ndarray.ndarray.</tt><tt class="descname">ndarray</tt><big>(</big><em>shape</em>, <em>distaxis</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>idx_ranges=None</em>, <em>targets_in_use=None</em>, <em>no_allocation=False</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/ndarray.html#ndarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.ndarray.ndarray" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a cluster-wide, multidimensional, homogenous array of fixed-size elements.
-<em>cluster-wide</em> means that its elements are distributed across <em class="xref std std-term">IPython.parallel-engines</em>.
+<em>cluster-wide</em> means that its elements are distributed across <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">IPython.parallel-engines</em></a>.
 The distribution is done in one dimension along a user-specified axis. The user can optionally specify
 which engine maps to which index range or leave the default that persuits an uniform distribution
 across all engines.</p>
@@ -90,13 +90,13 @@ or &#8216;array&#8217; (see <a class="reference internal" href="#module-pyDive.n
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>shape</strong> (<em>tuple of ints</em>) &#8211; size of the array on each axis</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <em class="xref std std-term">engines</em></li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
 <li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
 <li><strong>idx_ranges</strong> (<em>tuple/list of (int, int)</em>) &#8211; list of (begin, end) pairs indicating the index range the corresponding
-<em class="xref std std-term">engine</em> (see <em class="xref std std-ref">targets_in_use</em>) is associated with</li>
-<li><strong>targets_in_use</strong> (<em>tuple/list of ints</em>) &#8211; list of <em class="xref std std-term">engine</em>-ids that share this array.</li>
+<a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a> (see <em class="xref std std-ref">targets_in_use</em>) is associated with</li>
+<li><strong>targets_in_use</strong> (<em>tuple/list of ints</em>) &#8211; list of <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a>-ids that share this array.</li>
 <li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> no actual memory, i.e. <em>numpy-array</em>, will be
-allocated on <em class="xref std std-term">engine</em>. Useful when you want to assign an existing numpy array manually.</li>
+allocated on <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a>. Useful when you want to assign an existing numpy array manually.</li>
 </ul>
 </td>
 </tr>
@@ -107,7 +107,7 @@ allocated on <em class="xref std std-term">engine</em>. Useful when you want to 
 </tbody>
 </table>
 <p>If <em>idx_ranges</em> and <em>targets_in_use</em> are both <tt class="docutils literal"><span class="pre">None</span></tt> they will be auto-generated
-so that the memory will be equally distributed across all <em class="xref std std-term">engines</em> at its best.
+so that the memory will be equally distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> at its best.
 This means that the last engine may get less memory than the others.</p>
 </dd></dl>
 
@@ -175,7 +175,7 @@ the result.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>array_like</strong> (<em>array-like</em>) &#8211; Any object exposing the array interface, e.g. numpy-array, python sequence, ...</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <em class="xref std std-term">engines</em></li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
 </ul>
 </td>
 </tr>
@@ -186,14 +186,14 @@ the result.</p>
 <dl class="function">
 <dt id="pyDive.ndarray.factories.empty">
 <tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">empty</tt><big>(</big><em>shape</em>, <em>distaxis</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.empty" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <em class="xref std std-ref">pyDive.ndarray</em> distributed across all <em class="xref std std-term">engines</em> without initializing elements.</p>
+<dd><p>Return a new <em class="xref std std-ref">pyDive.ndarray</em> distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> without initializing elements.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <em class="xref std std-term">engines</em></li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
 <li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
 </ul>
 </td>
@@ -212,7 +212,7 @@ the result.</p>
 <dt id="pyDive.ndarray.factories.hollow">
 <tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">hollow</tt><big>(</big><em>shape</em>, <em>distaxis</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#hollow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.hollow" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="docutils">
-<dt>Return a new <em class="xref std std-ref">pyDive.ndarray</em> distributed across all <em class="xref std std-term">engines</em> without allocating a local</dt>
+<dt>Return a new <em class="xref std std-ref">pyDive.ndarray</em> distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> without allocating a local</dt>
 <dd><em>numpy-array</em>.</dd>
 </dl>
 <table class="docutils field-list" frame="void" rules="none">
@@ -221,7 +221,7 @@ the result.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <em class="xref std std-term">engines</em></li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
 <li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
 </ul>
 </td>
@@ -240,14 +240,14 @@ a local <em>numpy-array</em>.</p>
 <dl class="function">
 <dt id="pyDive.ndarray.factories.ones">
 <tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">ones</tt><big>(</big><em>shape</em>, <em>distaxis</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#ones"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.ones" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <em class="xref std std-ref">pyDive.ndarray</em> distributed across all <em class="xref std std-term">engines</em> filled with ones.</p>
+<dd><p>Return a new <em class="xref std std-ref">pyDive.ndarray</em> distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> filled with ones.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <em class="xref std std-term">engines</em></li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
 <li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
 </ul>
 </td>
@@ -265,14 +265,14 @@ a local <em>numpy-array</em>.</p>
 <dl class="function">
 <dt id="pyDive.ndarray.factories.zeros">
 <tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">zeros</tt><big>(</big><em>shape</em>, <em>distaxis</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#zeros"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.zeros" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <em class="xref std std-ref">pyDive.ndarray</em> distributed across all <em class="xref std std-term">engines</em> filled with zeros.</p>
+<dd><p>Return a new <em class="xref std std-ref">pyDive.ndarray</em> distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> filled with zeros.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <em class="xref std std-term">engines</em></li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
 <li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
 </ul>
 </td>
