@@ -26,7 +26,7 @@ from ..import IPParallelClient as com
 from IPython.parallel import interactive
 
 #: fraction of the available memory per engine used for caching hdf5 files.
-fraction_of_av_mem_used = 0.5
+fraction_of_av_mem_used = 0.25
 
 def __bestStepSize(h5_ndarrays):
     view = com.getView()
