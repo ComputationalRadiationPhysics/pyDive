@@ -55,7 +55,8 @@ def zeros(shape, distaxis, dtype=np.float):
     """
     result = hollow(shape, distaxis, dtype)
     view = com.getView()
-    view.execute("%s = np.zeros(%s.shape, %s.dtype)" % [result.name]*3, targets=result.targets_in_use)
+    view.push({"shape" : result.shape, "dtype" : result.dtype}, targets=result.targets_in_use)
+    view.execute("{0} = np.zeros(shape, dtype)".format(result.name), targets=result.targets_in_use)
     return result
 
 def ones(shape, distaxis, dtype=np.float):
@@ -67,7 +68,8 @@ def ones(shape, distaxis, dtype=np.float):
     """
     result = hollow(shape, distaxis, dtype)
     view = com.getView()
-    view.execute("%s = np.ones(%s.shape, %s.dtype)" % [result.name]*3, targets=result.targets_in_use)
+    view.push({"shape" : result.shape, "dtype" : result.dtype}, targets=result.targets_in_use)
+    view.execute("{0} = np.ones(shape, dtype)".format(result.name), targets=result.targets_in_use)
     return result
 
 def hollow_like(a):
@@ -86,7 +88,8 @@ def zeros_like(a):
     """
     result = hollow_like(a)
     view = com.getView()
-    view.execute("%s = np.zeros(%s.shape, %s.dtype)" % [result.name]*3, targets=result.targets_in_use)
+    view.push({"shape" : result.shape, "dtype" : result.dtype}, targets=result.targets_in_use)
+    view.execute("{0} = np.zeros(shape, dtype)".format(result_name), targets=result.targets_in_use)
     return result
 
 def ones_like(a):
@@ -94,7 +97,8 @@ def ones_like(a):
     """
     result = hollow_like(a)
     view = com.getView()
-    view.execute("%s = np.ones(%s.shape, %s.dtype)" % [result.name]*3, targets=result.targets_in_use)
+    view.push({"shape" : result.shape, "dtype" : result.dtype}, targets=result.targets_in_use)
+    view.execute("{0} = np.ones(shape, dtype)".format(result_name), targets=result.targets_in_use)
     return result
 
 def array(array_like, distaxis):
