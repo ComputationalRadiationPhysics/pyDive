@@ -51,10 +51,11 @@ Example: ::
 The example shows that in fact *fields* can be treated as an array-of-structures
 **or** a structure-of-arrays depending on what is more appropriate.
 
-The goal is to make the virtual *array-of-structs*-object look like a real array even ready for passing
-to foreign functions that expect a "real" array which at least inherits e.g. from a numpy-array.
-Therefore the virtual *array-of-structs*-object inherits from the class type of its arrays.
-This makes it for instance compatible to :mod:`pyDive.algorithm`.
+The goal is to make the virtual *array-of-structs*-object look like a real array. Every method
+call on the *array-of-structs*-object is forwarded to the leaf-arrays. Therefore you can do things like: ::
+
+    new_field = fields["FieldE"].astype(np.int) + fields["FieldB"].astype(np.float)
+
 """
 
 import sys
@@ -134,7 +135,13 @@ class ForeachLeafDo(object):
             structOfArrays = makeTree_fromTree(self.tree, apply_unary)
         return arrayOfStructs(structOfArrays)
 
-class VirtualArrayOfStructs(object):
+
+magic_ops = [name for name in np.ndarray.__dict__.keys() if name.endswith("__")\
+    and name not in ("__new__", "__str__", "__repr__")]
+make_magicOperation = lambda op: lambda self, *args: self.magicOperation(op, *args)
+MagicOperations = type("MagicOperations", (), {op : make_magicOperation(op) for op in magic_ops})
+
+class VirtualArrayOfStructs(MagicOperations):
 
     def __init__(self, structOfArrays):
         items = [item for item in treeItems(structOfArrays)]
@@ -188,6 +195,9 @@ class VirtualArrayOfStructs(object):
             return ForeachLeafDo(self.structOfArrays, name)
         else:
             raise AttributeError(name)
+
+    def magicOperation(self, op, *args):
+        return ForeachLeafDo(self.structOfArrays, op)(*args)
 
     def __repr__(self):
         return self.name
