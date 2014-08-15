@@ -200,7 +200,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
   ('index', 'pyDive.tex', u'pyDive Documentation',
-   u'Author', 'manual'),
+   u'Heiko Burau', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -230,7 +230,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'pydive', u'pyDive Documentation',
-     [u'Author'], 1)
+     [u'Heiko Burau'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -244,7 +244,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'pyDive', u'pyDive Documentation',
-   u'Author', 'pyDive', 'One line description of project.',
+   u'Heiko Burau', 'pyDive', 'One line description of project.',
    'Miscellaneous'),
 ]
 
