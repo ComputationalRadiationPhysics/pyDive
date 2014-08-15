@@ -111,6 +111,8 @@
         <span class="c">#: datatype of a single data value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">dtype</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">window</span><span class="p">:</span>
             <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">subWindow_of_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>

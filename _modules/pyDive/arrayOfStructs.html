@@ -117,16 +117,29 @@
     <span class="kn">from</span> <span class="nn">IPython.parallel</span> <span class="kn">import</span> <span class="n">interactive</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
-<span class="k">def</span> <span class="nf">makeTree_like</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">expression</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">makeTree_fromTree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">expression</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">traverseTree</span><span class="p">(</span><span class="n">outTree</span><span class="p">,</span> <span class="n">inTree</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">inTree</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
                 <span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="n">traverseTree</span><span class="p">(</span><span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">inTree</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="n">traverseTree</span><span class="p">(</span><span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">expression</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
     <span class="n">outTree</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">traverseTree</span><span class="p">(</span><span class="n">outTree</span><span class="p">,</span> <span class="n">tree</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">outTree</span>
+
+<span class="k">def</span> <span class="nf">makeTree_fromTwoTrees</span><span class="p">(</span><span class="n">treeA</span><span class="p">,</span> <span class="n">treeB</span><span class="p">,</span> <span class="n">expression</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">traverseTrees</span><span class="p">(</span><span class="n">outTree</span><span class="p">,</span> <span class="n">inTreeA</span><span class="p">,</span> <span class="n">inTreeB</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">valueA</span> <span class="ow">in</span> <span class="n">inTreeA</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">valueB</span> <span class="o">=</span> <span class="n">inTreeB</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">valueA</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">traverseTrees</span><span class="p">(</span><span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">valueA</span><span class="p">,</span> <span class="n">valueB</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">outTree</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">expression</span><span class="p">(</span><span class="n">valueA</span><span class="p">,</span> <span class="n">valueB</span><span class="p">)</span>
+    <span class="n">outTree</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">traverseTrees</span><span class="p">(</span><span class="n">outTree</span><span class="p">,</span> <span class="n">treeA</span><span class="p">,</span> <span class="n">treeB</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">outTree</span>
 
 <span class="k">def</span> <span class="nf">visitTwoTrees</span><span class="p">(</span><span class="n">treeA</span><span class="p">,</span> <span class="n">treeB</span><span class="p">,</span> <span class="n">visitor</span><span class="p">):</span>
@@ -151,21 +164,42 @@
 
 <span class="n">arrayOfStructs_id</span> <span class="o">=</span> <span class="mi">0</span>
 
-<span class="k">class</span> <span class="nc">arrayOfStructsClass</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ForeachLeafDo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tree</span> <span class="o">=</span> <span class="n">tree</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">=</span> <span class="n">op</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">apply_unary</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">apply_binary</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="n">VirtualArrayOfStructs</span><span class="p">:</span>
+            <span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">makeTree_fromTwoTrees</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">apply_binary</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">makeTree_fromTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">apply_unary</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">arrayOfStructs</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">VirtualArrayOfStructs</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structOfArrays</span><span class="p">):</span>
         <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">treeItems</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">),</span>\
+        <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">),</span>\
             <span class="s">&quot;all arrays in &#39;structOfArrays&#39; must be of the same type&quot;</span>
         <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">),</span>\
             <span class="s">&quot;all arrays in &#39;structOfArrays&#39; must have the same shape&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">shape</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">makeTree_like</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">makeTree_fromTree</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">nbytes</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">structOfArrays</span>
 
-        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">ndarray</span><span class="p">:</span>
             <span class="c">#assert all(a.targets_in_use == firstArray.targets_in_use for name, a in items),\</span>
             <span class="c">#    &quot;all ndarrays in structure-of-arrays (&#39;structOfArrays&#39;) must have an identical &#39;targets_in_use&#39; attribute&quot;</span>
 
@@ -181,22 +215,28 @@
             <span class="n">arrayOfStructs_id</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="c"># create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use</span>
-            <span class="n">names_tree</span> <span class="o">=</span> <span class="n">makeTree_like</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+            <span class="n">names_tree</span> <span class="o">=</span> <span class="n">makeTree_fromTree</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
 
             <span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="s">&#39;names_tree&#39;</span> <span class="p">:</span> <span class="n">names_tree</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
 
             <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
-<span class="s">                structOfArrays = arrayOfStructs.makeTree_like(names_tree, lambda a_name: globals()[a_name])</span>
+<span class="s">                structOfArrays = arrayOfStructs.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])</span>
 <span class="s">                </span><span class="si">%s</span><span class="s"> = arrayOfStructs.arrayOfStructs(structOfArrays)&#39;&#39;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>\
                 <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h5_ndarray</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">h5_ndarray</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">distaxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">distaxis</span>
 
     <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">ndarray</span><span class="p">:</span>
             <span class="c"># delete remote arrayOfStructs object</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;del </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">ForeachLeafDo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
@@ -208,10 +248,11 @@
                     <span class="n">result</span> <span class="o">+=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&quot;:</span><span class="se">\n</span><span class="s">&quot;</span>
                     <span class="n">result</span> <span class="o">=</span> <span class="n">printTree</span><span class="p">(</span><span class="n">tree</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">indent</span> <span class="o">+</span> <span class="s">&quot;  &quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">result</span> <span class="o">+=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&quot; -&gt; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span>
+                    <span class="n">result</span> <span class="o">+=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&quot; -&gt; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span>
             <span class="k">return</span> <span class="n">result</span>
 
-        <span class="n">result</span> <span class="o">=</span> <span class="s">&quot;StructOfArrays of type &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">))</span> <span class="o">+</span> <span class="s">&quot;:</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s">&quot;VirtualStructOfArrays&lt;array-type: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">))</span> <span class="o">+</span>\
+            <span class="s">&quot;, shape: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;&gt;:</span><span class="se">\n</span><span class="s">&quot;</span>
         <span class="k">return</span> <span class="n">printTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="s">&quot;  &quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
@@ -238,7 +279,7 @@
             <span class="s">&quot;number of arguments (</span><span class="si">%d</span><span class="s">) does not correspond to the dimension (</span><span class="si">%d</span><span class="s">)&quot;</span>\
                 <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
 
-        <span class="n">result</span> <span class="o">=</span> <span class="n">makeTree_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="p">[</span><span class="n">args</span><span class="p">])</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">makeTree_fromTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="p">[</span><span class="n">args</span><span class="p">])</span>
 
         <span class="c"># if args is a list of indices then return a single data value tree</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">):</span>
@@ -287,27 +328,10 @@
 <span class="sd">    :raises AssertionError: if the *arrays-types* do not match. Datatypes may differ.</span>
 <span class="sd">    :raises AssertionError: if the shapes do not match.</span>
 <span class="sd">    :return: Custom object representing a virtual array whose elements have the same tree-like structure</span>
-<span class="sd">        as *structOfArrays*. It inherits from *array-type*.</span>
-
-<span class="sd">    Known Issues:</span>
-<span class="sd">        - If executed on :term:`engine` the virtual array will not inherit from *array-type*.</span>
+<span class="sd">        as *structOfArrays*.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">treeItems</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)]</span>
-    <span class="n">array_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
 
-    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="n">array_type</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">),</span>\
-        <span class="s">&quot;all arrays in &#39;structOfArrays&#39; must be of the same type&quot;</span>
-
-    <span class="c"># create a new class type out of the arrayOfStructsClass that inherits from the arrays&#39; type.</span>
-    <span class="n">my_arrayOfStructsClass</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="s">&quot;ArrayOfStructs_&quot;</span> <span class="o">+</span> <span class="n">array_type</span><span class="o">.</span><span class="n">__module__</span> <span class="o">+</span> <span class="s">&quot;-&quot;</span> <span class="o">+</span> <span class="n">array_type</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>\
-        <span class="p">(</span><span class="n">array_type</span><span class="p">,),</span> <span class="nb">dict</span><span class="p">(</span><span class="n">arrayOfStructsClass</span><span class="o">.</span><span class="n">__dict__</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;True&#39;</span><span class="p">:</span>
-        <span class="c"># This is a workaround. Instanciation of my_arrayOfStructsClass raises an exception on target</span>
-        <span class="c"># before executing the constructor. No idea why.</span>
-        <span class="k">return</span> <span class="n">arrayOfStructsClass</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">my_arrayOfStructsClass</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">VirtualArrayOfStructs</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

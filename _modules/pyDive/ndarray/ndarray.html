@@ -129,6 +129,7 @@
         <span class="c">#: total bytes consumed by the elements of the array.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span>
 
         <span class="k">assert</span> <span class="n">distaxis</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">distaxis</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
