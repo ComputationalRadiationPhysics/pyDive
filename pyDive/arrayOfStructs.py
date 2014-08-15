@@ -66,9 +66,7 @@ if onTarget == 'False':
     from ndarray.ndarray import ndarray as ndarray
     from h5_ndarray.h5_ndarray import h5_ndarray as h5_ndarray
     from IPython.parallel import interactive
-    import debug
 import numpy as np
-from abc import ABCMeta
 
 def makeTree_like(tree, expression):
     def traverseTree(outTree, inTree):
@@ -139,12 +137,10 @@ class arrayOfStructsClass(object):
 
             view.push({'names_tree' : names_tree}, targets=self.targets_in_use)
 
-            ar = view.execute('''\
+            view.execute('''\
                 structOfArrays = arrayOfStructs.makeTree_like(names_tree, lambda a_name: globals()[a_name])
                 %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
-                targets=self.targets_in_use,block=False)
-
-            debug.wait_watching_stdout(ar)
+                targets=self.targets_in_use)
 
         if onTarget == 'False' and isinstance(self, h5_ndarray):
             self.distaxis = self.firstArray.distaxis
@@ -167,7 +163,7 @@ class arrayOfStructsClass(object):
                     result += indent + key + " -> " + str(value.dtype) + "\n"
             return result
 
-        result = "CustomStructOfArrays<type: " + str(type(self.firstArray)) +\
+        result = "CustomStructOfArrays<array-type: " + str(type(self.firstArray)) +\
             ", shape: " + str(self.shape) + ">:\n"
         return printTree(self.structOfArrays, "  ", result)
 
