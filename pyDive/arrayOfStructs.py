@@ -52,7 +52,7 @@ The example shows that in fact *fields* can be treated as an array-of-structures
 **or** a structure-of-arrays depending on what is more appropriate.
 
 The goal is to make the virtual *array-of-structs*-object look like a real array. Every method
-call on the *array-of-structs*-object is forwarded to the leaf-arrays. Therefore you can do things like: ::
+call on the *array-of-structs*-object is forwarded to the leaf-arrays. Therefore you can do (stupid) things like: ::
 
     new_field = fields["FieldE"].astype(np.int) + fields["FieldB"].astype(np.float)
 
@@ -129,19 +129,14 @@ class ForeachLeafDo(object):
             f = getattr(a, self.op)
             return f(b, *args[1:], **kwargs)
 
-        if type(args[0]) is VirtualArrayOfStructs:
+        if type(args[0]).__name__ == "VirtualArrayOfStructs":
             structOfArrays = makeTree_fromTwoTrees(self.tree, args[0].structOfArrays, apply_binary)
         else:
             structOfArrays = makeTree_fromTree(self.tree, apply_unary)
         return arrayOfStructs(structOfArrays)
 
 
-magic_ops = [name for name in np.ndarray.__dict__.keys() if name.endswith("__")\
-    and name not in ("__new__", "__str__", "__repr__")]
-make_magicOperation = lambda op: lambda self, *args: self.magicOperation(op, *args)
-MagicOperations = type("MagicOperations", (), {op : make_magicOperation(op) for op in magic_ops})
-
-class VirtualArrayOfStructs(MagicOperations):
+class ArrayOfStructsClass(object):
 
     def __init__(self, structOfArrays):
         items = [item for item in treeItems(structOfArrays)]
@@ -291,5 +286,16 @@ def arrayOfStructs(structOfArrays):
     :return: Custom object representing a virtual array whose elements have the same tree-like structure
         as *structOfArrays*.
     """
+
+    items = [item for item in treeItems(structOfArrays)]
+    firstArray = items[0][1]
+    arraytype = type(firstArray)
+
+    magic_ops = [name for name in arraytype.__dict__.keys() if name.endswith("__")\
+        and name not in ("__new__", "__str__", "__repr__")]
+    make_magicOperation = lambda op: lambda self, *args: self.magicOperation(op, *args)
+    MagicOperations = type("MagicOperations", (), {op : make_magicOperation(op) for op in magic_ops})
+
+    VirtualArrayOfStructs = type("VirtualArrayOfStructs", (MagicOperations,), dict(ArrayOfStructsClass.__dict__))
 
     return VirtualArrayOfStructs(structOfArrays)
