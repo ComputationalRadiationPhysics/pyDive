@@ -48,8 +48,8 @@ def __bestStepSize(h5_ndarrays):
     return pow(2, int(math.log(step_size, 2)))
 
 def cache_arrays(*arrays):
-    ndarrays = [a for a in arrays if isinstance(a, ndarray.ndarray)]
-    h5_ndarrays = [a for a in arrays if isinstance(a, h5_ndarray)]
+    ndarrays = [a for a in arrays if a.arraytype is ndarray.ndarray]
+    h5_ndarrays = [a for a in arrays if a.arraytype is h5_ndarray]
     both_ndarrays = ndarrays + h5_ndarrays
 
     if both_ndarrays:

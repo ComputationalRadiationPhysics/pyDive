@@ -62,6 +62,8 @@ class h5_ndarray(object):
         #: datatype of a single data value
         self.dtype = self.dataset.dtype
 
+        self.arraytype = self.__class__
+
         if not window:
             window = [slice(None)] * len(self.dataset.shape)
         self.shape, self.window = helper.subWindow_of_shape(self.dataset.shape, window)

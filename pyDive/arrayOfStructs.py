@@ -102,12 +102,13 @@ def treeItems(tree):
 
 arrayOfStructs_id = 0
 
-class arrayOfStructsClass(object):
+class VirtualArrayOfStructs(object):
 
     def __init__(self, structOfArrays):
         items = [item for item in treeItems(structOfArrays)]
         self.firstArray = items[0][1]
-        assert all(type(a) == type(self.firstArray) for name, a in items),\
+        self.arraytype = type(self.firstArray)
+        assert all(type(a) == self.arraytype for name, a in items),\
             "all arrays in 'structOfArrays' must be of the same type"
         assert all(a.shape == self.firstArray.shape for name, a in items),\
             "all arrays in 'structOfArrays' must have the same shape"
@@ -117,7 +118,7 @@ class arrayOfStructsClass(object):
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
 
-        if onTarget == 'False' and isinstance(self, ndarray):
+        if onTarget == 'False' and self.arraytype is ndarray:
             #assert all(a.targets_in_use == firstArray.targets_in_use for name, a in items),\
             #    "all ndarrays in structure-of-arrays ('structOfArrays') must have an identical 'targets_in_use' attribute"
 
@@ -142,11 +143,11 @@ class arrayOfStructsClass(object):
                 %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
                 targets=self.targets_in_use)
 
-        if onTarget == 'False' and isinstance(self, h5_ndarray):
+        if onTarget == 'False' and self.arraytype is h5_ndarray:
             self.distaxis = self.firstArray.distaxis
 
     def __del__(self):
-        if onTarget == 'False' and isinstance(self, ndarray):
+        if onTarget == 'False' and self.arraytype is ndarray:
             # delete remote arrayOfStructs object
             self.view.execute('del %s' % self.name, targets=self.targets_in_use)
 
@@ -163,7 +164,7 @@ class arrayOfStructsClass(object):
                     result += indent + key + " -> " + str(value.dtype) + "\n"
             return result
 
-        result = "CustomStructOfArrays<array-type: " + str(type(self.firstArray)) +\
+        result = "VirtualStructOfArrays<array-type: " + str(type(self.firstArray)) +\
             ", shape: " + str(self.shape) + ">:\n"
         return printTree(self.structOfArrays, "  ", result)
 
@@ -240,27 +241,7 @@ def arrayOfStructs(structOfArrays):
     :raises AssertionError: if the *arrays-types* do not match. Datatypes may differ.
     :raises AssertionError: if the shapes do not match.
     :return: Custom object representing a virtual array whose elements have the same tree-like structure
-        as *structOfArrays*. It inherits from *array-type*.
+        as *structOfArrays*.
     """
-    first_item = treeItems(structOfArrays).next()
-    array_type = type(first_item[1])
 
-    class CustomArrayOfStructs(arrayOfStructsClass, array_type):
-        __metaclass__ = type
-
-        def __new__(cls, *args):
-            return cls.__bases__[1].__new__(cls, shape=[0])
-
-        def __init__(self, structOfArrays):
-            super(CustomArrayOfStructs, self).__init__(structOfArrays)
-
-        def __setattr__(self, name, value):
-            self.__dict__[name] = value
-
-        def __getattribute__(self, name):
-            try:
-                return object.__getattribute__(self, "__dict__")[name]
-            except KeyError:
-                return CustomArrayOfStructs.__bases__[1].__getattribute__(self, name)
-
-    return CustomArrayOfStructs(structOfArrays)
+    return VirtualArrayOfStructs(structOfArrays)

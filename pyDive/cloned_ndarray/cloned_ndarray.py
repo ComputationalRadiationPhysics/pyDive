@@ -52,6 +52,7 @@ class cloned_ndarray(object):
         self.nbytes = np.dtype(dtype).itemsize * np.prod(self.shape)
         self.targets_in_use = targets_in_use
         self.view = com.getView()
+        self.arraytype = self.__class__
 
         if self.targets_in_use == 'all':
             self.targets_in_use = list(self.view.targets)

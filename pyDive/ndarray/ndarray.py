@@ -80,6 +80,7 @@ class ndarray(object):
         #: total bytes consumed by the elements of the array.
         self.nbytes = np.dtype(dtype).itemsize * np.prod(self.shape)
         self.view = com.getView()
+        self.arraytype = self.__class__
 
         assert distaxis >= 0 and distaxis < len(self.shape)
 
