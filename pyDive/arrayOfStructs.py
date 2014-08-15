@@ -51,11 +51,12 @@ Example: ::
 The example shows that in fact *fields* can be treated as an array-of-structures
 **or** a structure-of-arrays depending on what is more appropriate.
 
-The goal is to make the virtual *array-of-structs*-object look like a real array. Every method
-call on the *array-of-structs*-object is forwarded to the leaf-arrays. Therefore you can do (stupid) things like: ::
+The goal is to make the virtual *array-of-structs*-object look like a real array. Therefore
+every method call on the *array-of-structs*-object is forwarded to the individual arrays. ::
 
     new_field = fields["FieldE"].astype(np.int) + fields["FieldB"].astype(np.float)
 
+Here the forwarded method calls are "astype" and "__add__".
 """
 
 import sys
@@ -137,7 +138,6 @@ class ForeachLeafDo(object):
 
 
 class ArrayOfStructsClass(object):
-
     def __init__(self, structOfArrays):
         items = [item for item in treeItems(structOfArrays)]
         self.firstArray = items[0][1]
@@ -191,7 +191,7 @@ class ArrayOfStructsClass(object):
         else:
             raise AttributeError(name)
 
-    def magicOperation(self, op, *args):
+    def __magicOperation__(self, op, *args):
         return ForeachLeafDo(self.structOfArrays, op)(*args)
 
     def __repr__(self):
@@ -291,9 +291,13 @@ def arrayOfStructs(structOfArrays):
     firstArray = items[0][1]
     arraytype = type(firstArray)
 
+    # build a class which contains all special methods, or magic operations, array-type has.
+    # In their implementation they call the __magicOperation__ method of the virtual array-of-structs
+    # with the name of the operation ("__add__", "__sub__", ...) which forwards it to the individual arrays.
+    # All ordinary methods that array-type has are forwarded by __getattr__
     magic_ops = [name for name in arraytype.__dict__.keys() if name.endswith("__")\
         and name not in ("__new__", "__str__", "__repr__")]
-    make_magicOperation = lambda op: lambda self, *args: self.magicOperation(op, *args)
+    make_magicOperation = lambda op: lambda self, *args: self.__magicOperation__(op, *args)
     MagicOperations = type("MagicOperations", (), {op : make_magicOperation(op) for op in magic_ops})
 
     VirtualArrayOfStructs = type("VirtualArrayOfStructs", (MagicOperations,), dict(ArrayOfStructsClass.__dict__))
