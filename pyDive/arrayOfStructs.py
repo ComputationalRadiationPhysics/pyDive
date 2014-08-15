@@ -68,16 +68,29 @@ if onTarget == 'False':
     from IPython.parallel import interactive
 import numpy as np
 
-def makeTree_like(tree, expression):
+def makeTree_fromTree(tree, expression):
     def traverseTree(outTree, inTree):
         for key, value in inTree.items():
             if type(value) is dict:
                 outTree[key] = {}
-                traverseTree(outTree[key], inTree[key])
+                traverseTree(outTree[key], value)
             else:
                 outTree[key] = expression(value)
     outTree = {}
     traverseTree(outTree, tree)
+    return outTree
+
+def makeTree_fromTwoTrees(treeA, treeB, expression):
+    def traverseTrees(outTree, inTreeA, inTreeB):
+        for key, valueA in inTreeA.items():
+            valueB = inTreeB[key]
+            if type(valueA) is dict:
+                outTree[key] = {}
+                traverseTrees(outTree[key], valueA, valueB)
+            else:
+                outTree[key] = expression(valueA, valueB)
+    outTree = {}
+    traverseTrees(outTree, treeA, treeB)
     return outTree
 
 def visitTwoTrees(treeA, treeB, visitor):
@@ -102,6 +115,25 @@ def treeItems(tree):
 
 arrayOfStructs_id = 0
 
+class ForeachLeafDo(object):
+    def __init__(self, tree, op):
+        self.tree = tree
+        self.op = op
+
+    def __call__(self, *args, **kwargs):
+        def apply_unary(a):
+            f = getattr(a, self.op)
+            return f(*args, **kwargs)
+        def apply_binary(a, b):
+            f = getattr(a, self.op)
+            return f(b, *args[1:], **kwargs)
+
+        if type(args[0]) is VirtualArrayOfStructs:
+            structOfArrays = makeTree_fromTwoTrees(self.tree, args[0].structOfArrays, apply_binary)
+        else:
+            structOfArrays = makeTree_fromTree(self.tree, apply_unary)
+        return arrayOfStructs(structOfArrays)
+
 class VirtualArrayOfStructs(object):
 
     def __init__(self, structOfArrays):
@@ -114,7 +146,7 @@ class VirtualArrayOfStructs(object):
             "all arrays in 'structOfArrays' must have the same shape"
 
         self.shape = self.firstArray.shape
-        self.dtype = makeTree_like(structOfArrays, lambda a: a.dtype)
+        self.dtype = makeTree_fromTree(structOfArrays, lambda a: a.dtype)
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
 
@@ -134,12 +166,12 @@ class VirtualArrayOfStructs(object):
             arrayOfStructs_id += 1
 
             # create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use
-            names_tree = makeTree_like(structOfArrays, lambda a: repr(a))
+            names_tree = makeTree_fromTree(structOfArrays, lambda a: repr(a))
 
             view.push({'names_tree' : names_tree}, targets=self.targets_in_use)
 
             view.execute('''\
-                structOfArrays = arrayOfStructs.makeTree_like(names_tree, lambda a_name: globals()[a_name])
+                structOfArrays = arrayOfStructs.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
                 %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
                 targets=self.targets_in_use)
 
@@ -150,6 +182,12 @@ class VirtualArrayOfStructs(object):
         if onTarget == 'False' and self.arraytype is ndarray:
             # delete remote arrayOfStructs object
             self.view.execute('del %s' % self.name, targets=self.targets_in_use)
+
+    def __getattr__(self, name):
+        if name in self.arraytype.__dict__.keys():
+            return ForeachLeafDo(self.structOfArrays, name)
+        else:
+            raise AttributeError(name)
 
     def __repr__(self):
         return self.name
@@ -192,7 +230,7 @@ class VirtualArrayOfStructs(object):
             "number of arguments (%d) does not correspond to the dimension (%d)"\
                 % (len(args), len(self.shape))
 
-        result = makeTree_like(self.structOfArrays, lambda a: a[args])
+        result = makeTree_fromTree(self.structOfArrays, lambda a: a[args])
 
         # if args is a list of indices then return a single data value tree
         if all(type(arg) is int for arg in args):
