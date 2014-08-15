@@ -66,7 +66,9 @@ if onTarget == 'False':
     from ndarray.ndarray import ndarray as ndarray
     from h5_ndarray.h5_ndarray import h5_ndarray as h5_ndarray
     from IPython.parallel import interactive
+    import debug
 import numpy as np
+from abc import ABCMeta
 
 def makeTree_like(tree, expression):
     def traverseTree(outTree, inTree):
@@ -103,6 +105,7 @@ def treeItems(tree):
 arrayOfStructs_id = 0
 
 class arrayOfStructsClass(object):
+
     def __init__(self, structOfArrays):
         items = [item for item in treeItems(structOfArrays)]
         self.firstArray = items[0][1]
@@ -136,10 +139,12 @@ class arrayOfStructsClass(object):
 
             view.push({'names_tree' : names_tree}, targets=self.targets_in_use)
 
-            view.execute('''\
+            ar = view.execute('''\
                 structOfArrays = arrayOfStructs.makeTree_like(names_tree, lambda a_name: globals()[a_name])
                 %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
-                targets=self.targets_in_use)
+                targets=self.targets_in_use,block=False)
+
+            debug.wait_watching_stdout(ar)
 
         if onTarget == 'False' and isinstance(self, h5_ndarray):
             self.distaxis = self.firstArray.distaxis
@@ -159,10 +164,11 @@ class arrayOfStructsClass(object):
                     result += indent + key + ":\n"
                     result = printTree(tree[key], indent + "  ", result)
                 else:
-                    result += indent + key + " -> " + str(value) + "\n"
+                    result += indent + key + " -> " + str(value.dtype) + "\n"
             return result
 
-        result = "StructOfArrays of type " + str(type(self.firstArray)) + ":\n"
+        result = "CustomStructOfArrays<type: " + str(type(self.firstArray)) +\
+            ", shape: " + str(self.shape) + ">:\n"
         return printTree(self.structOfArrays, "  ", result)
 
     def __getitem__(self, args):
@@ -239,23 +245,26 @@ def arrayOfStructs(structOfArrays):
     :raises AssertionError: if the shapes do not match.
     :return: Custom object representing a virtual array whose elements have the same tree-like structure
         as *structOfArrays*. It inherits from *array-type*.
-
-    Known Issues:
-        - If executed on :term:`engine` the virtual array will not inherit from *array-type*.
     """
-    items = [item for item in treeItems(structOfArrays)]
-    array_type = type(items[0][1])
+    first_item = treeItems(structOfArrays).next()
+    array_type = type(first_item[1])
 
-    assert all(type(a) == array_type for name, a in items),\
-        "all arrays in 'structOfArrays' must be of the same type"
+    class CustomArrayOfStructs(arrayOfStructsClass, array_type):
+        __metaclass__ = type
 
-    # create a new class type out of the arrayOfStructsClass that inherits from the arrays' type.
-    my_arrayOfStructsClass = type("ArrayOfStructs_" + array_type.__module__ + "-" + array_type.__name__,\
-        (array_type,), dict(arrayOfStructsClass.__dict__))
+        def __new__(cls, *args):
+            return cls.__bases__[1].__new__(cls, shape=[0])
 
-    if onTarget == 'True':
-        # This is a workaround. Instanciation of my_arrayOfStructsClass raises an exception on target
-        # before executing the constructor. No idea why.
-        return arrayOfStructsClass(structOfArrays)
-    else:
-        return my_arrayOfStructsClass(structOfArrays)
+        def __init__(self, structOfArrays):
+            super(CustomArrayOfStructs, self).__init__(structOfArrays)
+
+        def __setattr__(self, name, value):
+            self.__dict__[name] = value
+
+        def __getattribute__(self, name):
+            try:
+                return object.__getattribute__(self, "__dict__")[name]
+            except KeyError:
+                return CustomArrayOfStructs.__bases__[1].__getattribute__(self, name)
+
+    return CustomArrayOfStructs(structOfArrays)
