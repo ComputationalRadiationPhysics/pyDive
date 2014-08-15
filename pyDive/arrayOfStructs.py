@@ -56,7 +56,7 @@ every method call on the *array-of-structs*-object is forwarded to the individua
 
     new_field = fields["FieldE"].astype(np.int) + fields["FieldB"].astype(np.float)
 
-Here the forwarded method calls are "astype" and "__add__".
+Here the forwarded method calls are ``astype`` and ``__add__``.
 """
 
 import sys
@@ -115,8 +115,6 @@ def treeItems(tree):
         else:
             yield key, value
 
-arrayOfStructs_id = 0
-
 class ForeachLeafDo(object):
     def __init__(self, tree, op):
         self.tree = tree
@@ -136,6 +134,8 @@ class ForeachLeafDo(object):
             structOfArrays = makeTree_fromTree(self.tree, apply_unary)
         return arrayOfStructs(structOfArrays)
 
+
+arrayOfStructs_id = 0
 
 class ArrayOfStructsClass(object):
     def __init__(self, structOfArrays):
