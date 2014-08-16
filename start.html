@@ -83,10 +83,10 @@ anyway you can call <a class="reference internal" href="pyDive.ndarray.html#pyDi
 into your local machine&#8217;s memory.</p>
 </div>
 <div class="section" id="setup-an-ipython-parallel-cluster-configuration">
-<h2>Setup an IPython.parallel cluster configuration<a class="headerlink" href="#setup-an-ipython-parallel-cluster-configuration" title="Permalink to this headline">¶</a></h2>
-<p>The first step is to create an IPython.parallel profile in MPI-mode: <a class="reference external" href="http://ipython.org/ipython-doc/2/parallel/parallel_process.html">http://ipython.org/ipython-doc/2/parallel/parallel_process.html</a> .
+<span id="cluster-config"></span><h2>Setup an IPython.parallel cluster configuration<a class="headerlink" href="#setup-an-ipython-parallel-cluster-configuration" title="Permalink to this headline">¶</a></h2>
+<p>The first step is to create an IPython.parallel profile in MPI-mode: <a class="reference external" href="http://ipython.org/ipython-doc/2/parallel/parallel_process.html">http://ipython.org/ipython-doc/2/parallel/parallel_process.html</a>.
 The name of this profile is the argument of <tt class="xref py py-func docutils literal"><span class="pre">pyDive.init()</span></tt>. It defaults to <tt class="docutils literal"><span class="pre">&quot;mpi&quot;</span></tt>.
-Starting the cluster is then the second and last step:</p>
+Starting the cluster is then the second and final step:</p>
 <div class="highlight-python"><div class="highlight"><pre>$ ipcluster start -n 4 --profile=mpi
 </pre></div>
 </div>

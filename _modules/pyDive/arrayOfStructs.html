@@ -100,10 +100,12 @@
 <span class="sd">The example shows that in fact *fields* can be treated as an array-of-structures</span>
 <span class="sd">**or** a structure-of-arrays depending on what is more appropriate.</span>
 
-<span class="sd">The goal is to make the virtual *array-of-structs*-object look like a real array even ready for passing</span>
-<span class="sd">to foreign functions that expect a &quot;real&quot; array which at least inherits e.g. from a numpy-array.</span>
-<span class="sd">Therefore the virtual *array-of-structs*-object inherits from the class type of its arrays.</span>
-<span class="sd">This makes it for instance compatible to :mod:`pyDive.algorithm`.</span>
+<span class="sd">The goal is to make the virtual *array-of-structs*-object look like a real array. Therefore</span>
+<span class="sd">every method call on it is forwarded to the individual arrays. ::</span>
+
+<span class="sd">    new_field = fields[&quot;FieldE&quot;].astype(np.int) + fields[&quot;FieldB&quot;].astype(np.float)</span>
+
+<span class="sd">Here the forwarded method calls are ``astype`` and ``__add__``.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">sys</span>
@@ -162,8 +164,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
 
-<span class="n">arrayOfStructs_id</span> <span class="o">=</span> <span class="mi">0</span>
-
 <span class="k">class</span> <span class="nc">ForeachLeafDo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tree</span> <span class="o">=</span> <span class="n">tree</span>
@@ -177,14 +177,16 @@
             <span class="n">f</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">is</span> <span class="n">VirtualArrayOfStructs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;VirtualArrayOfStructs&quot;</span><span class="p">:</span>
             <span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">makeTree_fromTwoTrees</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">apply_binary</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">makeTree_fromTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">apply_unary</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">arrayOfStructs</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)</span>
 
-<span class="k">class</span> <span class="nc">VirtualArrayOfStructs</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 
+<span class="n">arrayOfStructs_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">class</span> <span class="nc">ArrayOfStructsClass</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">structOfArrays</span><span class="p">):</span>
         <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">treeItems</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
@@ -238,6 +240,9 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">__magicOperation__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ForeachLeafDo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">op</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
 
@@ -251,7 +256,7 @@
                     <span class="n">result</span> <span class="o">+=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&quot; -&gt; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span>
             <span class="k">return</span> <span class="n">result</span>
 
-        <span class="n">result</span> <span class="o">=</span> <span class="s">&quot;VirtualStructOfArrays&lt;array-type: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">))</span> <span class="o">+</span>\
+        <span class="n">result</span> <span class="o">=</span> <span class="s">&quot;VirtualArrayOfStructs&lt;array-type: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">))</span> <span class="o">+</span>\
             <span class="s">&quot;, shape: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;&gt;:</span><span class="se">\n</span><span class="s">&quot;</span>
         <span class="k">return</span> <span class="n">printTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="s">&quot;  &quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
 
@@ -272,6 +277,9 @@
 
         <span class="c"># slicing</span>
         <span class="c"># -------</span>
+        <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">),)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="p">,)</span>
 
@@ -309,6 +317,9 @@
 
         <span class="c"># slicing</span>
         <span class="c"># -------</span>
+        <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">),)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="p">,)</span>
 
@@ -330,6 +341,21 @@
 <span class="sd">    :return: Custom object representing a virtual array whose elements have the same tree-like structure</span>
 <span class="sd">        as *structOfArrays*.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">treeItems</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)]</span>
+    <span class="n">firstArray</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">arraytype</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">firstArray</span><span class="p">)</span>
+
+    <span class="c"># build a class which contains all special methods, or magic operations, array-type has.</span>
+    <span class="c"># In their implementation they call the __magicOperation__ method of the virtual array-of-structs</span>
+    <span class="c"># with the name of the operation (&quot;__add__&quot;, &quot;__sub__&quot;, ...) which forwards it to the individual arrays.</span>
+    <span class="c"># All ordinary methods that array-type has are forwarded by __getattr__</span>
+    <span class="n">magic_ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">arraytype</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&quot;__&quot;</span><span class="p">)</span>\
+        <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;__new__&quot;</span><span class="p">,</span> <span class="s">&quot;__str__&quot;</span><span class="p">,</span> <span class="s">&quot;__repr__&quot;</span><span class="p">)]</span>
+    <span class="n">make_magicOperation</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__magicOperation__</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">MagicOperations</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="s">&quot;MagicOperations&quot;</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{</span><span class="n">op</span> <span class="p">:</span> <span class="n">make_magicOperation</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">magic_ops</span><span class="p">})</span>
+
+    <span class="n">VirtualArrayOfStructs</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="s">&quot;VirtualArrayOfStructs&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">MagicOperations</span><span class="p">,),</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ArrayOfStructsClass</span><span class="o">.</span><span class="n">__dict__</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">VirtualArrayOfStructs</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)</span></div>
 </pre></div>

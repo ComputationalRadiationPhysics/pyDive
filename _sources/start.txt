@@ -33,12 +33,14 @@ Although the array elements are stored on the cluster nodes you have full access
 anyway you can call :meth:`pyDive.ndarray.ndarray.ndarray.gather` knowing that your pyDive array has been sliced down to fit
 into your local machine's memory.
 
+.. _cluster-config:
+
 Setup an IPython.parallel cluster configuration
 -----------------------------------------------
 
-The first step is to create an IPython.parallel profile in MPI-mode: http://ipython.org/ipython-doc/2/parallel/parallel_process.html .
+The first step is to create an IPython.parallel profile in MPI-mode: http://ipython.org/ipython-doc/2/parallel/parallel_process.html.
 The name of this profile is the argument of :func:`pyDive.init`. It defaults to ``"mpi"``.
-Starting the cluster is then the second and last step::
+Starting the cluster is then the second and final step::
 
   $ ipcluster start -n 4 --profile=mpi
 

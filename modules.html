@@ -81,10 +81,12 @@ such as shape and dtype and allows for slicing but is operating on a structure-o
 </div>
 <p>The example shows that in fact <em>fields</em> can be treated as an array-of-structures
 <strong>or</strong> a structure-of-arrays depending on what is more appropriate.</p>
-<p>The goal is to make the virtual <em>array-of-structs</em>-object look like a real array even ready for passing
-to foreign functions that expect a &#8220;real&#8221; array which at least inherits e.g. from a numpy-array.
-Therefore the virtual <em>array-of-structs</em>-object inherits from the class type of its arrays.
-This makes it for instance compatible to <a class="reference internal" href="#module-pyDive.algorithm" title="pyDive.algorithm"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.algorithm</span></tt></a>.</p>
+<p>The goal is to make the virtual <em>array-of-structs</em>-object look like a real array. Therefore
+every method call on it is forwarded to the individual arrays.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">new_field</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="s">&quot;FieldE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span> <span class="o">+</span> <span class="n">fields</span><span class="p">[</span><span class="s">&quot;FieldB&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here the forwarded method calls are <tt class="docutils literal"><span class="pre">astype</span></tt> and <tt class="docutils literal"><span class="pre">__add__</span></tt>.</p>
 <dl class="function">
 <dt id="pyDive.arrayOfStructs.arrayOfStructs">
 <tt class="descclassname">pyDive.arrayOfStructs.</tt><tt class="descname">arrayOfStructs</tt><big>(</big><em>structOfArrays</em><big>)</big><a class="reference internal" href="_modules/pyDive/arrayOfStructs.html#arrayOfStructs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrayOfStructs.arrayOfStructs" title="Permalink to this definition">¶</a></dt>
@@ -238,7 +240,7 @@ be compiled which gives an appreciable speedup.</p>
 
 <dl class="function">
 <dt id="pyDive.mappings.mesh2particles">
-<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">mesh2particles</tt><big>(</big><em>mesh</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x2b5085225808&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#mesh2particles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.mesh2particles" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">mesh2particles</tt><big>(</big><em>mesh</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x2aca41814808&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#mesh2particles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.mesh2particles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Map mesh values to particles according to a particle shape function.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -271,7 +273,7 @@ Defaults to cloud-in-cell.</li>
 
 <dl class="function">
 <dt id="pyDive.mappings.particles2mesh">
-<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">particles2mesh</tt><big>(</big><em>mesh</em>, <em>particles</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x2b5085225808&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#particles2mesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.particles2mesh" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">particles2mesh</tt><big>(</big><em>mesh</em>, <em>particles</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x2aca41814808&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#particles2mesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.particles2mesh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Map particle values to mesh according to a particle shape function.
 Particle values are added to the mesh.</p>
 <table class="docutils field-list" frame="void" rules="none">
