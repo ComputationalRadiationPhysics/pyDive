@@ -207,7 +207,7 @@ class ArrayOfStructsClass(object):
                     result += indent + key + " -> " + str(value.dtype) + "\n"
             return result
 
-        result = "VirtualStructOfArrays<array-type: " + str(type(self.firstArray)) +\
+        result = "VirtualArrayOfStructs<array-type: " + str(type(self.firstArray)) +\
             ", shape: " + str(self.shape) + ">:\n"
         return printTree(self.structOfArrays, "  ", result)
 
@@ -228,6 +228,9 @@ class ArrayOfStructsClass(object):
 
         # slicing
         # -------
+        if args == slice(None):
+            args = (slice(None),) * len(self.shape)
+
         if not isinstance(args, list) and not isinstance(args, tuple):
             args = (args,)
 
@@ -265,6 +268,9 @@ class ArrayOfStructsClass(object):
 
         # slicing
         # -------
+        if args == slice(None):
+            args = (slice(None),) * len(self.shape)
+
         if not isinstance(args, list) and not isinstance(args, tuple):
             args = (args,)
 

@@ -90,7 +90,7 @@ class h5_ndarray(object):
         view.execute("%s.close()" % self.fileHandle_name)
 
     def __getitem__(self, args):
-        if args ==  slice(None):
+        if args == slice(None):
             args = (slice(None),) * len(self.shape)
 
         if not isinstance(args, list) and not isinstance(args, tuple):
