@@ -76,7 +76,7 @@
 <span class="kn">import</span> <span class="nn">helper</span>
 <span class="c">#import ndarray    # this import is done by the ndarray module itself due to circular dependencies</span>
 
-<div class="viewcode-block" id="hollow"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.hollow">[docs]</a><span class="k">def</span> <span class="nf">hollow</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+<div class="viewcode-block" id="hollow"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.hollow">[docs]</a><span class="k">def</span> <span class="nf">hollow</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines &lt;engine&gt;` without allocating a local</span>
 <span class="sd">        *numpy-array*.</span>
 
@@ -86,7 +86,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="empty"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.empty">[docs]</a><span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+<div class="viewcode-block" id="empty"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.empty">[docs]</a><span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines &lt;engine&gt;` without initializing elements.</span>
 
 <span class="sd">    :param ints shape: shape of the array</span>
@@ -95,7 +95,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
 </div>
-<div class="viewcode-block" id="zeros"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.zeros">[docs]</a><span class="k">def</span> <span class="nf">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+<div class="viewcode-block" id="zeros"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.zeros">[docs]</a><span class="k">def</span> <span class="nf">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines &lt;engine&gt;` filled with zeros.</span>
 
 <span class="sd">    :param ints shape: shape of the array</span>
@@ -107,7 +107,7 @@
     <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = np.zeros({0}.shape, {0}.dtype)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
 </div>
-<div class="viewcode-block" id="ones"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.ones">[docs]</a><span class="k">def</span> <span class="nf">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+<div class="viewcode-block" id="ones"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.ones">[docs]</a><span class="k">def</span> <span class="nf">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines &lt;engine&gt;` filled with ones.</span>
 
 <span class="sd">    :param ints shape: shape of the array</span>
@@ -146,7 +146,7 @@
     <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = np.zeros({0}.shape, {0}.dtype)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
 </div>
-<div class="viewcode-block" id="array"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.array">[docs]</a><span class="k">def</span> <span class="nf">array</span><span class="p">(</span><span class="n">array_like</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">):</span>
+<div class="viewcode-block" id="array"><a class="viewcode-back" href="../../../pyDive.ndarray.html#pyDive.ndarray.factories.array">[docs]</a><span class="k">def</span> <span class="nf">array</span><span class="p">(</span><span class="n">array_like</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.ndarray` from an array-like object.</span>
 
 <span class="sd">    :param array-like array_like: Any object exposing the array interface, e.g. numpy-array, python sequence, ...</span>

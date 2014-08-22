@@ -77,15 +77,16 @@
 <span class="kn">import</span> <span class="nn">os.path</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">h5_ndarray.factories</span>
+<span class="kn">import</span> <span class="nn">arrayOfStructs</span>
 
-<div class="viewcode-block" id="loadSteps"><a class="viewcode-back" href="../../modules.html#pyDive.picongpu.loadSteps">[docs]</a><span class="k">def</span> <span class="nf">loadSteps</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">folder_path</span><span class="p">,</span> <span class="n">data_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="loadSteps"><a class="viewcode-back" href="../../modules.html#pyDive.picongpu.loadSteps">[docs]</a><span class="k">def</span> <span class="nf">loadSteps</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">folder_path</span><span class="p">,</span> <span class="n">data_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Python generator object looping all hdf5-data found in *folder_path*</span>
 <span class="sd">        from timesteps appearing in *steps*.</span>
 
 <span class="sd">        This generator doesn&#39;t read or write any data elements from hdf5 but returns dataset-handles</span>
 <span class="sd">        covered by *pyDive.h5_ndarray* objects.</span>
 
-<span class="sd">        All datasets inside *data_path* must have the same shape.</span>
+<span class="sd">        All datasets within *data_path* must have the same shape.</span>
 
 <span class="sd">        :param ints steps: list of timesteps to loop</span>
 <span class="sd">        :param str folder_path: Path of the folder containing the hdf5-files</span>
@@ -96,6 +97,9 @@
 <span class="sd">        :type window: list of slice objects (:ref:`numpy.s_`).</span>
 <span class="sd">        :return: tuple of timestep and a :ref:`pyDive.h5_ndarray &lt;pyDive.h5_ndarray.h5_ndarray.h5_ndarray&gt;`</span>
 <span class="sd">            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            - If the dataset has a &#39;sim_unit&#39; attribute its value is stored in ``h5array.unit``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">folder_path</span><span class="p">),</span> <span class="s">&quot;folder &#39;</span><span class="si">%s</span><span class="s">&#39; does not exist&quot;</span> <span class="o">%</span> <span class="n">folder_path</span>
 
@@ -114,7 +118,20 @@
         <span class="n">full_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
         <span class="n">full_datapath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;/data&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">timestep</span><span class="p">),</span> <span class="n">data_path</span><span class="p">)</span>
 
-        <span class="k">yield</span> <span class="n">timestep</span><span class="p">,</span> <span class="n">h5_ndarray</span><span class="o">.</span><span class="n">factories</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="n">full_filename</span><span class="p">,</span> <span class="n">full_datapath</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+        <span class="n">h5data</span> <span class="o">=</span> <span class="n">h5_ndarray</span><span class="o">.</span><span class="n">factories</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="n">full_filename</span><span class="p">,</span> <span class="n">full_datapath</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span>
+
+        <span class="c"># add &#39;sim_unit&#39; as &#39;unit&#39; attribute</span>
+        <span class="k">def</span> <span class="nf">add_sim_unit</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s">&#39;sim_unit&#39;</span> <span class="ow">in</span> <span class="n">array</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="s">&quot;unit&quot;</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s">&quot;sim_unit&quot;</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">array</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">h5data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">h5_ndarray</span><span class="o">.</span><span class="n">h5_ndarray</span><span class="o">.</span><span class="n">h5_ndarray</span><span class="p">:</span>
+            <span class="n">h5data</span> <span class="o">=</span> <span class="n">add_sim_unit</span><span class="p">(</span><span class="n">h5data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">h5data</span> <span class="o">=</span> <span class="n">arrayOfStructs</span><span class="o">.</span><span class="n">arrayOfStructs</span><span class="p">(</span>\
+                <span class="n">arrayOfStructs</span><span class="o">.</span><span class="n">makeTree_fromTree</span><span class="p">(</span><span class="n">h5data</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">add_sim_unit</span><span class="p">))</span>
+
+        <span class="k">yield</span> <span class="n">timestep</span><span class="p">,</span> <span class="n">h5data</span>
 </div>
 <div class="viewcode-block" id="getSteps"><a class="viewcode-back" href="../../modules.html#pyDive.picongpu.getSteps">[docs]</a><span class="k">def</span> <span class="nf">getSteps</span><span class="p">(</span><span class="n">folder_path</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Returns a list of all timesteps in *folder_path*.</span>
@@ -128,13 +145,13 @@
         <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">timestep</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
 </div>
-<div class="viewcode-block" id="loadAllSteps"><a class="viewcode-back" href="../../modules.html#pyDive.picongpu.loadAllSteps">[docs]</a><span class="k">def</span> <span class="nf">loadAllSteps</span><span class="p">(</span><span class="n">folder_path</span><span class="p">,</span> <span class="n">data_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="loadAllSteps"><a class="viewcode-back" href="../../modules.html#pyDive.picongpu.loadAllSteps">[docs]</a><span class="k">def</span> <span class="nf">loadAllSteps</span><span class="p">(</span><span class="n">folder_path</span><span class="p">,</span> <span class="n">data_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Python generator object looping hdf5-data of all timesteps found in *folder_path*.</span>
 
 <span class="sd">        This generator doesn&#39;t read or write any data elements from hdf5 but returns dataset-handles</span>
 <span class="sd">        covered by *pyDive.h5_ndarray* objects.</span>
 
-<span class="sd">        All datasets inside *data_path* must have the same shape.</span>
+<span class="sd">        All datasets within *data_path* must have the same shape.</span>
 
 <span class="sd">        :param str folder_path: Path of the folder containing the hdf5-files</span>
 <span class="sd">        :param str data_path: Relative path starting from &quot;/data/&lt;timestep&gt;/&quot; within hdf5-file to the dataset or group of datasets</span>
@@ -144,11 +161,35 @@
 <span class="sd">        :type window: list of slice objects (:ref:`numpy.s_`).</span>
 <span class="sd">        :return: tuple of timestep and a :ref:`pyDive.h5_ndarray &lt;pyDive.h5_ndarray.h5_ndarray.h5_ndarray&gt;`</span>
 <span class="sd">            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            - If the dataset has a &#39;sim_unit&#39; attribute its value is stored in ``h5array.unit``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">steps</span> <span class="o">=</span> <span class="n">getSteps</span><span class="p">(</span><span class="n">folder_path</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">timestep</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">loadSteps</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">folder_path</span><span class="p">,</span> <span class="n">data_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">window</span><span class="p">):</span>
-        <span class="k">yield</span> <span class="n">timestep</span><span class="p">,</span> <span class="n">data</span></div>
+        <span class="k">yield</span> <span class="n">timestep</span><span class="p">,</span> <span class="n">data</span>
+</div>
+<div class="viewcode-block" id="loadStep"><a class="viewcode-back" href="../../modules.html#pyDive.picongpu.loadStep">[docs]</a><span class="k">def</span> <span class="nf">loadStep</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">folder_path</span><span class="p">,</span> <span class="n">data_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load hdf5-data from a single timestep found in *folder_path*.</span>
+
+<span class="sd">        All datasets within *data_path* must have the same shape.</span>
+
+<span class="sd">        :param ints step: timestep</span>
+<span class="sd">        :param str folder_path: Path of the folder containing the hdf5-files</span>
+<span class="sd">        :param str data_path: Relative path starting from &quot;/data/&lt;timestep&gt;/&quot; within hdf5-file to the dataset or group of datasets</span>
+<span class="sd">        :param int distaxis: axis on which datasets are distributed over when once loaded into memory.</span>
+<span class="sd">        :param window: This param let you specify a sub-part of the array as a virtual container.</span>
+<span class="sd">            Example: window=np.s_[:,:,::2]</span>
+<span class="sd">        :type window: list of slice objects (:ref:`numpy.s_`).</span>
+<span class="sd">        :return: :ref:`pyDive.h5_ndarray &lt;pyDive.h5_ndarray.h5_ndarray.h5_ndarray&gt;`</span>
+<span class="sd">            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`).</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            - If the dataset has a &#39;sim_unit&#39; attribute its value is stored in ``h5array.unit``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">step</span><span class="p">,</span> <span class="n">field</span> <span class="o">=</span> <span class="n">loadSteps</span><span class="p">([</span><span class="n">step</span><span class="p">],</span> <span class="n">folder_path</span><span class="p">,</span> <span class="n">data_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">window</span><span class="p">)</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">field</span></div>
 </pre></div>
 
           </div>

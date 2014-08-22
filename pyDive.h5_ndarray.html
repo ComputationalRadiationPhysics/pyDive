@@ -63,7 +63,7 @@
 <h2>pyDive.h5_ndarray.h5_ndarray module<a class="headerlink" href="#pydive-h5-ndarray-h5-ndarray-module" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyDive.h5_ndarray.h5_ndarray.h5_ndarray">
-<em class="property">class </em><tt class="descclassname">pyDive.h5_ndarray.h5_ndarray.</tt><tt class="descname">h5_ndarray</tt><big>(</big><em>h5_filename</em>, <em>dataset_path</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/h5_ndarray.html#h5_ndarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.h5_ndarray.h5_ndarray" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pyDive.h5_ndarray.h5_ndarray.</tt><tt class="descname">h5_ndarray</tt><big>(</big><em>h5_filename</em>, <em>dataset_path</em>, <em>distaxis=0</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/h5_ndarray.html#h5_ndarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.h5_ndarray.h5_ndarray" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a single hdf5-dataset like a virtual, cluster-wide array.
 Data access goes through array slicing where data is written to respectively read from
 <a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.ndarray.ndarray" title="pyDive.ndarray.ndarray.ndarray"><tt class="xref py py-class docutils literal"><span class="pre">pyDive.ndarray.ndarray.ndarray</span></tt></a> objects in parallel using all engines.</p>
@@ -76,7 +76,7 @@ h5_data[:] = data # write everything back
 </div>
 <dl class="method">
 <dt id="pyDive.h5_ndarray.h5_ndarray.h5_ndarray.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>h5_filename</em>, <em>dataset_path</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/h5_ndarray.html#h5_ndarray.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.h5_ndarray.h5_ndarray.__init__" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">__init__</tt><big>(</big><em>h5_filename</em>, <em>dataset_path</em>, <em>distaxis=0</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/h5_ndarray.html#h5_ndarray.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.h5_ndarray.h5_ndarray.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an <tt class="xref py py-class docutils literal"><span class="pre">h5_ndarray</span></tt> instance.
 By using this method you may only load a single dataset. If you want to
 load a <em>structure</em> of datasets at once see <a class="reference internal" href="#pyDive.h5_ndarray.factories.fromPath" title="pyDive.h5_ndarray.factories.fromPath"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.h5_ndarray.factories.fromPath()</span></tt></a>.</p>
@@ -95,6 +95,13 @@ Example: window=np.s_[:,:,::2]</li>
 </tr>
 </tbody>
 </table>
+<dl class="docutils">
+<dt>Notes:</dt>
+<dd><ul class="first last simple">
+<li>The dataset&#8217;s attributes are stored in <tt class="docutils literal"><span class="pre">h5array.attrs</span></tt>.</li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -104,7 +111,7 @@ Example: window=np.s_[:,:,::2]</li>
 <span id="pydive-h5-ndarray-factories-module"></span><h2>pyDive.h5_ndarray.factories module<a class="headerlink" href="#module-pyDive.h5_ndarray.factories" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pyDive.h5_ndarray.factories.fromPath">
-<tt class="descclassname">pyDive.h5_ndarray.factories.</tt><tt class="descname">fromPath</tt><big>(</big><em>h5_filename</em>, <em>datapath</em>, <em>distaxis</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/factories.html#fromPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.factories.fromPath" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pyDive.h5_ndarray.factories.</tt><tt class="descname">fromPath</tt><big>(</big><em>h5_filename</em>, <em>datapath</em>, <em>distaxis=0</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/factories.html#fromPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.factories.fromPath" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a <a class="reference internal" href="#pydive-h5-ndarray"><em>pyDive.h5_ndarray package</em></a> or structure of <a class="reference internal" href="#pydive-h5-ndarray"><em>pyDive.h5_ndarrays</em></a>
 from a hdf5-dataset respectively a hdf5-group.</p>
 <table class="docutils field-list" frame="void" rules="none">
