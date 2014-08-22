@@ -171,7 +171,7 @@ Example 2: Particle density field
 ---------------------------------
 
 Given the list of particles in our ``sample.h5`` we want to create a 2D density field out of it. For this particle-to-mesh
-mapping we need to apply a certain particle shape like cloud-in-shape (CIC), triangular-shaped-cloud (TSC), and so on. A list of 
+mapping we need to apply a certain particle shape like cloud-in-cell (CIC), triangular-shaped-cloud (TSC), and so on. A list of 
 these together with the actual mapping functions can be found in the :mod:`pyDive.mappings` module. If you miss a shape you can
 easily create one by your own by basically just defining a particle shape function. Note that if you have `numba <http://numba.pydata.org/>`_
 installed the shape function will be compiled resulting in a significant speed-up.

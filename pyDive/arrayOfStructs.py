@@ -52,7 +52,7 @@ The example shows that in fact *fields* can be treated as an array-of-structures
 **or** a structure-of-arrays depending on what is more appropriate.
 
 The goal is to make the virtual *array-of-structs*-object look like a real array. Therefore
-every method call on it is forwarded to the individual arrays. ::
+every method call or operation is forwarded to the individual arrays.::
 
     new_field = fields["FieldE"].astype(np.int) + fields["FieldB"].astype(np.float)
 
