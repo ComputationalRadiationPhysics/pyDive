@@ -48,6 +48,7 @@ def init(profile='mpi'):
         import math
         os.environ["onTarget"] = 'True'
         from pyDive import arrayOfStructs
+        from pyDive import algorithm
          ''')
 
     get_rank = interactive(lambda: MPI.COMM_WORLD.Get_rank())

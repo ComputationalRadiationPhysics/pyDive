@@ -20,13 +20,17 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-from ndarray import *
-from h5_ndarray.h5_ndarray import *
-from cloned_ndarray import *
-import IPParallelClient as com
+import os
+# check whether this code is executed on target or not
+onTarget = os.environ.get("onTarget", 'False')
+if onTarget == 'False':
+    from ndarray import *
+    from h5_ndarray.h5_ndarray import *
+    from cloned_ndarray import *
+    import IPParallelClient as com
+    from IPython.parallel import interactive
+    from h5_ndarray import h5caching
 import numpy as np
-from IPython.parallel import interactive
-from h5_ndarray import h5caching
 
 def map(f, *arrays, **kwargs):
     """Calls *f* on :term:`engine` with local numpy-arrays related to *arrays*.
@@ -80,7 +84,7 @@ def reduce(_array, op):
     """
     def reduce_wrapper(array_name, op):
         _array = globals()[array_name]
-        return op.reduce(_array, axis=None) # reduce over all axes
+        return algorithm.__tree_reduce(_array, axis=None, op=op) # reduction over all axes
 
     view = com.getView()
 
@@ -130,7 +134,7 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     """
     def mapReduce_wrapper(map_func, reduce_op, array_names, **kwargs):
         arrays = [globals()[array_name] for array_name in array_names]
-        return reduce_op.reduce(map_func(*arrays, **kwargs), axis=None)
+        return algorithm.__tree_reduce(map_func(*arrays, **kwargs), axis=None, op=reduce_op)
 
     view = com.getView()
     tmp_targets = view.targets # save current target list
@@ -152,3 +156,29 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
 
     view.targets = tmp_targets # restore target list
     return result
+
+def __tree_reduce(array, axis=None, op=np.add):
+
+    # reduce all axes
+    if axis is None:
+        result = array
+        for axis in range(len(array.shape))[::-1]:
+            result = __tree_reduce(result, axis=axis, op=op)
+        return result
+
+    assert 0 <= axis and axis < len(array.shape)
+    result = np.rollaxis(array, axis)
+
+    while True:
+        l = result.shape[0]
+
+        # if axis is small enough to neglect rounding errors do a faster numpy-reduce
+        if l < 100000:
+            return op.reduce(result, axis=0)
+
+        if l % 2 == 0:
+            result = op(result[0:l/2], result[l/2:])
+        else:
+            tmp = result[-1]
+            result = op(result[0:l/2], result[l/2:-1])
+            result[0] = op(result[0], tmp)
