@@ -37,7 +37,7 @@ def loadSteps(steps, folder_path, data_path, distaxis, window=None):
         This generator doesn't read or write any data elements from hdf5 but returns dataset-handles
         covered by *pyDive.h5_ndarray* objects.
 
-        All datasets inside *data_path* must have the same shape.
+        All datasets within *data_path* must have the same shape.
 
         :param ints steps: list of timesteps to loop
         :param str folder_path: Path of the folder containing the hdf5-files
@@ -98,7 +98,7 @@ def loadAllSteps(folder_path, data_path, distaxis, window=None):
         This generator doesn't read or write any data elements from hdf5 but returns dataset-handles
         covered by *pyDive.h5_ndarray* objects.
 
-        All datasets inside *data_path* must have the same shape.
+        All datasets within *data_path* must have the same shape.
 
         :param str folder_path: Path of the folder containing the hdf5-files
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
@@ -113,3 +113,21 @@ def loadAllSteps(folder_path, data_path, distaxis, window=None):
 
     for timestep, data in loadSteps(steps, folder_path, data_path, distaxis, window):
         yield timestep, data
+
+def loadStep(step, folder_path, data_path, distaxis, window=None):
+    """Load hdf5-data from a single timestep found in *folder_path*.
+
+        All datasets within *data_path* must have the same shape.
+
+        :param ints step: timestep
+        :param str folder_path: Path of the folder containing the hdf5-files
+        :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
+        :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
+        :param window: This param let you specify a sub-part of the array as a virtual container.
+            Example: window=np.s_[:,:,::2]
+        :type window: list of slice objects (:ref:`numpy.s_`).
+        :return: :ref:`pyDive.h5_ndarray <pyDive.h5_ndarray.h5_ndarray.h5_ndarray>`
+            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`).
+    """
+    step, field = loadSteps([step], folder_path, data_path, distaxis, window).next()
+    return field
