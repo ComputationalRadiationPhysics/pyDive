@@ -42,7 +42,7 @@ class h5_ndarray(object):
             h5_data[:] = data # write everything back
 
     """
-    def __init__(self, h5_filename, dataset_path, distaxis, window=None):
+    def __init__(self, h5_filename, dataset_path, distaxis=0, window=None):
         """Creates an :class:`h5_ndarray` instance.
         By using this method you may only load a single dataset. If you want to
         load a *structure* of datasets at once see :func:`pyDive.h5_ndarray.factories.fromPath`.

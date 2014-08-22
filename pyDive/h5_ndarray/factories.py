@@ -24,7 +24,7 @@ from . import h5_ndarray
 import h5py as h5
 from .. import arrayOfStructs
 
-def fromPath(h5_filename, datapath, distaxis, window=None):
+def fromPath(h5_filename, datapath, distaxis=0, window=None):
     """Creates a :ref:`pyDive.h5_ndarray` or structure of :ref:`pyDive.h5_ndarrays <pyDive.h5_ndarray>`
         from a hdf5-dataset respectively a hdf5-group.
 

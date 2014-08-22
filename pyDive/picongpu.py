@@ -30,7 +30,7 @@ import re
 import h5_ndarray.factories
 import arrayOfStructs
 
-def loadSteps(steps, folder_path, data_path, distaxis, window=None):
+def loadSteps(steps, folder_path, data_path, distaxis=0, window=None):
     """Python generator object looping all hdf5-data found in *folder_path*
         from timesteps appearing in *steps*.
 
@@ -92,7 +92,7 @@ def getSteps(folder_path):
         result.append(timestep)
     return result
 
-def loadAllSteps(folder_path, data_path, distaxis, window=None):
+def loadAllSteps(folder_path, data_path, distaxis=0, window=None):
     """Python generator object looping hdf5-data of all timesteps found in *folder_path*.
 
         This generator doesn't read or write any data elements from hdf5 but returns dataset-handles
@@ -114,7 +114,7 @@ def loadAllSteps(folder_path, data_path, distaxis, window=None):
     for timestep, data in loadSteps(steps, folder_path, data_path, distaxis, window):
         yield timestep, data
 
-def loadStep(step, folder_path, data_path, distaxis, window=None):
+def loadStep(step, folder_path, data_path, distaxis=0, window=None):
     """Load hdf5-data from a single timestep found in *folder_path*.
 
         All datasets within *data_path* must have the same shape.

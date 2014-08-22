@@ -48,7 +48,7 @@ class ndarray(object):
 
     Every cluster-wide array operation first equalizes the distribution of all involved arrays if necessary.
     """
-    def __init__(self, shape, distaxis, dtype=np.float, idx_ranges=None, targets_in_use=None, no_allocation=False):
+    def __init__(self, shape, distaxis=0, dtype=np.float, idx_ranges=None, targets_in_use=None, no_allocation=False):
         """Creates an :class:`pyDive.ndarray.ndarray.ndarray` instance. This is a low-level method for instanciating
         an array. Arrays should  be constructed using 'empty', 'zeros'
         or 'array' (see :mod:`pyDive.ndarray.factories`).

@@ -27,7 +27,7 @@ from .. import IPParallelClient as com
 import helper
 #import ndarray    # this import is done by the ndarray module itself due to circular dependencies
 
-def hollow(shape, distaxis, dtype=np.float):
+def hollow(shape, distaxis=0, dtype=np.float):
     """Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines <engine>` without allocating a local
         *numpy-array*.
 
@@ -37,7 +37,7 @@ def hollow(shape, distaxis, dtype=np.float):
     """
     return ndarray.ndarray(shape, distaxis, dtype, no_allocation=True)
 
-def empty(shape, distaxis, dtype=np.float):
+def empty(shape, distaxis=0, dtype=np.float):
     """Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines <engine>` without initializing elements.
 
     :param ints shape: shape of the array
@@ -46,7 +46,7 @@ def empty(shape, distaxis, dtype=np.float):
     """
     return ndarray.ndarray(shape, distaxis, dtype)
 
-def zeros(shape, distaxis, dtype=np.float):
+def zeros(shape, distaxis=0, dtype=np.float):
     """Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines <engine>` filled with zeros.
 
     :param ints shape: shape of the array
@@ -58,7 +58,7 @@ def zeros(shape, distaxis, dtype=np.float):
     view.execute("{0} = np.zeros({0}.shape, {0}.dtype)".format(result.name), targets=result.targets_in_use)
     return result
 
-def ones(shape, distaxis, dtype=np.float):
+def ones(shape, distaxis=0, dtype=np.float):
     """Return a new :ref:`pyDive.ndarray` distributed across all :term:`engines <engine>` filled with ones.
 
     :param ints shape: shape of the array
@@ -97,7 +97,7 @@ def ones_like(a):
     view.execute("{0} = np.zeros({0}.shape, {0}.dtype)".format(result.name), targets=result.targets_in_use)
     return result
 
-def array(array_like, distaxis):
+def array(array_like, distaxis=0):
     """Return a new :ref:`pyDive.ndarray` from an array-like object.
 
     :param array-like array_like: Any object exposing the array interface, e.g. numpy-array, python sequence, ...
