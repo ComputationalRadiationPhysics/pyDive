@@ -53,6 +53,9 @@ class h5_ndarray(object):
         :param window: This param let you specify a sub-part of the array as a virtual container.
             Example: window=np.s_[:,:,::2]
         :type window: list of slice objects (:obj:`numpy.s_`).
+
+        Notes:
+            - The dataset's attributes are stored in ``h5array.attrs``.
         """
         self.h5_filename = h5_filename
         self.dataset_path = dataset_path

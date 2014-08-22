@@ -74,7 +74,7 @@ def map(f, *arrays, **kwargs):
     view.targets = tmp_targets # restore target list
 
 def reduce(_array, op):
-    """Performs a reduction over all axes of *_array*.
+    """Perform a tree-like reduction over all axes of *_array*.
 
     :param _array: *pyDive.ndarray*, *pyDive.h5_ndarray* or *pyDive.cloned_ndarray* to be reduced
     :param numpy-ufunc op: reduce operation, e.g. *numpy.add*.
@@ -109,7 +109,7 @@ def reduce(_array, op):
 
 def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     """Calls *map_func* on :term:`engine` with local numpy-arrays related to *arrays*
-    and reduces its result.
+    and reduces its result in a tree-like fashion.
     Example: ::
 
         cluster_array = pyDive.ones(shape=[100], distaxis=0)
