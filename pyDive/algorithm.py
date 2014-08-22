@@ -158,7 +158,6 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     return result
 
 def __tree_reduce(array, axis=None, op=np.add):
-
     # reduce all axes
     if axis is None:
         result = array
@@ -173,7 +172,7 @@ def __tree_reduce(array, axis=None, op=np.add):
         l = result.shape[0]
 
         # if axis is small enough to neglect rounding errors do a faster numpy-reduce
-        if l < 100000:
+        if l < 10000:
             return op.reduce(result, axis=0)
 
         if l % 2 == 0:

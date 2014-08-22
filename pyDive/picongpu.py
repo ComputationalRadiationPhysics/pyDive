@@ -68,7 +68,7 @@ def loadSteps(steps, folder_path, data_path, distaxis=0, window=None):
 
         h5data = h5_ndarray.factories.fromPath(full_filename, full_datapath, distaxis, window)
 
-        # add 'sim_unit'
+        # add 'sim_unit' as 'unit' attribute
         def add_sim_unit(array):
             if 'sim_unit' in array.attrs:
                 setattr(array, "unit", array.attrs["sim_unit"])
@@ -76,7 +76,8 @@ def loadSteps(steps, folder_path, data_path, distaxis=0, window=None):
         if type(h5data) is h5_ndarray.h5_ndarray.h5_ndarray:
             h5data = add_sim_unit(h5data)
         else:
-            h5data = arrayOfStructs.makeTree_fromTree(h5data, add_sim_unit)
+            h5data = arrayOfStructs.arrayOfStructs(\
+                arrayOfStructs.makeTree_fromTree(h5data.structOfArrays, add_sim_unit))
 
         yield timestep, h5data
 
