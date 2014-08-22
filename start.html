@@ -74,13 +74,13 @@ pyDive with these and other required packages from <cite>requirements.txt</cite>
 <span class="o">...</span>
 </pre></div>
 </div>
-<p>Before actually running this script there must have been an IPython.parallel cluster started (see section below) otherwise <cite>pyDive.init()</cite> fails.</p>
+<p>Before actually running this script there must have been an IPython.parallel cluster launched (see section below) otherwise <cite>pyDive.init()</cite> fails.</p>
 <p>To keep things simple pyDive distributes array-memory only along <strong>one</strong> user-specified axis. This axis is given by the <cite>distaxis</cite>
-parameter at array instanciating. It should usually be the largest axis in order to have the best surface-to-volume ratio.
+parameter at array instanciation. It should usually be the largest axis in order to have the best surface-to-volume ratio.
 But keep in mind that during arithmetic operations both arrays have to be distributed along the <em>same</em> axis.</p>
 <p>Although the array elements are stored on the cluster nodes you have full access through indexing. If you want to have a numpy-array
-anyway you can call <a class="reference internal" href="pyDive.ndarray.html#pyDive.ndarray.ndarray.ndarray.gather" title="pyDive.ndarray.ndarray.ndarray.gather"><tt class="xref py py-meth docutils literal"><span class="pre">pyDive.ndarray.ndarray.ndarray.gather()</span></tt></a> knowing that your pyDive array has been sliced down to fit
-into your local machine&#8217;s memory.</p>
+from a pyDive-array anyway you can call the method <tt class="docutils literal"><span class="pre">arrayC.gather()</span></tt> but make sure that your pyDive-array is small enough to fit
+into your local machine&#8217;s memory. If not you may want to slice it first.</p>
 </div>
 <div class="section" id="setup-an-ipython-parallel-cluster-configuration">
 <span id="cluster-config"></span><h2>Setup an IPython.parallel cluster configuration<a class="headerlink" href="#setup-an-ipython-parallel-cluster-configuration" title="Permalink to this headline">¶</a></h2>

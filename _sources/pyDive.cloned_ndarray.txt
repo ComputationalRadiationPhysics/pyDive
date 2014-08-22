@@ -1,3 +1,5 @@
+.. _pyDive.cloned_ndarray:
+
 pyDive.cloned_ndarray package
 =============================
 
