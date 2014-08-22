@@ -57,6 +57,7 @@ class h5_ndarray(object):
         self.h5_filename = h5_filename
         self.dataset_path = dataset_path
         self.dataset = h5.File(h5_filename)[dataset_path]
+        self.attrs = self.dataset.attrs
         #: axis of element-distribution
         self.distaxis = distaxis
         #: datatype of a single data value

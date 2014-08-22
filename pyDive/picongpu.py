@@ -28,6 +28,7 @@ import os
 import os.path
 import re
 import h5_ndarray.factories
+import arrayOfStructs
 
 def loadSteps(steps, folder_path, data_path, distaxis, window=None):
     """Python generator object looping all hdf5-data found in *folder_path*
@@ -65,7 +66,19 @@ def loadSteps(steps, folder_path, data_path, distaxis, window=None):
         full_filename = os.path.join(folder_path, filename)
         full_datapath = os.path.join("/data", str(timestep), data_path)
 
-        yield timestep, h5_ndarray.factories.fromPath(full_filename, full_datapath, distaxis, window)
+        h5data = h5_ndarray.factories.fromPath(full_filename, full_datapath, distaxis, window)
+
+        # add 'sim_unit'
+        def add_sim_unit(array):
+            if 'sim_unit' in array.attrs:
+                setattr(array, "unit", array.attrs["sim_unit"])
+            return array
+        if type(h5data) is h5_ndarray.h5_ndarray.h5_ndarray:
+            h5data = add_sim_unit(h5data)
+        else:
+            h5data = arrayOfStructs.makeTree_fromTree(h5data, add_sim_unit)
+
+        yield timestep, h5data
 
 def getSteps(folder_path):
     """Returns a list of all timesteps in *folder_path*.
