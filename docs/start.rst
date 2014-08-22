@@ -23,15 +23,15 @@ Basic code example: ::
   # plot result
   ...
 
-Before actually running this script there must have been an IPython.parallel cluster started (see section below) otherwise `pyDive.init()` fails.
+Before actually running this script there must have been an IPython.parallel cluster launched (see section below) otherwise `pyDive.init()` fails.
 
 To keep things simple pyDive distributes array-memory only along **one** user-specified axis. This axis is given by the `distaxis`
-parameter at array instanciating. It should usually be the largest axis in order to have the best surface-to-volume ratio. 
+parameter at array instanciation. It should usually be the largest axis in order to have the best surface-to-volume ratio. 
 But keep in mind that during arithmetic operations both arrays have to be distributed along the *same* axis.
 
 Although the array elements are stored on the cluster nodes you have full access through indexing. If you want to have a numpy-array
-anyway you can call :meth:`pyDive.ndarray.ndarray.ndarray.gather` knowing that your pyDive array has been sliced down to fit
-into your local machine's memory.
+from a pyDive-array anyway you can call the method ``arrayC.gather()`` but make sure that your pyDive-array is small enough to fit
+into your local machine's memory. If not you may want to slice it first.
 
 .. _cluster-config:
 

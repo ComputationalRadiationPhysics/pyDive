@@ -42,7 +42,7 @@ Load a single dataset: ::
 
     assert type(fieldB_z) is pyDive.ndarray.ndarray.ndarray
 
-This loads the entire dataset into the cluster's memory. The array elements are distributed across the :term:`engines<engine>`
+This loads the entire dataset into the main memory of all :term:`engines<engine>`. The array elements are distributed
 along ``distaxis=0``.
 
 We can also load a hdf5-group: ::
@@ -76,7 +76,7 @@ Computing the total field energy of an electromagnetic field means squaring and 
     h5input = "sample.h5"
 
     h5fields = pyDive.h5.fromPath(h5input, "/fields", distaxis=0)
-    fields = h5fields[:] # read out all fields into cluster memory in parallel
+    fields = h5fields[:] # read out all fields into cluster's main memory in parallel
     
     energy_field = fields["fieldE/x"]**2 + fields["fieldE/y"]**2 + fields["fieldB/z"]**2
 
@@ -89,7 +89,7 @@ Output: ::
     557502.0
 
 Well this was just a very small hdf5-sample of 1.3 MB however in the real world we deal with a lot greater data volumes.
-So what happens if *h5fields* is too large to be stored in the cluster's memory? The line ``fields = h5fields[:]`` will crash.
+So what happens if *h5fields* is too large to be stored in the main memory of the whole cluster? The line ``fields = h5fields[:]`` will crash.
 In this case we want to load the hdf5 data piece by piece. The functions in :mod:`pyDive.algorithm` help us doing so: ::
 
     import pyDive
@@ -109,14 +109,14 @@ In this case we want to load the hdf5 data piece by piece. The functions in :mod
 *square_fields* is called on each :term:`engine` where *npfield* is a structure (:mod:`pyDive.arrayOfStructs`) of numpy-arrays representing a sub part of the big *h5fields*.
 :func:`pyDive.algorithm.mapReduce` can be called with an arbitrary number of arrays including
 :obj:`pyDive.ndarrays`, :obj:`pyDive.h5_ndarrays` and :obj:`pyDive.cloned_ndarrays`. If there are :obj:`pyDive.h5_ndarrays` it will
-check whether they fit into the cluster memory as a whole and loads them piece by piece if not.
+check whether they fit into the cluster's main memory as a whole and loads them piece by piece if not.
 
 Now let's say our dataset is really big and we just want to get a first estimate of the total energy: ::
 
   ...
   total_energy = pyDive.mapReduce(square_fields, np.add, h5fields[::10, ::10]) * 10.0**2
 
-This is valid if *h5fields[::10, ::10]* fits into the cluster's memory. Note that slicing on a :obj:`pyDive.h5_ndarray` always
+This is valid if *h5fields[::10, ::10]* fits into the cluster's main memory. Note that slicing on a :obj:`pyDive.h5_ndarray` always
 means reading or writing from hdf5 to respectively from memory. So in this case we also could have used the very first version: ::
 
     import pyDive
@@ -170,8 +170,13 @@ here is an example of how to get the total field energy for each timestep (see :
 Example 2: Particle density field
 ---------------------------------
 
-Given the list of particles in our ``sample.h5`` we want to create a 2D density field out of it. We assume that the particle
-positions are distributed randomly. This means although each engine is loading a separate part of all particles it needs to 
+Given the list of particles in our ``sample.h5`` we want to create a 2D density field out of it. For this particle-to-mesh
+mapping we need to apply a certain particle shape like cloud-in-shape (CIC), triangular-shaped-cloud (TSC), and so on. A list of 
+these together with the actual mapping functions can be found in the :mod:`pyDive.mappings` module. If you miss a shape you can
+easily create one by your own by basically just defining a particle shape function. Note that if you have `numba <http://numba.pydata.org/>`_
+installed the shape function will be compiled resulting in a significant speed-up.
+
+We assume that the particle positions are distributed randomly. This means although each engine is loading a separate part of all particles it needs to 
 write to the entire density field. Therefore the density field must have a whole representation on each participating engine.
 This is the job of :class:`pyDive.cloned_ndarray.cloned_ndarray.cloned_ndarray`. ::
 

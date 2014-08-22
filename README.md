@@ -30,7 +30,7 @@ ones = pyDive.ones_like(h5field)
 h5field[1:] = h5field[1:] - h5field[:-1] + 5.0 * ones[1:]
 ```
 
-## Getting started
+## Documentation
 
 In our [Online Documentation](http://ComputationalRadiationPhysics.github.io/pyDive/), [pdf](http://ComputationalRadiationPhysics.github.io/pyDive/pyDive.pdf) you can find 
 detailed information on all interfaces as well as some [Tutorials](http://computationalradiationphysics.github.io/pyDive/tutorial.html)

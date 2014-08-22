@@ -1,3 +1,5 @@
+.. _pyDive.h5_ndarray:
+
 pyDive.h5_ndarray package
 =========================
 
