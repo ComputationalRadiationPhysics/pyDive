@@ -116,7 +116,7 @@
 <span class="sd">        :raises ValueError: if just *idx_ranges* is given and *targets_in_use* not or vice versa</span>
 
 <span class="sd">        If *idx_ranges* and *targets_in_use* are both ``None`` they will be auto-generated</span>
-<span class="sd">        so that the memory will be equally distributed across all :term:`engines &lt;engine&gt;` at its best.</span>
+<span class="sd">        so that the memory is equally distributed across all :term:`engines &lt;engine&gt;` at its best.</span>
 <span class="sd">        This means that the last engine may get less memory than the others.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -427,10 +427,6 @@
 <span class="n">my_module</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">__name__</span><span class="p">]</span>
 <span class="n">dist_math</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">my_module</span>
 <span class="n">factories</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">my_module</span>
-
-<span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
-<span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-    <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;from pyDive.ndarray import interengine&#39;</span><span class="p">)</span>
 </pre></div>
 
           </div>

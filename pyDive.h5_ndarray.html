@@ -112,7 +112,7 @@ Example: window=np.s_[:,:,::2]</li>
 <dl class="function">
 <dt id="pyDive.h5_ndarray.factories.fromPath">
 <tt class="descclassname">pyDive.h5_ndarray.factories.</tt><tt class="descname">fromPath</tt><big>(</big><em>h5_filename</em>, <em>datapath</em>, <em>distaxis=0</em>, <em>window=None</em><big>)</big><a class="reference internal" href="_modules/pyDive/h5_ndarray/factories.html#fromPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.h5_ndarray.factories.fromPath" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a <a class="reference internal" href="#pydive-h5-ndarray"><em>pyDive.h5_ndarray package</em></a> or structure of <a class="reference internal" href="#pydive-h5-ndarray"><em>pyDive.h5_ndarrays</em></a>
+<dd><p>Creates a <tt class="xref py py-class docutils literal"><span class="pre">pyDive.h5_ndarray</span></tt> or structure of <a class="reference internal" href="#pydive-h5-ndarray"><em>pyDive.h5_ndarrays</em></a>
 from a hdf5-dataset respectively a hdf5-group.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -132,6 +132,13 @@ Example: window=np.s_[:,:,::2]</li>
 </tr>
 </tbody>
 </table>
+<dl class="docutils">
+<dt>Notes:</dt>
+<dd><ul class="first last simple">
+<li>The dataset&#8217;s attributes are stored in <tt class="docutils literal"><span class="pre">h5array.attrs</span></tt>.</li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </div>

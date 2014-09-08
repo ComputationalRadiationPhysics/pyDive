@@ -74,7 +74,7 @@
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">arrayOfStructs</span>
 
 <div class="viewcode-block" id="fromPath"><a class="viewcode-back" href="../../../pyDive.h5_ndarray.html#pyDive.h5_ndarray.factories.fromPath">[docs]</a><span class="k">def</span> <span class="nf">fromPath</span><span class="p">(</span><span class="n">h5_filename</span><span class="p">,</span> <span class="n">datapath</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Creates a :ref:`pyDive.h5_ndarray` or structure of :ref:`pyDive.h5_ndarrays &lt;pyDive.h5_ndarray&gt;`</span>
+    <span class="sd">&quot;&quot;&quot;Creates a :class:`pyDive.h5_ndarray` or structure of :ref:`pyDive.h5_ndarrays &lt;pyDive.h5_ndarray&gt;`</span>
 <span class="sd">        from a hdf5-dataset respectively a hdf5-group.</span>
 
 <span class="sd">        :param str h5_filename: hdf5-filename</span>
@@ -85,6 +85,9 @@
 <span class="sd">        :type window: list of slice objects (:ref:`numpy.s_`)</span>
 <span class="sd">        :return: :obj:`pyDive.h5_ndarray` or structure of :obj:`pyDive.h5_ndarrays &lt;pyDive.h5_ndarray&gt;`\</span>
 <span class="sd">            (:mod:`pyDive.arrayOfStructs`)</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            - The dataset&#39;s attributes are stored in ``h5array.attrs``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">hFile</span> <span class="o">=</span> <span class="n">h5</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">h5_filename</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
     <span class="n">datapath</span> <span class="o">=</span> <span class="n">datapath</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">)</span>

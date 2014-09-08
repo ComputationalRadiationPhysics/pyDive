@@ -82,7 +82,7 @@ such as shape and dtype and allows for slicing but is operating on a structure-o
 <p>The example shows that in fact <em>fields</em> can be treated as an array-of-structures
 <strong>or</strong> a structure-of-arrays depending on what is more appropriate.</p>
 <p>The goal is to make the virtual <em>array-of-structs</em>-object look like a real array. Therefore
-every method call on it is forwarded to the individual arrays.</p>
+every method call or operation is forwarded to the individual arrays.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">new_field</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="s">&quot;FieldE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span> <span class="o">+</span> <span class="n">fields</span><span class="p">[</span><span class="s">&quot;FieldB&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -127,6 +127,14 @@ cluster_array *= 2.0
 pyDive.map(lambda a: a *= 2.0, cluster_array) # a is the local numpy-array of *cluster_array*
 </pre></div>
 </div>
+<p>Or, as a decorator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@pyDive.map</span>
+<span class="k">def</span> <span class="nf">twice</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">*=</span> <span class="mf">2.0</span>
+
+<span class="n">twice</span><span class="p">(</span><span class="n">cluster_array</span><span class="p">)</span>
+</pre></div>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -162,7 +170,7 @@ pyDive.map(lambda a: a *= 2.0, cluster_array) # a is the local numpy-array of *c
 <dt id="pyDive.algorithm.mapReduce">
 <tt class="descclassname">pyDive.algorithm.</tt><tt class="descname">mapReduce</tt><big>(</big><em>map_func</em>, <em>reduce_op</em>, <em>*arrays</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/pyDive/algorithm.html#mapReduce"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.algorithm.mapReduce" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls <em>map_func</em> on <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a> with local numpy-arrays related to <em>arrays</em>
-and reduces its result in a tree-like fashion.
+and reduces its result in a tree-like fashion over all axes.
 Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">cluster_array</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">],</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
@@ -240,7 +248,7 @@ be compiled which gives an appreciable speedup.</p>
 
 <dl class="function">
 <dt id="pyDive.mappings.mesh2particles">
-<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">mesh2particles</tt><big>(</big><em>mesh</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x2ae54b6446d0&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#mesh2particles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.mesh2particles" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">mesh2particles</tt><big>(</big><em>mesh</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x2af19ede5738&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#mesh2particles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.mesh2particles" title="Permalink to this definition">¶</a></dt>
 <dd><p>Map mesh values to particles according to a particle shape function.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -273,7 +281,7 @@ Defaults to cloud-in-cell.</li>
 
 <dl class="function">
 <dt id="pyDive.mappings.particles2mesh">
-<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">particles2mesh</tt><big>(</big><em>mesh</em>, <em>particles</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x2ae54b6446d0&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#particles2mesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.particles2mesh" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">pyDive.mappings.</tt><tt class="descname">particles2mesh</tt><big>(</big><em>mesh</em>, <em>particles</em>, <em>particles_pos</em>, <em>shape_function=&lt;class pyDive.mappings.CIC at 0x2af19ede5738&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/mappings.html#particles2mesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.mappings.particles2mesh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Map particle values to mesh according to a particle shape function.
 Particle values are added to the mesh.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -329,7 +337,7 @@ covered by <em>pyDive.h5_ndarray</em> objects.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>folder_path</strong> (<em>str</em>) &#8211; Path of the folder containing the hdf5-files</li>
+<li><strong>folder_path</strong> (<em>str</em>) &#8211; Path to the folder containing the hdf5-files</li>
 <li><strong>data_path</strong> (<em>str</em>) &#8211; Relative path starting from &#8220;/data/&lt;timestep&gt;/&#8221; within hdf5-file to the dataset or group of datasets</li>
 <li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which datasets are distributed over when once loaded into memory.</li>
 <li><strong>window</strong> (list of slice objects (<em class="xref std std-ref">numpy.s_</em>).) &#8211; This param let you specify a sub-part of the array as a virtual container.
@@ -362,8 +370,8 @@ or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#modul
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>step</strong> (<em>ints</em>) &#8211; timestep</li>
-<li><strong>folder_path</strong> (<em>str</em>) &#8211; Path of the folder containing the hdf5-files</li>
+<li><strong>step</strong> (<em>int</em>) &#8211; timestep</li>
+<li><strong>folder_path</strong> (<em>str</em>) &#8211; Path to the folder containing the hdf5-files</li>
 <li><strong>data_path</strong> (<em>str</em>) &#8211; Relative path starting from &#8220;/data/&lt;timestep&gt;/&#8221; within hdf5-file to the dataset or group of datasets</li>
 <li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which datasets are distributed over when once loaded into memory.</li>
 <li><strong>window</strong> (list of slice objects (<em class="xref std std-ref">numpy.s_</em>).) &#8211; This param let you specify a sub-part of the array as a virtual container.
@@ -400,7 +408,7 @@ covered by <em>pyDive.h5_ndarray</em> objects.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>steps</strong> (<em>ints</em>) &#8211; list of timesteps to loop</li>
-<li><strong>folder_path</strong> (<em>str</em>) &#8211; Path of the folder containing the hdf5-files</li>
+<li><strong>folder_path</strong> (<em>str</em>) &#8211; Path to the folder containing the hdf5-files</li>
 <li><strong>data_path</strong> (<em>str</em>) &#8211; Relative path starting from &#8220;/data/&lt;timestep&gt;/&#8221; within hdf5-file to the dataset or group of datasets</li>
 <li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which datasets are distributed over when once loaded into memory.</li>
 <li><strong>window</strong> (list of slice objects (<em class="xref std std-ref">numpy.s_</em>).) &#8211; This param let you specify a sub-part of the array as a virtual container.

@@ -91,6 +91,14 @@
 <span class="sd">        # equivalent to</span>
 <span class="sd">        pyDive.map(lambda a: a *= 2.0, cluster_array) # a is the local numpy-array of *cluster_array*</span>
 
+<span class="sd">    Or, as a decorator: ::</span>
+
+<span class="sd">        @pyDive.map</span>
+<span class="sd">        def twice(a):</span>
+<span class="sd">            a *= 2.0</span>
+
+<span class="sd">        twice(cluster_array)</span>
+
 <span class="sd">    :param callable f: function to be called on :term:`engine`. Has to accept *numpy-arrays* and *kwargs*</span>
 <span class="sd">    :param arrays: list of arrays including *pyDive.ndarrays*, *pyDive.h5_ndarrays* or *pyDive.cloned_ndarrays*</span>
 <span class="sd">    :param kwargs: user-specified keyword arguments passed to *f*</span>
@@ -105,6 +113,12 @@
 <span class="sd">        - *map* is not writing data back to a *pyDive.h5_ndarray* yet.</span>
 <span class="sd">        - *map* does not equalize the element distribution of *pyDive.ndarrays* before execution.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">arrays</span><span class="p">:</span>
+        <span class="c"># decorator mode</span>
+        <span class="k">def</span> <span class="nf">map_deco</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="nb">map</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">map_deco</span>
+
     <span class="k">def</span> <span class="nf">map_wrapper</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">arrays</span> <span class="o">=</span> <span class="p">[</span><span class="nb">globals</span><span class="p">()[</span><span class="n">array_name</span><span class="p">]</span> <span class="k">for</span> <span class="n">array_name</span> <span class="ow">in</span> <span class="n">array_names</span><span class="p">]</span>
         <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -158,7 +172,7 @@
 </div>
 <div class="viewcode-block" id="mapReduce"><a class="viewcode-back" href="../../modules.html#pyDive.algorithm.mapReduce">[docs]</a><span class="k">def</span> <span class="nf">mapReduce</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Calls *map_func* on :term:`engine` with local numpy-arrays related to *arrays*</span>
-<span class="sd">    and reduces its result in a tree-like fashion.</span>
+<span class="sd">    and reduces its result in a tree-like fashion over all axes.</span>
 <span class="sd">    Example: ::</span>
 
 <span class="sd">        cluster_array = pyDive.ones(shape=[100], distaxis=0)</span>

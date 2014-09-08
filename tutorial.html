@@ -89,7 +89,7 @@ It has the following dataset structure:</p>
 <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">h5fieldB_z</span><span class="p">)</span> <span class="ow">is</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5_ndarray</span><span class="o">.</span><span class="n">h5_ndarray</span><span class="o">.</span><span class="n">h5_ndarray</span>
 </pre></div>
 </div>
-<p><em>h5fieldB_z</em> just holds a dataset <em>handle</em>. To read out data into memory we do slicing:</p>
+<p><em>h5fieldB_z</em> just holds a dataset <em>handle</em>. To read out data into memory do slicing:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">fieldB_z</span> <span class="o">=</span> <span class="n">h5fieldB_z</span><span class="p">[:]</span>
 
 <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">fieldB_z</span><span class="p">)</span> <span class="ow">is</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span><span class="o">.</span><span class="n">ndarray</span>
@@ -138,7 +138,7 @@ along <tt class="docutils literal"><span class="pre">distaxis=0</span></tt>.</p>
 557502.0
 </pre></div>
 </div>
-<p>Well this was just a very small hdf5-sample of 1.3 MB however in the real world we deal with a lot greater data volumes.
+<p>Well this was just a very small hdf5-sample of 1.3 MB however in real world we deal with a lot greater data volumes.
 So what happens if <em>h5fields</em> is too large to be stored in the main memory of the whole cluster? The line <tt class="docutils literal"><span class="pre">fields</span> <span class="pre">=</span> <span class="pre">h5fields[:]</span></tt> will crash.
 In this case we want to load the hdf5 data piece by piece. The functions in <a class="reference internal" href="modules.html#module-pyDive.algorithm" title="pyDive.algorithm"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.algorithm</span></tt></a> help us doing so:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pyDive</span>
@@ -219,9 +219,9 @@ here is an example of how to get the total field energy for each timestep (see <
 <div class="section" id="example-2-particle-density-field">
 <h2>Example 2: Particle density field<a class="headerlink" href="#example-2-particle-density-field" title="Permalink to this headline">¶</a></h2>
 <p>Given the list of particles in our <tt class="docutils literal"><span class="pre">sample.h5</span></tt> we want to create a 2D density field out of it. For this particle-to-mesh
-mapping we need to apply a certain particle shape like cloud-in-shape (CIC), triangular-shaped-cloud (TSC), and so on. A list of
+mapping we need to apply a certain particle shape like cloud-in-cell (CIC), triangular-shaped-cloud (TSC), and so on. A list of
 these together with the actual mapping functions can be found in the <a class="reference internal" href="modules.html#module-pyDive.mappings" title="pyDive.mappings"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.mappings</span></tt></a> module. If you miss a shape you can
-easily create one by your own by basically just defining a particle shape function. Note that if you have <a class="reference external" href="http://numba.pydata.org/">numba</a>
+easily create one by your own by basically defining a particle shape function. Note that if you have <a class="reference external" href="http://numba.pydata.org/">numba</a>
 installed the shape function will be compiled resulting in a significant speed-up.</p>
 <p>We assume that the particle positions are distributed randomly. This means although each engine is loading a separate part of all particles it needs to
 write to the entire density field. Therefore the density field must have a whole representation on each participating engine.
@@ -261,6 +261,14 @@ This is the job of <a class="reference internal" href="pyDive.cloned_ndarray.htm
 <img alt="_images/density.png" src="_images/density.png" />
 <p>Here, as in the first example, <em>particles2density</em> is a function executed on the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> by <a class="reference internal" href="modules.html#pyDive.algorithm.map" title="pyDive.algorithm.map"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.algorithm.map()</span></tt></a>.
 All of its arguments are numpy-arrays or structures (<a class="reference internal" href="modules.html#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></tt></a>) of numpy-arrays.</p>
+<p><a class="reference internal" href="modules.html#pyDive.algorithm.map" title="pyDive.algorithm.map"><tt class="xref py py-func docutils literal"><span class="pre">pyDive.algorithm.map()</span></tt></a> can also be used as a decorator:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nd">@pyDive.map</span>
+<span class="k">def</span> <span class="nf">particles2density</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">density</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="n">particles2density</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">density</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="example-3-particle-energy-spectrum">
 <h2>Example 3: Particle energy spectrum<a class="headerlink" href="#example-3-particle-energy-spectrum" title="Permalink to this headline">¶</a></h2>
