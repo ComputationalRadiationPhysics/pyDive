@@ -242,13 +242,14 @@ Example 3: Particle energy spectrum
 
     velocities = pyDive.h5.fromPath(h5input, "/particles/vel", distaxis=0)
 
+    @pyDive.map
     def vel2spectrum(velocities, spectrum, bins):
         mass = 1.0
         energies = 0.5 * mass * (velocities["x"]**2 + velocities["y"]**2 + velocities["z"]**2)
 
         spectrum[:], bin_edges = np.histogram(energies, bins)
 
-    pyDive.map(vel2spectrum, velocities, spectrum, bins=bins)
+    vel2spectrum(velocities, spectrum, bins=bins)
 
     final_spectrum = spectrum.sum() # add up all local copies
 
