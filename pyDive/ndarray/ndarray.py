@@ -67,7 +67,7 @@ class ndarray(object):
         :raises ValueError: if just *idx_ranges* is given and *targets_in_use* not or vice versa
 
         If *idx_ranges* and *targets_in_use* are both ``None`` they will be auto-generated
-        so that the memory will be equally distributed across all :term:`engines <engine>` at its best.
+        so that the memory is equally distributed across all :term:`engines <engine>` at its best.
         This means that the last engine may get less memory than the others.
         """
 

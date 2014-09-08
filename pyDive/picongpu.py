@@ -40,7 +40,7 @@ def loadSteps(steps, folder_path, data_path, distaxis=0, window=None):
         All datasets within *data_path* must have the same shape.
 
         :param ints steps: list of timesteps to loop
-        :param str folder_path: Path of the folder containing the hdf5-files
+        :param str folder_path: Path to the folder containing the hdf5-files
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
         :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
         :param window: This param let you specify a sub-part of the array as a virtual container.
@@ -104,7 +104,7 @@ def loadAllSteps(folder_path, data_path, distaxis=0, window=None):
 
         All datasets within *data_path* must have the same shape.
 
-        :param str folder_path: Path of the folder containing the hdf5-files
+        :param str folder_path: Path to the folder containing the hdf5-files
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
         :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
         :param window: This param let you specify a sub-part of the array as a virtual container.
@@ -126,8 +126,8 @@ def loadStep(step, folder_path, data_path, distaxis=0, window=None):
 
         All datasets within *data_path* must have the same shape.
 
-        :param ints step: timestep
-        :param str folder_path: Path of the folder containing the hdf5-files
+        :param int step: timestep
+        :param str folder_path: Path to the folder containing the hdf5-files
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
         :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
         :param window: This param let you specify a sub-part of the array as a virtual container.

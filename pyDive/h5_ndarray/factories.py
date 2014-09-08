@@ -25,7 +25,7 @@ import h5py as h5
 from .. import arrayOfStructs
 
 def fromPath(h5_filename, datapath, distaxis=0, window=None):
-    """Creates a :ref:`pyDive.h5_ndarray` or structure of :ref:`pyDive.h5_ndarrays <pyDive.h5_ndarray>`
+    """Creates a :class:`pyDive.h5_ndarray` or structure of :ref:`pyDive.h5_ndarrays <pyDive.h5_ndarray>`
         from a hdf5-dataset respectively a hdf5-group.
 
         :param str h5_filename: hdf5-filename
@@ -36,6 +36,9 @@ def fromPath(h5_filename, datapath, distaxis=0, window=None):
         :type window: list of slice objects (:ref:`numpy.s_`)
         :return: :obj:`pyDive.h5_ndarray` or structure of :obj:`pyDive.h5_ndarrays <pyDive.h5_ndarray>`\
             (:mod:`pyDive.arrayOfStructs`)
+
+        Notes:
+            - The dataset's attributes are stored in ``h5array.attrs``.
     """
     hFile = h5.File(h5_filename, 'r')
     datapath = datapath.rstrip("/")

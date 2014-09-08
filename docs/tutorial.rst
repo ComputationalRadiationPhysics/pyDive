@@ -36,7 +36,7 @@ Load a single dataset: ::
 
     assert type(h5fieldB_z) is pyDive.h5_ndarray.h5_ndarray.h5_ndarray
 
-*h5fieldB_z* just holds a dataset *handle*. To read out data into memory we do slicing: ::
+*h5fieldB_z* just holds a dataset *handle*. To read out data into memory do slicing: ::
 
     fieldB_z = h5fieldB_z[:]
 
@@ -88,7 +88,7 @@ Output: ::
     $ python example1.py
     557502.0
 
-Well this was just a very small hdf5-sample of 1.3 MB however in the real world we deal with a lot greater data volumes.
+Well this was just a very small hdf5-sample of 1.3 MB however in real world we deal with a lot greater data volumes.
 So what happens if *h5fields* is too large to be stored in the main memory of the whole cluster? The line ``fields = h5fields[:]`` will crash.
 In this case we want to load the hdf5 data piece by piece. The functions in :mod:`pyDive.algorithm` help us doing so: ::
 
@@ -173,7 +173,7 @@ Example 2: Particle density field
 Given the list of particles in our ``sample.h5`` we want to create a 2D density field out of it. For this particle-to-mesh
 mapping we need to apply a certain particle shape like cloud-in-cell (CIC), triangular-shaped-cloud (TSC), and so on. A list of 
 these together with the actual mapping functions can be found in the :mod:`pyDive.mappings` module. If you miss a shape you can
-easily create one by your own by basically just defining a particle shape function. Note that if you have `numba <http://numba.pydata.org/>`_
+easily create one by your own by basically defining a particle shape function. Note that if you have `numba <http://numba.pydata.org/>`_
 installed the shape function will be compiled resulting in a significant speed-up.
 
 We assume that the particle positions are distributed randomly. This means although each engine is loading a separate part of all particles it needs to 
