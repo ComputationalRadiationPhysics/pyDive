@@ -283,13 +283,14 @@ All of its arguments are numpy-arrays or structures (<a class="reference interna
 
 <span class="n">velocities</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="n">h5input</span><span class="p">,</span> <span class="s">&quot;/particles/vel&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
+<span class="nd">@pyDive.map</span>
 <span class="k">def</span> <span class="nf">vel2spectrum</span><span class="p">(</span><span class="n">velocities</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">bins</span><span class="p">):</span>
     <span class="n">mass</span> <span class="o">=</span> <span class="mf">1.0</span>
     <span class="n">energies</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="n">velocities</span><span class="p">[</span><span class="s">&quot;x&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">velocities</span><span class="p">[</span><span class="s">&quot;y&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">velocities</span><span class="p">[</span><span class="s">&quot;z&quot;</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="n">spectrum</span><span class="p">[:],</span> <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">energies</span><span class="p">,</span> <span class="n">bins</span><span class="p">)</span>
 
-<span class="n">pyDive</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">vel2spectrum</span><span class="p">,</span> <span class="n">velocities</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+<span class="n">vel2spectrum</span><span class="p">(</span><span class="n">velocities</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
 
 <span class="n">final_spectrum</span> <span class="o">=</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="c"># add up all local copies</span>
 
