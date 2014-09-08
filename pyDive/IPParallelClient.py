@@ -53,6 +53,7 @@ def init(profile='mpi'):
         os.environ["onTarget"] = 'True'
         from pyDive import arrayOfStructs
         from pyDive import algorithm
+        from pyDive.ndarray import interengine
          ''')
 
     # get number of processes per node (ppn)
@@ -70,8 +71,10 @@ def init(profile='mpi'):
 
 def getView():
     global view
+    assert view is not None, "pyDive.init() has not been called yet."
     return view
 
 def getPPN():
     global ppn
+    assert ppn is not None, "pyDive.init() has not been called yet."
     return ppn

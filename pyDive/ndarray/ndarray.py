@@ -378,7 +378,3 @@ class ndarray(object):
 my_module = sys.modules[__name__]
 dist_math.ndarray = my_module
 factories.ndarray = my_module
-
-view = com.getView()
-if view is not None:
-    view.execute('from pyDive.ndarray import interengine')
