@@ -42,6 +42,14 @@ def map(f, *arrays, **kwargs):
         # equivalent to
         pyDive.map(lambda a: a *= 2.0, cluster_array) # a is the local numpy-array of *cluster_array*
 
+    Or, as a decorator: ::
+
+        @pyDive.map
+        def twice(a):
+            a *= 2.0
+
+        twice(cluster_array)
+
     :param callable f: function to be called on :term:`engine`. Has to accept *numpy-arrays* and *kwargs*
     :param arrays: list of arrays including *pyDive.ndarrays*, *pyDive.h5_ndarrays* or *pyDive.cloned_ndarrays*
     :param kwargs: user-specified keyword arguments passed to *f*
@@ -56,6 +64,12 @@ def map(f, *arrays, **kwargs):
         - *map* is not writing data back to a *pyDive.h5_ndarray* yet.
         - *map* does not equalize the element distribution of *pyDive.ndarrays* before execution.
     """
+    if not arrays:
+        # decorator mode
+        def map_deco(*arrays, **kwargs):
+            map(f, *arrays, **kwargs)
+        return map_deco
+
     def map_wrapper(f, array_names, **kwargs):
         arrays = [globals()[array_name] for array_name in array_names]
         f(*arrays, **kwargs)
@@ -109,7 +123,7 @@ def reduce(_array, op):
 
 def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     """Calls *map_func* on :term:`engine` with local numpy-arrays related to *arrays*
-    and reduces its result in a tree-like fashion.
+    and reduces its result in a tree-like fashion over all axes.
     Example: ::
 
         cluster_array = pyDive.ones(shape=[100], distaxis=0)

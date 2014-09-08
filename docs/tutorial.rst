@@ -217,6 +217,15 @@ Output:
 Here, as in the first example, *particles2density* is a function executed on the :term:`engines <engine>` by :func:`pyDive.algorithm.map`.
 All of its arguments are numpy-arrays or structures (:mod:`pyDive.arrayOfStructs`) of numpy-arrays.
 
+:func:`pyDive.algorithm.map` can also be used as a decorator: ::
+
+    @pyDive.map
+    def particles2density(particles, density):
+        ...
+
+    particles2density(particles, density)
+
+
 Example 3: Particle energy spectrum
 -----------------------------------
 
