@@ -25,7 +25,9 @@ from IPython.parallel import interactive
 from collections import Counter
 import sys
 
+#: IPParallel direct view
 view = None
+#: number of processes per node
 ppn = None
 
 def init(profile='mpi'):
@@ -60,7 +62,6 @@ def init(profile='mpi'):
     hostnames = view.apply(interactive(hostname))
     global ppn
     ppn = min(Counter(hostnames).values())
-    print "ppn:", ppn
 
     # mpi ranks
     get_rank = interactive(lambda: MPI.COMM_WORLD.Get_rank())
