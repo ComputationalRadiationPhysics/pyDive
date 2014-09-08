@@ -22,7 +22,7 @@ __doc__ = None
 
 from ..ndarray import *
 from h5_ndarray import *
-from ..import IPParallelClient as com
+from .. import IPParallelClient as com
 from IPython.parallel import interactive
 
 #: fraction of the available memory per engine used for caching hdf5 files.
@@ -33,7 +33,7 @@ def __bestStepSize(h5_ndarrays):
 
     # minimum amount of memory available and memory needed, both per engine
     get_mem_av = interactive(lambda: psutil.virtual_memory().available)
-    mem_av = min(view.apply(get_mem_av)) / 64.0
+    mem_av = min(view.apply(get_mem_av)) / view.getPPN()
     mem_needed = sum(a.nbytes for a in h5_ndarrays) / len(view.targets)
 
     # edge length of the whole h5_ndarray

@@ -22,9 +22,11 @@ __doc__ = None
 
 from IPython.parallel import Client
 from IPython.parallel import interactive
+from collections import Counter
 import sys
 
 view = None
+ppn = None
 
 def init(profile='mpi'):
     """Initialize pyDive.
@@ -32,7 +34,7 @@ def init(profile='mpi'):
     :param str profile: The name of the cluster profile of *IPython.parallel*. Has to be an MPI-profile.\
         Defaults to 'mpi'.
     """
-    #init direct view
+    # init direct view
     global view
 
     client = Client(profile=profile)
@@ -51,6 +53,16 @@ def init(profile='mpi'):
         from pyDive import algorithm
          ''')
 
+    # get number of processes per node (ppn)
+    def hostname():
+        import socket
+        return socket.gethostname()
+    hostnames = view.apply(interactive(hostname))
+    global ppn
+    ppn = min(Counter(hostnames).values())
+    print "ppn:", ppn
+
+    # mpi ranks
     get_rank = interactive(lambda: MPI.COMM_WORLD.Get_rank())
     all_ranks = view.apply(get_rank)
     view['target2rank'] = all_ranks
@@ -58,3 +70,7 @@ def init(profile='mpi'):
 def getView():
     global view
     return view
+
+def getPPN():
+    global ppn
+    return ppn
