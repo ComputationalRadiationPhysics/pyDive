@@ -20,21 +20,40 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-def gatherArraysMPI_sync(out_array, targets, tags, distaxis_sizes, distaxis, target2rank):
-    window = [slice(None)] * len(shape(out_array))
-    tasks = []
-    pos = 0
-    for i in range(len(targets)):
-        window[distaxis] = slice(pos, pos + distaxis_sizes[i])
-        tasks.append(MPI.COMM_WORLD.Recv(out_array[window], source=target2rank[targets[i]], tag=tags[i]))
-        pos += distaxis_sizes[i]
+import numpy as np
+from mpi4py import MPI
 
 def scatterArrayMPI_async(in_array, targets, tags, distaxis_sizes, distaxis, target2rank):
-    window = [slice(None)] * len(shape(in_array))
+    window = [slice(None)] * len(np.shape(in_array))
     pos = 0
+    send_bufs = []
+    tasks = []
     for i in range(len(targets)):
         window[distaxis] = slice(pos, pos + distaxis_sizes[i])
-        tmp = np.empty_like(in_array[window])
-        tmp[:] = in_array[window]
-        MPI.COMM_WORLD.Isend(tmp, dest=target2rank[targets[i]], tag=tags[i])
+        send_bufs.append(np.empty_like(in_array[window]))
+        send_bufs[-1][:] = in_array[window]
+        tasks.append(MPI.COMM_WORLD.Isend(send_bufs[-1], dest=target2rank[targets[i]], tag=tags[i]))
+        pos += distaxis_sizes[i]
+
+    return tasks
+
+def gatherArraysMPI_async(out_array, targets, tags, distaxis_sizes, distaxis, target2rank):
+    window = [slice(None)] * len(np.shape(out_array))
+    pos = 0
+    recv_bufs = []
+    tasks = []
+    for i in range(len(targets)):
+        window[distaxis] = slice(pos, pos + distaxis_sizes[i])
+        recv_bufs.append(np.empty_like(out_array[window]))
+        tasks.append(MPI.COMM_WORLD.Irecv(recv_bufs[-1], source=target2rank[targets[i]], tag=tags[i]))
+        pos += distaxis_sizes[i]
+
+    return tasks, recv_bufs
+
+def finish_communication(out_array, distaxis_sizes, distaxis, recv_bufs):
+    window = [slice(None)] * len(np.shape(out_array))
+    pos = 0
+    for i in range(len(recv_bufs)):
+        window[distaxis] = slice(pos, pos + distaxis_sizes[i])
+        out_array[window] = recv_bufs[i]
         pos += distaxis_sizes[i]

@@ -26,6 +26,7 @@ import factories as factories
 from .. import IPParallelClient as com
 import dist_math
 import sys
+import debug
 
 ndarray_id = 0
 
@@ -135,7 +136,8 @@ class ndarray(object):
             args = (args,)
 
         assert len(args) == len(self.shape),\
-            "number of arguments does not correspond to the dimension (%d)" % len(self.shape)
+            "number of arguments (%d) does not correspond to the dimension (%d)"\
+                 % (len(args), len(self.shape))
 
         # if args is a list of indices then return a single data value
         if all(type(arg) is int for arg in args):
@@ -321,12 +323,26 @@ class ndarray(object):
         result = ndarray(self.shape, self.distaxis, self.dtype, other.idx_ranges, other.targets_in_use)
 
         # send
-        self.view.execute('interengine.scatterArrayMPI_async(%s, src_targets[0], src_tags[0], src_distaxis_sizes[0], %d, target2rank)' \
-            % (self.name, self.distaxis), targets=self.targets_in_use)
+        self.view.execute('%s_send_tasks = interengine.scatterArrayMPI_async(%s, src_targets[0], src_tags[0], src_distaxis_sizes[0], %d, target2rank)' \
+            % (self.name, self.name, self.distaxis), targets=self.targets_in_use)
 
         # receive
-        self.view.execute('interengine.gatherArraysMPI_sync(%s, dest_targets[0], dest_tags[0], dest_distaxis_sizes[0], %d, target2rank)' \
-            % (result.name, self.distaxis), targets=result.targets_in_use)
+        self.view.execute("""\
+            {0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysMPI_async({1}, dest_targets[0], dest_tags[0], dest_distaxis_sizes[0], {2}, target2rank)
+            """.format(self.name, result.name, self.distaxis),\
+            targets=result.targets_in_use)
+
+        # finish communication
+        self.view.execute('''\
+            if "{0}_send_tasks" in locals():
+                MPI.Request.Waitall({0}_send_tasks)
+                del {0}_send_tasks
+            if "{0}_recv_tasks" in locals():
+                MPI.Request.Waitall({0}_recv_tasks)
+                interengine.finish_communication({1}, dest_distaxis_sizes[0], {2}, {0}_recv_bufs)
+                del {0}_recv_tasks, {0}_recv_bufs
+            '''.format(self.name, result.name, self.distaxis),
+            targets=list(set(self.targets_in_use + result.targets_in_use)))
 
         return result
 

@@ -79,6 +79,7 @@ class n_ary_fun_wrapper(object):
     def __call__(self, *args):
         return n_ary_fun(self.fun_name, *args)
 
+
 # math function names
 trigonometric_funs = ('sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan')
 hyperbolic_funs = ('sinh', 'cosh', 'tanh', 'arcsinh', 'arccosh', 'arctanh')
