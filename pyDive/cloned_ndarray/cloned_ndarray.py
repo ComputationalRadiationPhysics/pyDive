@@ -74,6 +74,44 @@ class cloned_ndarray(object):
     def __repr__(self):
         return self.name
 
+    def __setitem__(self, key, value):
+        # if args is [:] then assign value to the entire ndarray
+        if key == slice(None):
+            assert isinstance(value, np.ndarray), "assignment available for numpy-arrays only"
+
+            view = com.getView()
+            view.push({'np_array' : value}, targets=self.targets_in_use)
+            view.execute("%s = np_array.copy()" % self.name, targets=self.targets_in_use)
+
+            return
+
+        if not isinstance(key, list) and not isinstance(key, tuple):
+            key = (key,)
+
+        assert len(key) == len(self.shape)
+
+        # assign value to sub-array of self
+        sub_array = self[key]
+        sub_array[:] = value
+
+    def __getitem__(self, args):
+        if not isinstance(args, list) and not isinstance(args, tuple):
+            args = (args,)
+
+        assert len(args) == len(self.shape),\
+            "number of arguments (%d) does not correspond to the dimension (%d)"\
+                 % (len(args), len(self.shape))
+
+        # shape of the new sliced ndarray
+        new_shape, clean_slices = helper.subWindow_of_shape(self.shape, args)
+
+        result = pyDive.cloned.hollow_engines_like(new_shape, self.dtype, self)
+
+        self.view.push({'args' : args}, targets=self.targets_in_use)
+        self.view.execute('%s = %s[args]' % (result.name, self.name), targets=self.targets_in_use)
+
+        return result
+
     def merge(self, op):
         """Merge all local arrays in a pair-wise operation into a single numpy-array.
 
