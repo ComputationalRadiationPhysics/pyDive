@@ -111,6 +111,7 @@ def reduce(_array, op):
         array_name = repr(cached_array)
 
         view.targets = cached_array.targets_in_use
+
         targets_results = view.apply(interactive(reduce_wrapper), array_name, op)
         chunk_result = op.reduce(targets_results) # reduce over targets' results
         if result is None:
@@ -169,6 +170,7 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
             result = reduce_op(result, chunk_result)
 
     view.targets = tmp_targets # restore target list
+
     return result
 
 def __tree_reduce(array, axis=None, op=np.add):

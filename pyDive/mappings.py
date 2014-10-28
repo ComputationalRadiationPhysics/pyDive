@@ -110,7 +110,7 @@ def mesh2particles(mesh, particles_pos, shape_function=CIC):
     particles = np.empty(len(particles_pos), dtype='f')
 
     def mapOp(sub_mesh, coeffs, particle_idx):
-        particles[particle_idx] = sum(sub_mesh * coeffs)
+        particles[particle_idx] = np.add.reduce(sub_mesh * coeffs, axis=None)
 
     __apply_MapOp(mesh, particles_pos, shape_function, mapOp)
 
