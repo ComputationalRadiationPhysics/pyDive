@@ -1,13 +1,16 @@
 import pyDive
 import numpy as np
 import pytest
+import os
+
+input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample.h5")
 
 @pytest.fixture()
 def init_pyDive(request):
     pyDive.init("mpi")
 
 def test_map(init_pyDive):
-    input_array = pyDive.h5.fromPath("sample.h5", "fields")
+    input_array = pyDive.h5.fromPath(input_file, "fields")
 
     ref_array = input_array["fieldE/x"][:].gather()**2 \
               + input_array["fieldE/y"][:].gather()**2 \
@@ -23,7 +26,7 @@ def test_map(init_pyDive):
     assert np.array_equal(ref_array, test_array.gather())
 
 def test_reduce(init_pyDive):
-    input_array = pyDive.h5.fromPath("sample.h5", "fields")
+    input_array = pyDive.h5.fromPath(input_file, "fields")
 
     energy_array = pyDive.empty(input_array.shape, distaxis=0, dtype=input_array.dtype["fieldE"]["x"])
 
@@ -39,7 +42,7 @@ def test_reduce(init_pyDive):
     assert diff / ref_total < 1.0e-5
 
 def test_mapReduce(init_pyDive):
-    input_array = pyDive.h5.fromPath("sample.h5", "fields")
+    input_array = pyDive.h5.fromPath(input_file, "fields")
 
     ref_array = input_array["fieldE/x"][:].gather()**2 \
               + input_array["fieldE/y"][:].gather()**2 \

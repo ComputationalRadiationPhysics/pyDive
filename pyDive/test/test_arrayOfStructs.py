@@ -1,7 +1,6 @@
 import pyDive
 import numpy as np
 import pytest
-import numpy.random
 
 @pytest.fixture()
 def init_pyDive(request):
