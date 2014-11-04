@@ -26,6 +26,8 @@ import io
 import codecs
 import os
 import sys
+import subprocess
+import time
 
 import pyDive
 
@@ -50,8 +52,22 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
+        profile_name = raw_input("Name of your IPython-parallel profile you want to run the tests with: ")
+        n_engines = raw_input("Number of engines: ")
+
+        # start ipcluster
+        print("Waiting for engines to start...")
+        ipcluster = subprocess.Popen(("ipcluster", "start", "--n=%s" % n_engines, "--profile=%s" % profile_name))
+        time.sleep(32)
+
         import pytest
+        # set profile name as environment variable
+        os.environ["IPP_PROFILE_NAME"] = profile_name
         errcode = pytest.main(self.test_args)
+
+        ipcluster.terminate()
+        ipcluster.wait()
+
         sys.exit(errcode)
 
 setup(
@@ -62,7 +78,7 @@ setup(
     author='Heiko Burau',
     #tests_require=['pytest'],
     install_requires=requirements,
-    #cmdclass={'test': PyTest},
+    cmdclass={'test': PyTest},
     author_email='h.burau@hzdr.de',
     description='Distributed Interactive Visualization and Exploration of large datasets',
     long_description=long_description,
@@ -81,6 +97,5 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering :: Information Analysis'
         ],
-    #extras_require={
-    #    'testing': ['pytest'],}
+    extras_require={'testing': ['pytest'],}
 )

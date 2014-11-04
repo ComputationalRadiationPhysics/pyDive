@@ -8,10 +8,6 @@ sizes = ((1,), (5,),
         (5, 29), (64, 1), (64, 64),
         (1, 1, 1), (12, 37, 50))
 
-@pytest.fixture()
-def init_pyDive(request):
-    pyDive.init("mpi")
-
 def test_cloned_ndarray(init_pyDive):
     view = com.getView()
     for size in sizes:

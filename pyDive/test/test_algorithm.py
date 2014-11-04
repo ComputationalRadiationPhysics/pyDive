@@ -1,13 +1,8 @@
 import pyDive
 import numpy as np
-import pytest
 import os
 
 input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample.h5")
-
-@pytest.fixture()
-def init_pyDive(request):
-    pyDive.init("mpi")
 
 def test_map(init_pyDive):
     input_array = pyDive.h5.fromPath(input_file, "fields")

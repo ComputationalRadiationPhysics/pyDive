@@ -83,7 +83,7 @@ def map(f, *arrays, **kwargs):
         array_names = [repr(a) for a in cached_arrays]
 
         view.targets = cached_arrays[0].targets_in_use
-        view.apply(interactive(map_wrapper), f, array_names, **kwargs)
+        view.apply(interactive(map_wrapper), interactive(f), array_names, **kwargs)
 
     view.targets = tmp_targets # restore target list
 
@@ -96,8 +96,9 @@ def reduce(_array, op):
     If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\
     the data will be read block-wise so that a block fits into memory.
     """
-    def reduce_wrapper(array_name, op):
+    def reduce_wrapper(array_name, op_name):
         _array = globals()[array_name]
+        op =  eval("np." + op_name)
         return algorithm.__tree_reduce(_array, axis=None, op=op) # reduction over all axes
 
     view = com.getView()
@@ -112,7 +113,7 @@ def reduce(_array, op):
 
         view.targets = cached_array.targets_in_use
 
-        targets_results = view.apply(interactive(reduce_wrapper), array_name, op)
+        targets_results = view.apply(interactive(reduce_wrapper), array_name, op.__name__)
         chunk_result = op.reduce(targets_results) # reduce over targets' results
         if result is None:
             result = chunk_result
@@ -147,8 +148,9 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
         - *mapReduce* is not writing data back to a *pyDive.h5_ndarray* yet.
         - *mapReduce* does not equalize the element distribution of *pyDive.ndarrays* before execution.
     """
-    def mapReduce_wrapper(map_func, reduce_op, array_names, **kwargs):
+    def mapReduce_wrapper(map_func, reduce_op_name, array_names, **kwargs):
         arrays = [globals()[array_name] for array_name in array_names]
+        reduce_op =  eval("np." + reduce_op_name)
         return algorithm.__tree_reduce(map_func(*arrays, **kwargs), axis=None, op=reduce_op)
 
     view = com.getView()
@@ -161,7 +163,7 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
 
         view.targets = cached_arrays[0].targets_in_use
         targets_results = view.apply(interactive(mapReduce_wrapper),\
-            map_func, reduce_op, array_names, **kwargs)
+            interactive(map_func), reduce_op.__name__, array_names, **kwargs)
 
         chunk_result = reduce_op.reduce(targets_results) # reduce over targets' results
         if result is None:

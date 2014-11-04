@@ -1,16 +1,11 @@
 import pyDive
 import numpy as np
-import pytest
 import random
 
 sizes = ((1,), (5,), (29,), (64,),
         (1, 1), (1, 5), (5, 29), (64, 1), (64, 64),
         (1, 1, 1), (8, 8, 8), (1, 2, 3), (12, 37, 50))
 dtypes = (np.int,)
-
-@pytest.fixture()
-def init_pyDive(request):
-    pyDive.init("mpi")
 
 def test_slicing(init_pyDive):
     for size in sizes:

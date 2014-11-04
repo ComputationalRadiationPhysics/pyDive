@@ -1,14 +1,9 @@
 import pyDive
 import numpy as np
-import pytest
 import os
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 input_file = os.path.join(dirname, "sample.h5")
-
-@pytest.fixture()
-def init_pyDive(request):
-    pyDive.init("mpi")
 
 def test_particles2mesh(init_pyDive):
     shape = [256, 256]
@@ -33,7 +28,21 @@ def test_particles2mesh(init_pyDive):
 
     ref_density = np.load(os.path.join(dirname, "p2m_CIC.npy"))
 
-    assert np.array_equal(ref_density, test_density)
+    import matplotlib.pyplot as plt
+    plt.imshow(ref_density - test_density)
+    plt.colorbar()
+    plt.savefig("diff.png")
+    plt.clf()
+    plt.imshow(ref_density)
+    plt.colorbar()
+    plt.savefig("ref_density.png")
+    plt.clf()
+    plt.imshow(test_density)
+    plt.colorbar()
+    plt.savefig("test_density.png")
+    plt.clf()
+
+    np.testing.assert_array_almost_equal(ref_density, test_density)
 
 def test_mesh2particles(init_pyDive):
     particles = pyDive.h5.fromPath(input_file, "/particles")[:]

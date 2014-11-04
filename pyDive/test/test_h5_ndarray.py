@@ -1,15 +1,10 @@
 import pyDive
 import numpy as np
-import pytest
 import random
 import h5py as h5
 import os
 
 input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample.h5")
-
-@pytest.fixture()
-def init_pyDive(request):
-    pyDive.init("mpi")
 
 def test_h5_ndarray1(init_pyDive):
     dataset = "particles/pos/x"

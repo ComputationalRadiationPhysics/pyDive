@@ -1,10 +1,5 @@
 import pyDive
 import numpy as np
-import pytest
-
-@pytest.fixture()
-def init_pyDive(request):
-    pyDive.init("mpi")
 
 def test_arrayOfStructs(init_pyDive):
     fieldE_x = np.random.rand(100, 100)
