@@ -44,6 +44,18 @@ Starting the cluster is then the second and final step::
 
   $ ipcluster start -n 4 --profile=mpi
 
+Run tests
+---------
+
+In ordner to test the pyDive installation you can run::
+
+  $ python setup.py test
+
+This will ask you for the IPython.parallel profile you want to connect to and the number of engines to be started, e.g.: ::
+
+  $ Name of your IPython-parallel profile you want to run the tests with: mpi
+  $ Number of engines: 4
+
 Overview
 --------
 
