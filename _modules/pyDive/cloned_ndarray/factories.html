@@ -75,6 +75,16 @@
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">IPParallelClient</span> <span class="k">as</span> <span class="n">com</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
+<div class="viewcode-block" id="hollow_engines_like"><a class="viewcode-back" href="../../../pyDive.cloned_ndarray.html#pyDive.cloned_ndarray.factories.hollow_engines_like">[docs]</a><span class="k">def</span> <span class="nf">hollow_engines_like</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :obj:`pyDive.cloned_ndarray` utilizing the same engines *a* does</span>
+<span class="sd">    without allocating a local *numpy-array*.</span>
+
+<span class="sd">    :param ints shape: shape of the array</span>
+<span class="sd">    :param numpy-dtype dtype: datatype of a single data value</span>
+<span class="sd">    :param a: :ref:`pyDive.ndarray`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">cloned_ndarray</span><span class="o">.</span><span class="n">cloned_ndarray</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+</div>
 <div class="viewcode-block" id="empty_engines_like"><a class="viewcode-back" href="../../../pyDive.cloned_ndarray.html#pyDive.cloned_ndarray.factories.empty_engines_like">[docs]</a><span class="k">def</span> <span class="nf">empty_engines_like</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a new :obj:`pyDive.cloned_ndarray` utilizing the same engines *a* does</span>
 <span class="sd">    without initializing elements.</span>
@@ -97,6 +107,25 @@
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
     <span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="s">&#39;myshape&#39;</span> <span class="p">:</span> <span class="n">shape</span><span class="p">,</span> <span class="s">&#39;dtype&#39;</span> <span class="p">:</span> <span class="n">dtype</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
     <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> = np.zeros(myshape, dtype)&#39;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="hollow"><a class="viewcode-back" href="../../../pyDive.cloned_ndarray.html#pyDive.cloned_ndarray.factories.hollow">[docs]</a><span class="k">def</span> <span class="nf">hollow</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.cloned_ndarray` utilizing all engines without allocating a local</span>
+<span class="sd">        *numpy-array*.</span>
+
+<span class="sd">    :param ints shape: shape of the array</span>
+<span class="sd">    :param numpy-dtype dtype: datatype of a single data value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">cloned_ndarray</span><span class="o">.</span><span class="n">cloned_ndarray</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">targets_in_use</span><span class="o">=</span><span class="s">&#39;all&#39;</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="empty"><a class="viewcode-back" href="../../../pyDive.cloned_ndarray.html#pyDive.cloned_ndarray.factories.empty">[docs]</a><span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new :ref:`pyDive.cloned_ndarray` utilizing all engines without initializing elements.</span>
+
+<span class="sd">    :param ints shape: shape of the array</span>
+<span class="sd">    :param numpy-dtype dtype: datatype of a single data value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">cloned_ndarray</span><span class="o">.</span><span class="n">cloned_ndarray</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">targets_in_use</span><span class="o">=</span><span class="s">&#39;all&#39;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">result</span>
 </div>
 <div class="viewcode-block" id="zeros"><a class="viewcode-back" href="../../../pyDive.cloned_ndarray.html#pyDive.cloned_ndarray.factories.zeros">[docs]</a><span class="k">def</span> <span class="nf">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>

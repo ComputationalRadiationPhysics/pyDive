@@ -131,10 +131,69 @@ allocated on <a class="reference internal" href="index.html#term-engine"><em cla
 <span id="pydive-cloned-ndarray-factories-module"></span><h2>pyDive.cloned_ndarray.factories module<a class="headerlink" href="#module-pyDive.cloned_ndarray.factories" title="Permalink to this headline">¶</a></h2>
 <p>This module holds high-level functions for instanciating <em class="xref std std-ref">pyDive.cloned_ndarrays</em>.</p>
 <dl class="function">
+<dt id="pyDive.cloned_ndarray.factories.empty">
+<tt class="descclassname">pyDive.cloned_ndarray.factories.</tt><tt class="descname">empty</tt><big>(</big><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/cloned_ndarray/factories.html#empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.cloned_ndarray.factories.empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new <a class="reference internal" href="#pydive-cloned-ndarray"><em>pyDive.cloned_ndarray package</em></a> utilizing all engines without initializing elements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
+<li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="pyDive.cloned_ndarray.factories.empty_engines_like">
 <tt class="descclassname">pyDive.cloned_ndarray.factories.</tt><tt class="descname">empty_engines_like</tt><big>(</big><em>shape</em>, <em>dtype</em>, <em>a</em><big>)</big><a class="reference internal" href="_modules/pyDive/cloned_ndarray/factories.html#empty_engines_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.cloned_ndarray.factories.empty_engines_like" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a new <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.cloned_ndarray</span></tt> utilizing the same engines <em>a</em> does
 without initializing elements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
+<li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
+<li><strong>a</strong> &#8211; <a class="reference internal" href="pyDive.ndarray.html#pydive-ndarray"><em>pyDive.ndarray package</em></a></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.cloned_ndarray.factories.hollow">
+<tt class="descclassname">pyDive.cloned_ndarray.factories.</tt><tt class="descname">hollow</tt><big>(</big><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/cloned_ndarray/factories.html#hollow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.cloned_ndarray.factories.hollow" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Return a new <a class="reference internal" href="#pydive-cloned-ndarray"><em>pyDive.cloned_ndarray package</em></a> utilizing all engines without allocating a local</dt>
+<dd><em>numpy-array</em>.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
+<li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.cloned_ndarray.factories.hollow_engines_like">
+<tt class="descclassname">pyDive.cloned_ndarray.factories.</tt><tt class="descname">hollow_engines_like</tt><big>(</big><em>shape</em>, <em>dtype</em>, <em>a</em><big>)</big><a class="reference internal" href="_modules/pyDive/cloned_ndarray/factories.html#hollow_engines_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.cloned_ndarray.factories.hollow_engines_like" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new <tt class="xref py py-obj docutils literal"><span class="pre">pyDive.cloned_ndarray</span></tt> utilizing the same engines <em>a</em> does
+without allocating a local <em>numpy-array</em>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />

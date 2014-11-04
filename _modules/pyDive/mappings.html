@@ -159,7 +159,7 @@
     <span class="n">particles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">particles_pos</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;f&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">mapOp</span><span class="p">(</span><span class="n">sub_mesh</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">particle_idx</span><span class="p">):</span>
-        <span class="n">particles</span><span class="p">[</span><span class="n">particle_idx</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sub_mesh</span> <span class="o">*</span> <span class="n">coeffs</span><span class="p">)</span>
+        <span class="n">particles</span><span class="p">[</span><span class="n">particle_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">sub_mesh</span> <span class="o">*</span> <span class="n">coeffs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
 
     <span class="n">__apply_MapOp</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">particles_pos</span><span class="p">,</span> <span class="n">shape_function</span><span class="p">,</span> <span class="n">mapOp</span><span class="p">)</span>
 

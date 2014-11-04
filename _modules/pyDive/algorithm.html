@@ -132,7 +132,7 @@
         <span class="n">array_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cached_arrays</span><span class="p">]</span>
 
         <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">cached_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">targets_in_use</span>
-        <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">map_wrapper</span><span class="p">),</span> <span class="n">f</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">map_wrapper</span><span class="p">),</span> <span class="n">interactive</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">tmp_targets</span> <span class="c"># restore target list</span>
 </div>
@@ -145,8 +145,9 @@
 <span class="sd">    If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\</span>
 <span class="sd">    the data will be read block-wise so that a block fits into memory.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">reduce_wrapper</span><span class="p">(</span><span class="n">array_name</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">reduce_wrapper</span><span class="p">(</span><span class="n">array_name</span><span class="p">,</span> <span class="n">op_name</span><span class="p">):</span>
         <span class="n">_array</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">array_name</span><span class="p">]</span>
+        <span class="n">op</span> <span class="o">=</span>  <span class="nb">eval</span><span class="p">(</span><span class="s">&quot;np.&quot;</span> <span class="o">+</span> <span class="n">op_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">__tree_reduce</span><span class="p">(</span><span class="n">_array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">op</span><span class="p">)</span> <span class="c"># reduction over all axes</span>
 
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
@@ -160,7 +161,8 @@
         <span class="n">array_name</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">cached_array</span><span class="p">)</span>
 
         <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">cached_array</span><span class="o">.</span><span class="n">targets_in_use</span>
-        <span class="n">targets_results</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">reduce_wrapper</span><span class="p">),</span> <span class="n">array_name</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+
+        <span class="n">targets_results</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">reduce_wrapper</span><span class="p">),</span> <span class="n">array_name</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
         <span class="n">chunk_result</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
         <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">chunk_result</span>
@@ -195,8 +197,9 @@
 <span class="sd">        - *mapReduce* is not writing data back to a *pyDive.h5_ndarray* yet.</span>
 <span class="sd">        - *mapReduce* does not equalize the element distribution of *pyDive.ndarrays* before execution.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">mapReduce_wrapper</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">mapReduce_wrapper</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">reduce_op_name</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">arrays</span> <span class="o">=</span> <span class="p">[</span><span class="nb">globals</span><span class="p">()[</span><span class="n">array_name</span><span class="p">]</span> <span class="k">for</span> <span class="n">array_name</span> <span class="ow">in</span> <span class="n">array_names</span><span class="p">]</span>
+        <span class="n">reduce_op</span> <span class="o">=</span>  <span class="nb">eval</span><span class="p">(</span><span class="s">&quot;np.&quot;</span> <span class="o">+</span> <span class="n">reduce_op_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">__tree_reduce</span><span class="p">(</span><span class="n">map_func</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">reduce_op</span><span class="p">)</span>
 
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
@@ -209,7 +212,7 @@
 
         <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">cached_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">targets_in_use</span>
         <span class="n">targets_results</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">mapReduce_wrapper</span><span class="p">),</span>\
-            <span class="n">map_func</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">interactive</span><span class="p">(</span><span class="n">map_func</span><span class="p">),</span> <span class="n">reduce_op</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="n">chunk_result</span> <span class="o">=</span> <span class="n">reduce_op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
         <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -218,6 +221,7 @@
             <span class="n">result</span> <span class="o">=</span> <span class="n">reduce_op</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">chunk_result</span><span class="p">)</span>
 
     <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">tmp_targets</span> <span class="c"># restore target list</span>
+
     <span class="k">return</span> <span class="n">result</span>
 </div>
 <span class="k">def</span> <span class="nf">__tree_reduce</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">):</span>
