@@ -5,7 +5,7 @@ Quickstart
 ----------
 
 pyDive is built on top of *IPython.parallel*, *numpy*, *mpi4py* and *h5py*. Running ``python setup.py install`` will install
-pyDive with these and other required packages from `requirements.txt`. Alternatively you can use pip ``pip install pyDive``.
+pyDive with these and other required packages from `requirements.txt`. Alternatively you can install it via pip: ``pip install pyDive``.
 
 Basic code example: ::
 
@@ -56,7 +56,7 @@ This will ask you for the IPython.parallel profile to be used and the number of 
   $ Name of your IPython-parallel profile you want to run the tests with: pbs
   $ Number of engines: 256
 
-Now the script starts the cluster, runs the tests and stops the cluster. If you have already a cluster running by your own
+Then the script starts the cluster, runs the tests and finally stops the cluster. If you have already a cluster running by your own
 you can also run the tests by launching ``py.test`` from the pyDive directory and setting the environment variable ``IPP_PROFILE_NAME``
 to the profile's name.
 
