@@ -57,7 +57,8 @@ class PyTest(TestCommand):
 
         # start ipcluster
         print("Waiting for engines to start...")
-        ipcluster = subprocess.Popen(("ipcluster", "start", "--n=%s" % n_engines, "--profile=%s" % profile_name))
+        subprocess.Popen(("ipcluster", "start", "--n=%s" % n_engines,\
+            "--profile=%s" % profile_name))
         time.sleep(32)
 
         import pytest
@@ -65,8 +66,8 @@ class PyTest(TestCommand):
         os.environ["IPP_PROFILE_NAME"] = profile_name
         errcode = pytest.main(self.test_args)
 
-        ipcluster.terminate()
-        ipcluster.wait()
+        # stop ipcluster
+        subprocess.Popen(("ipcluster", "stop", "--profile=%s" % profile_name)).wait()
 
         sys.exit(errcode)
 
