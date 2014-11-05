@@ -77,7 +77,7 @@ setup(
     url='http://github.com/ComputationalRadiationPhysics/pyDive',
     license='GNU Affero General Public License v3',
     author='Heiko Burau',
-    #tests_require=['pytest'],
+    tests_require=['pytest'],
     install_requires=requirements,
     cmdclass={'test': PyTest},
     author_email='h.burau@hzdr.de',
@@ -89,7 +89,7 @@ setup(
     #test_suite='sandman.test.test_sandman',
     classifiers = [
         'Programming Language :: Python',
-        'Development Status :: 2 - Pre-Alpha Development Status',
+        'Development Status :: 4 - Beta',
         'Natural Language :: English',
         'Environment :: Console',
         'Environment :: Web Environment',
