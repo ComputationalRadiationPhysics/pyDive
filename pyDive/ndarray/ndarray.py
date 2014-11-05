@@ -26,7 +26,6 @@ import factories as factories
 from .. import IPParallelClient as com
 import dist_math
 import sys
-import debug
 
 ndarray_id = 0
 
