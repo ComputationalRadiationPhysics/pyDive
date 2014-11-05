@@ -109,15 +109,15 @@ In this case we want to load the hdf5 data piece by piece. The functions in :mod
 *square_fields* is called on each :term:`engine` where *npfield* is a structure (:mod:`pyDive.arrayOfStructs`) of numpy-arrays representing a sub part of the big *h5fields*.
 :func:`pyDive.algorithm.mapReduce` can be called with an arbitrary number of arrays including
 :obj:`pyDive.ndarrays`, :obj:`pyDive.h5_ndarrays` and :obj:`pyDive.cloned_ndarrays`. If there are :obj:`pyDive.h5_ndarrays` it will
-check whether they fit into the cluster's main memory as a whole and loads them piece by piece if not.
+check whether they fit into the combined main memory of all cluster nodes as a whole and loads them piece by piece if not.
 
 Now let's say our dataset is really big and we just want to get a first estimate of the total energy: ::
 
   ...
   total_energy = pyDive.mapReduce(square_fields, np.add, h5fields[::10, ::10]) * 10.0**2
 
-This is valid if *h5fields[::10, ::10]* fits into the cluster's main memory. Note that slicing on a :obj:`pyDive.h5_ndarray` always
-means reading or writing from hdf5 to respectively from memory. So in this case we also could have used the very first version: ::
+This is valid if *h5fields[::10, ::10]* fits into the cluster's main memory. Remember that slicing on a :obj:`pyDive.h5_ndarray` always
+means data transfer between hdf5 and main memory. So in this case we also could have used the very first version: ::
 
     import pyDive
     import numpy as np
