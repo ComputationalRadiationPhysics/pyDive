@@ -5,7 +5,7 @@ Quickstart
 ----------
 
 pyDive is built on top of *IPython.parallel*, *numpy*, *mpi4py* and *h5py*. Running ``python setup.py install`` will install
-pyDive with these and other required packages from `requirements.txt`.
+pyDive with these and other required packages from `requirements.txt`. Alternatively you can use pip ``pip install pyDive``.
 
 Basic code example: ::
 
