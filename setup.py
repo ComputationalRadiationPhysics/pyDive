@@ -83,7 +83,8 @@ setup(
     author_email='h.burau@hzdr.de',
     description='Distributed Interactive Visualization and Exploration of large datasets',
     long_description=long_description,
-    packages=['pyDive'],
+    packages=['pyDive', 'pyDive/ndarray', 'pyDive/h5_ndarray', 'pyDive/cloned_ndarray', 'pyDive/test'],
+    package_data=['pyDive/test' : ['*.h5', '*.npy']
     include_package_data=True,
     platforms='any',
     #test_suite='sandman.test.test_sandman',
