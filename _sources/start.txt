@@ -38,7 +38,7 @@ into your local machine's memory. If not you may want to slice it first.
 Setup an IPython.parallel cluster configuration
 -----------------------------------------------
 
-The first step is to create an IPython.parallel profile in MPI-mode: http://ipython.org/ipython-doc/2/parallel/parallel_process.html.
+The first step is to create an IPython.parallel profile: http://ipython.org/ipython-doc/2/parallel/parallel_process.html.
 The name of this profile is the argument of :func:`pyDive.init`. It defaults to ``"mpi"``.
 Starting the cluster is then the second and final step::
 
@@ -47,14 +47,18 @@ Starting the cluster is then the second and final step::
 Run tests
 ---------
 
-In ordner to test the pyDive installation you can run::
+In order to test the pyDive installation you can run::
 
   $ python setup.py test
 
-This will ask you for the IPython.parallel profile you want to connect to and the number of engines to be started, e.g.: ::
+This will ask you for the IPython.parallel profile to be used and the number of engines to be started, e.g.: ::
 
-  $ Name of your IPython-parallel profile you want to run the tests with: mpi
-  $ Number of engines: 4
+  $ Name of your IPython-parallel profile you want to run the tests with: pbs
+  $ Number of engines: 256
+
+Now the script starts the cluster, runs the tests and stops the cluster. If you have already a cluster running by your own
+you can also run the tests by launching ``py.test`` from the pyDive directory and setting the environment variable ``IPP_PROFILE_NAME``
+to the profile's name.
 
 Overview
 --------
