@@ -50,7 +50,7 @@ def loadSteps(steps, folder_path, data_path, distaxis=0, window=None):
             or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.
 
         Notes:
-            - If the dataset has a 'sim_unit' attribute its value is stored in ``h5array.unit``.
+            - If the dataset has a '**sim_unit**' attribute its value is stored in ``h5array.unit``.
     """
     assert os.path.exists(folder_path), "folder '%s' does not exist" % folder_path
 
@@ -114,7 +114,7 @@ def loadAllSteps(folder_path, data_path, distaxis=0, window=None):
             or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.
 
         Notes:
-            - If the dataset has a 'sim_unit' attribute its value is stored in ``h5array.unit``.
+            - If the dataset has a '**sim_unit**' attribute its value is stored in ``h5array.unit``.
     """
     steps = getSteps(folder_path)
 
@@ -137,7 +137,7 @@ def loadStep(step, folder_path, data_path, distaxis=0, window=None):
             or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`).
 
         Notes:
-            - If the dataset has a 'sim_unit' attribute its value is stored in ``h5array.unit``.
+            - If the dataset has a '**sim_unit**' attribute its value is stored in ``h5array.unit``.
     """
     step, field = loadSteps([step], folder_path, data_path, distaxis, window).next()
     return field
