@@ -1,0 +1,5 @@
+include *.md
+include *.txt
+include COPYING*
+include pyDive/test/*.h5 pyDive/test/*.npy
+include docs/*
