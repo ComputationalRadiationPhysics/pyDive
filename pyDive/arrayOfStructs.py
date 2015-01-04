@@ -188,8 +188,8 @@ class ArrayOfStructsClass(object):
     def __getattr__(self, name):
         if name in self.arraytype.__dict__.keys():
             return ForeachLeafDo(self.structOfArrays, name)
-        else:
-            raise AttributeError(name)
+
+        return self[name]
 
     def __magicOperation__(self, op, *args):
         return ForeachLeafDo(self.structOfArrays, op)(*args)

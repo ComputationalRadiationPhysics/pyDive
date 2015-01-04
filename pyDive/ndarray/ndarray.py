@@ -149,7 +149,7 @@ class ndarray(object):
                 local_idx = list(args)
                 local_idx[self.distaxis] = dist_idx - begin
                 return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=target)
-            raise IndexError("Array index", dist_idx, "out of bounds (" + str(self.shape[distaxis]) + ")")
+            raise IndexError("Array index", dist_idx, "out of bounds [0, " + str(self.shape[distaxis]) + ")")
 
         if type(clean_view[self.distaxis]) is int:
             # return numpy-array because the distributed axis has vanished
@@ -159,7 +159,7 @@ class ndarray(object):
                 local_array = self.view.pull(self.name, targets=target)
                 clean_view[self.distaxis] = dist_idx - begin
                 return local_array[clean_view]
-            raise IndexError("Array index", dist_idx, "out of bounds (" + str(self.shape[distaxis]) + ")")
+            raise IndexError("Array index", dist_idx, "out of bounds [0, " + str(self.shape[distaxis]) + ")")
 
         # slice object in the direction of the distributed axis
         distaxis_slice = clean_view[self.distaxis]
