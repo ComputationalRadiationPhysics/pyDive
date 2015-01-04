@@ -138,29 +138,38 @@ class ndarray(object):
             "number of arguments (%d) does not correspond to the dimension (%d)"\
                  % (len(args), len(self.shape))
 
+        # shape of the new sliced ndarray
+        new_shape, clean_view = helper.view_of_shape(self.shape, args)
+
         # if args is a list of indices then return a single data value
-        if all(type(arg) is int for arg in args):
+        if not new_shape:
             dist_idx = args[self.distaxis]
-            for i in range(len(self.idx_ranges)):
-                begin, end = self.idx_ranges[i]
+            for (begin, end), target in zip(self.idx_ranges, self.targets_in_use):
                 if dist_idx >= end: continue
                 local_idx = list(args)
                 local_idx[self.distaxis] = dist_idx - begin
-                return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=self.targets_in_use[i])
+                return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=target)
+            raise IndexError("Array index", dist_idx, "out of bounds (" + str(self.shape[distaxis]) + ")")
 
-        # shape of the new sliced ndarray
-        new_shape, clean_slices = helper.subWindow_of_shape(self.shape, args)
+        if type(clean_view[self.distaxis]) is int:
+            # return numpy-array because the distributed axis has vanished
+            dist_idx = clean_view[self.distaxis]
+            for (begin, end), target in zip(self.idx_ranges, self.targets_in_use):
+                if dist_idx >= end: continue
+                local_array = self.view.pull(self.name, targets=target)
+                clean_view[self.distaxis] = dist_idx - begin
+                return local_array[clean_view]
+            raise IndexError("Array index", dist_idx, "out of bounds (" + str(self.shape[distaxis]) + ")")
 
-        # clean slice object in the direction of the distributed axis
-        distaxis_slice = clean_slices[self.distaxis]
+        # slice object in the direction of the distributed axis
+        distaxis_slice = clean_view[self.distaxis]
 
         # determine properties of the new sliced ndarray
         new_idx_ranges = []
         new_targets_in_use = []
         local_slices = []
         total_ids = 0
-        for i in range(len(self.idx_ranges)):
-            begin, end = self.idx_ranges[i]
+        for (begin, end), target in zip(self.idx_ranges, self.targets_in_use):
             # first index within [begin, end) after slicing
             firstSubIdx = helper.getFirstSubIdx(distaxis_slice, begin, end)
             if firstSubIdx is None: continue
@@ -179,16 +188,20 @@ class ndarray(object):
             new_idx_ranges.append([total_ids, total_ids + num_ids])
             total_ids += num_ids
             # target id
-            new_targets_in_use.append(self.targets_in_use[i])
+            new_targets_in_use.append(target)
 
-        result = ndarray(new_shape, self.distaxis, self.dtype, new_idx_ranges, new_targets_in_use, True)
+        # shift distaxis by the number of vanished axes in the left of it
+        new_distaxis = self.distaxis - sum(1 for arg in args[:self.distaxis] if type(arg) is int)
+
+        # create resulting ndarray
+        result = ndarray(new_shape, new_distaxis, self.dtype, new_idx_ranges, new_targets_in_use, True)
 
         # remote slicing
         args = list(args)
         for i in range(len(local_slices)):
             args[self.distaxis] = local_slices[i]
-            self.view.push({'args' : args}, targets=new_targets_in_use[i])
-        self.view.execute('%s = %s[args]' % (result.name, self.name), targets=new_targets_in_use)
+            self.view.push({'args' : args}, targets=result.targets_in_use[i])
+        self.view.execute('%s = %s[args]' % (result.name, self.name), targets=result.targets_in_use)
 
         return result
 
@@ -257,7 +270,8 @@ class ndarray(object):
         :return: new array with the same content as *self* but distributed like *other*.
             If *self* is already distributed like *other* nothing is done and *self* is returned.
         """
-        assert self.shape == other.shape
+        assert self.shape == other.shape,\
+            "Shapes do not match: " + str(self.shape) + " <-> " + str(other.shape)
         assert self.distaxis == other.distaxis # todo: add this feature
 
         # if self is already distributed like *other* do nothing

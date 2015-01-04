@@ -29,19 +29,19 @@ def getFirstSubIdx(slice_obj, begin, end):
     if idx >= end or idx >= slice_obj.stop: return None
     return idx
 
-def subWindow_of_shape(shape, window):
+def view_of_shape(shape, window):
     new_shape = []
-    clean_slices = list(window)
-    for i in range(len(window)):
-        if type(window[i]) is int:
-            clean_slices[i] = slice(window[i], window[i]+1, 1)
+    clean_view = []
+    for s, w in zip(shape, window):
+        if type(w) is int:
+            clean_view.append(w)
             continue
         # create a clean, wrapped slice object
-        wrapped_ids = window[i].indices(shape[i])
-        clean_slices[i] = slice(*wrapped_ids)
+        clean_slice = slice(*w.indices(s))
+        clean_view.append(clean_slice)
         # new size of axis i
-        new_shape.append((clean_slices[i].stop-1 - clean_slices[i].start) / clean_slices[i].step + 1)
-    return new_shape, clean_slices
+        new_shape.append((clean_slice.stop-1 - clean_slice.start) / clean_slice.step + 1)
+    return new_shape, clean_view
 
 def createLocalSlices(slices, distaxis, idx_ranges):
     # create local slice objects for each engine

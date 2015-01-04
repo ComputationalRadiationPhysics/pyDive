@@ -128,7 +128,7 @@ class ForeachLeafDo(object):
             f = getattr(a, self.op)
             return f(b, *args[1:], **kwargs)
 
-        if type(args[0]).__name__ == "VirtualArrayOfStructs":
+        if args and type(args[0]).__name__ == "VirtualArrayOfStructs":
             structOfArrays = makeTree_fromTwoTrees(self.tree, args[0].structOfArrays, apply_binary)
         else:
             structOfArrays = makeTree_fromTree(self.tree, apply_unary)

@@ -70,7 +70,7 @@ class h5_ndarray(object):
 
         if not window:
             window = [slice(None)] * len(self.dataset.shape)
-        self.shape, self.window = helper.subWindow_of_shape(self.dataset.shape, window)
+        self.shape, self.window = helper.view_of_shape(self.dataset.shape, window)
 
         #: total bytes consumed by the elements of the array.
         self.nbytes = self.dtype.itemsize * np.prod(self.shape)
@@ -105,9 +105,9 @@ class h5_ndarray(object):
         assert not all(type(arg) is int for arg in args),\
             "single data access is not allowed"
 
-        result_shape, clean_slices = helper.subWindow_of_shape(self.shape, args)
+        result_shape, clean_slices = helper.view_of_shape(self.shape, args)
 
-        # Applying 'clean_slices' after 'self.window' results in 'total_slices'
+        # Applying 'clean_slices' after 'self.window', results in 'total_slices'
         total_slices = [slice(self.window[i].start + clean_slices[i].start * self.window[i].step,\
                               self.window[i].start + clean_slices[i].stop * self.window[i].step,\
                               self.window[i].step * clean_slices[i].step) for i in range(len(args))]
@@ -139,7 +139,7 @@ class h5_ndarray(object):
 
         assert len(key) == len(self.shape)
 
-        new_shape, clean_slices = helper.subWindow_of_shape(self.shape, key)
+        new_shape, clean_slices = helper.view_of_shape(self.shape, key)
 
         # Applying 'clean_slices' after 'self.window'-slices result in 'total_slices'
         total_slices = [slice(self.window[i].start + clean_slices[i].start * self.window[i].step,\
