@@ -48,13 +48,16 @@ Example: ::
     # equivalent to
     half = fields["FieldE"][::2]["x"]
 
+    # equivalent to
+    half = fields.FieldE.x[::2]
+
 The example shows that in fact *fields* can be treated as an array-of-structures
 **or** a structure-of-arrays depending on what is more appropriate.
 
 The goal is to make the virtual *array-of-structs*-object look like a real array. Therefore
 every method call or operation is forwarded to the individual arrays.::
 
-    new_field = fields["FieldE"].astype(np.int) + fields["FieldB"].astype(np.float)
+    new_field = fields.FieldE.astype(np.int) + fields.FieldB.astype(np.float)
 
 Here the forwarded method calls are ``astype`` and ``__add__``.
 """

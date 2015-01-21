@@ -28,20 +28,6 @@ def test_particles2mesh(init_pyDive):
 
     ref_density = np.load(os.path.join(dirname, "p2m_CIC.npy"))
 
-    import matplotlib.pyplot as plt
-    plt.imshow(ref_density - test_density)
-    plt.colorbar()
-    plt.savefig("diff.png")
-    plt.clf()
-    plt.imshow(ref_density)
-    plt.colorbar()
-    plt.savefig("ref_density.png")
-    plt.clf()
-    plt.imshow(test_density)
-    plt.colorbar()
-    plt.savefig("test_density.png")
-    plt.clf()
-
     np.testing.assert_array_almost_equal(ref_density, test_density)
 
 def test_mesh2particles(init_pyDive):

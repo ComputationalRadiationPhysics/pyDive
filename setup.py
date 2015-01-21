@@ -59,7 +59,7 @@ class PyTest(TestCommand):
         print("Waiting for engines to start...")
         subprocess.Popen(("ipcluster", "start", "--n=%s" % n_engines,\
             "--profile=%s" % profile_name))
-        time.sleep(32)
+        time.sleep(35)
 
         import pytest
         # set profile name as environment variable
