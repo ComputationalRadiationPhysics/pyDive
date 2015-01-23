@@ -25,6 +25,19 @@ def test_slicing(init_pyDive):
 
                 assert np.array_equal(ref[slices], test_array[slices].gather())
 
+                slices = []
+                for i in range(len(size)):
+                    slices.append(slice(-5, None, None))
+
+                assert np.array_equal(ref[slices], test_array[slices].gather())
+
+                slices = []
+                for i in range(len(size)):
+                    slices.append(slice(0, 5, None))
+
+                assert np.array_equal(ref[slices], test_array[slices].gather())
+
+
 def test_interengine(init_pyDive):
     for size in sizes:
         for dtype in dtypes:

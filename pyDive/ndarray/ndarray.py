@@ -48,7 +48,7 @@ class ndarray(object):
 
     Every cluster-wide array operation first equalizes the distribution of all involved arrays if necessary.
     """
-    def __init__(self, shape, distaxis=0, dtype=np.float, idx_ranges=None, targets_in_use=None, no_allocation=False):
+    def __init__(self, shape, distaxis=0, dtype=np.float, target_offsets=None, target_ranks=None, no_allocation=False):
         """Creates an :class:`pyDive.ndarray.ndarray.ndarray` instance. This is a low-level method for instanciating
         an array. Arrays should  be constructed using 'empty', 'zeros'
         or 'array' (see :mod:`pyDive.ndarray.factories`).
@@ -57,16 +57,15 @@ class ndarray(object):
         :type shape: tuple of ints
         :param int distaxis: axis on which memory is distributed across the :term:`engines <engine>`
         :param numpy-dtype dtype: datatype of a single data value
-        :param idx_ranges: list of (begin, end) pairs indicating the index range the corresponding
-            :term:`engine` (see :ref:`targets_in_use`) is associated with
-        :type idx_ranges: tuple/list of (int, int)
-        :param targets_in_use: list of :term:`engine`-ids that share this array.
-        :type targets_in_use: tuple/list of ints
+        :param target_offsets: list of indices indicating the offset, along the distributed axis, the local array of
+             the corresponding :term:`engine` (see :ref:`target_ranks`) starts with.
+        :type target_offsets: *numpy*-array or list/tuple of ints
+        :param target_ranks: list of :term:`engine`-ids that share this array.
+        :type target_ranks: list/tuple of ints
         :param bool no_allocation: if ``True`` no actual memory, i.e. *numpy-array*, will be
             allocated on :term:`engine`. Useful when you want to assign an existing numpy array manually.
-        :raises ValueError: if just *idx_ranges* is given and *targets_in_use* not or vice versa
 
-        If *idx_ranges* and *targets_in_use* are both ``None`` they will be auto-generated
+        If *target_offsets* is ``None`` it will be auto-generated
         so that the memory is equally distributed across all :term:`engines <engine>` at its best.
         This means that the last engine may get less memory than the others.
         """
@@ -82,55 +81,63 @@ class ndarray(object):
         self.view = com.getView()
         self.arraytype = self.__class__
 
-        assert distaxis >= 0 and distaxis < len(self.shape)
+        assert distaxis >= 0 and distaxis < len(self.shape),\
+            "distaxis ({}) has to be within [0,{})".format(distaxis, 0, len(self.shape))
 
-        if idx_ranges is None and targets_in_use is None:
+        if target_offsets is None or target_ranks is None:
             # number of available targets (engines)
-            num_targets_av = len(self.view.targets)
+            num_targets_av = len(self.view.targets if target_ranks is None else target_ranks)
 
-            # shape of the mpi-local ndarray
+            # shape of the local ndarray
             localshape = np.array(self.shape)
             localshape[distaxis] = (self.shape[distaxis] - 1) / num_targets_av + 1
-            tmp = localshape[distaxis]
 
             # number of occupied targets by this ndarray instance
             num_targets = (self.shape[distaxis] - 1) / localshape[distaxis] + 1
 
-            #: list of pairs on which each pair stores the range of indices [begin, end) for the distributed axis on each engine
+        if target_offsets is None:
             #: this is the decomposition of the distributed axis
-            self.idx_ranges = [(r * tmp, (r+1) * tmp) for r in range(0, num_targets-1)]
-            self.idx_ranges += [((num_targets-1) * tmp, self.shape[distaxis])]
-            #: list of indices of the occupied engines
-            self.targets_in_use = list(range(num_targets))
-        elif idx_ranges is not None and targets_in_use is not None:
-            self.idx_ranges = list(idx_ranges)
-            self.targets_in_use = list(targets_in_use)
+            self.target_offsets = np.arange(num_targets) * localshape[distaxis]
         else:
-            raise ValueError("either args 'idx_ranges' and 'targets_in_use' have to be given both or not given both.")
+            self.target_offsets = np.array(target_offsets)
+
+        if target_ranks is None:
+            #: list of indices of the occupied engines
+            self.target_ranks = tuple(range(num_targets))
+        else:
+            self.target_ranks = tuple(target_ranks)
 
         # generate a unique variable name used on target representing this instance
         global ndarray_id
         #: Unique variable name of the local *numpy-array* on *engine*.
-        #: Unless you do manual stuff on the *engines* there is no need for dealing with this attribute.
+        #: Unless you are doing manual stuff on the *engines* there is no need for dealing with this attribute.
         self.name = 'dist_ndarray' + str(ndarray_id)
         ndarray_id += 1
 
         if no_allocation:
-            self.view.push({self.name : None}, targets=self.targets_in_use)
+            self.view.push({self.name : None}, targets=self.target_ranks)
         else:
-            # instanciate an empty ndarray object of the appropriate shape on each target in use
-            localshapes = [self.shape[:] for i in range(len(self.targets_in_use))]
-            for i in range(len(self.targets_in_use)):
-                localshapes[i][distaxis] = self.idx_ranges[i][1] - self.idx_ranges[i][0]
+            # generate a list of the local shape on each target in use
+            localshapes = []
+            for i in range(len(self.target_offsets)-1):
+                localshape = np.array(self.shape)
+                localshape[distaxis] = self.target_offsets[i+1] - self.target_offsets[i]
+                localshapes.append(localshape)
+            localshape = np.array(self.shape)
+            localshape[distaxis] = self.shape[distaxis] - self.target_offsets[-1]
+            localshapes.append(localshape)
 
-            self.view.scatter('localshape', localshapes, targets=self.targets_in_use)
-            self.view.push({'dtype' : dtype}, targets=self.targets_in_use)
-            self.view.execute('%s = np.empty(localshape[0], dtype=dtype)' % self.name, targets=self.targets_in_use)
+            self.view.scatter('localshape', localshapes, targets=self.target_ranks)
+            self.view.push({'dtype' : dtype}, targets=self.target_ranks)
+            self.view.execute('%s = np.empty(localshape[0], dtype=dtype)' % self.name, targets=self.target_ranks)
 
     def __del__(self):
-        self.view.execute('del %s' % self.name, targets=self.targets_in_use)
+        self.view.execute('del %s' % self.name, targets=self.target_ranks)
 
     def __getitem__(self, args):
+        if args == slice(None):
+            args = (slice(None),) * len(self.shape)
+
         if not isinstance(args, list) and not isinstance(args, tuple):
             args = (args,)
 
@@ -144,64 +151,70 @@ class ndarray(object):
         # if args is a list of indices then return a single data value
         if not new_shape:
             dist_idx = args[self.distaxis]
-            for (begin, end), target in zip(self.idx_ranges, self.targets_in_use):
-                if dist_idx >= end: continue
-                local_idx = list(args)
-                local_idx[self.distaxis] = dist_idx - begin
-                return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=target)
-            raise IndexError("Array index", dist_idx, "out of bounds [0, " + str(self.shape[distaxis]) + ")")
+            target_idx = np.searchsorted(self.target_offsets, dist_idx, side="right") - 1
+            local_idx = list(args)
+            local_idx[self.distaxis] = dist_idx - self.target_offsets[target_idx]
+            return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=self.target_ranks[target_idx])
 
         if type(clean_view[self.distaxis]) is int:
             # return numpy-array because the distributed axis has vanished
             dist_idx = clean_view[self.distaxis]
-            for (begin, end), target in zip(self.idx_ranges, self.targets_in_use):
-                if dist_idx >= end: continue
-                local_array = self.view.pull(self.name, targets=target)
-                clean_view[self.distaxis] = dist_idx - begin
-                return local_array[clean_view]
-            raise IndexError("Array index", dist_idx, "out of bounds [0, " + str(self.shape[distaxis]) + ")")
+            target_idx = np.searchsorted(self.target_offsets, dist_idx, side="right") - 1
+            clean_view[self.distaxis] = dist_idx - self.target_offsets[target_idx]
+            self.view.execute("sliced = %s%s" % (self.name, repr(clean_view)), targets=self.target_ranks[target_idx])
+            return self.view.pull("sliced", targets=self.target_ranks[target_idx])
 
         # slice object in the direction of the distributed axis
         distaxis_slice = clean_view[self.distaxis]
 
         # determine properties of the new sliced ndarray
-        new_idx_ranges = []
-        new_targets_in_use = []
+        new_target_offsets = []
+        new_target_ranks = []
         local_slices = []
         total_ids = 0
-        for (begin, end), target in zip(self.idx_ranges, self.targets_in_use):
-            # first index within [begin, end) after slicing
-            firstSubIdx = helper.getFirstSubIdx(distaxis_slice, begin, end)
-            if firstSubIdx is None: continue
-            # calculate last index of distaxis_slice
+
+        first_target_idx = np.searchsorted(self.target_offsets, distaxis_slice.start, side="right") - 1
+        last_target_idx = np.searchsorted(self.target_offsets, distaxis_slice.stop, side="right")
+
+        for i, target in zip(range(first_target_idx, last_target_idx),\
+                             self.target_ranks[first_target_idx:last_target_idx]):
+            # index range of current target
+            begin = self.target_offsets[i]
+            end = self.target_offsets[i+1] if i+1 < len(self.target_offsets) else self.shape[self.distaxis]
+            # first slice index within [begin, end)
+            firstSliceIdx = helper.getFirstSliceIdx(distaxis_slice, begin, end)
+            if firstSliceIdx is None: continue
+            # calculate last slice index of distaxis_slice
             tmp = (distaxis_slice.stop-1 - distaxis_slice.start) / distaxis_slice.step
             lastIdx = distaxis_slice.start + tmp * distaxis_slice.step
-            # calculate last sub index
-            tmp = (end-1 - firstSubIdx) / distaxis_slice.step
-            lastSubIdx = firstSubIdx + tmp * distaxis_slice.step
-            lastSubIdx = min(lastSubIdx, lastIdx)
-            # slice object on the current target
-            local_slices.append(slice(firstSubIdx - begin, lastSubIdx+1 - begin, distaxis_slice.step))
+            # calculate last sub index within [begin,end)
+            tmp = (end-1 - firstSliceIdx) / distaxis_slice.step
+            lastSliceIdx = firstSliceIdx + tmp * distaxis_slice.step
+            lastSliceIdx = min(lastSliceIdx, lastIdx)
+            # slice object for current target
+            local_slices.append(slice(firstSliceIdx - begin, lastSliceIdx+1 - begin, distaxis_slice.step))
             # number of indices remaining on the current target after slicing
-            num_ids = (lastSubIdx - firstSubIdx) / distaxis_slice.step + 1
-            # index range for the current target
-            new_idx_ranges.append([total_ids, total_ids + num_ids])
+            num_ids = (lastSliceIdx - firstSliceIdx) / distaxis_slice.step + 1
+            # new offset for current target
+            new_target_offsets.append(total_ids)
             total_ids += num_ids
-            # target id
-            new_targets_in_use.append(target)
+            # target rank
+            new_target_ranks.append(target)
 
         # shift distaxis by the number of vanished axes in the left of it
         new_distaxis = self.distaxis - sum(1 for arg in args[:self.distaxis] if type(arg) is int)
 
         # create resulting ndarray
-        result = ndarray(new_shape, new_distaxis, self.dtype, new_idx_ranges, new_targets_in_use, True)
+        result = ndarray(new_shape, new_distaxis, self.dtype, new_target_offsets, new_target_ranks, True)
 
         # remote slicing
-        args = list(args)
-        for i in range(len(local_slices)):
-            args[self.distaxis] = local_slices[i]
-            self.view.push({'args' : args}, targets=result.targets_in_use[i])
-        self.view.execute('%s = %s[args]' % (result.name, self.name), targets=result.targets_in_use)
+        local_args_list = []
+        for local_slice in local_slices:
+            local_args = list(args)
+            local_args[self.distaxis] = local_slice
+            local_args_list.append(local_args)
+        self.view.scatter('local_args', local_args_list, targets=result.target_ranks)
+        self.view.execute('%s = %s[local_args[0]]' % (result.name, self.name), targets=result.target_ranks)
 
         return result
 
@@ -211,25 +224,25 @@ class ndarray(object):
             if isinstance(value, np.ndarray):
                 value = factories.array(value, self.distaxis)
             other = value.dist_like(self)
-            self.view.execute("%s[:] = %s" % (self.name, other.name), targets=self.targets_in_use)
+            self.view.execute("%s[:] = %s" % (self.name, other.name), targets=self.target_ranks)
             return
 
         if not isinstance(key, list) and not isinstance(key, tuple):
             key = (key,)
 
-        assert len(key) == len(self.shape)
+        assert len(key) == len(self.shape),\
+            "number of arguments (%d) does not correspond to the dimension (%d)"\
+                 % (len(key), len(self.shape))
 
         # value assignment (key == list of indices)
         if all(type(k) is int for k in key):
             dist_idx = key[self.distaxis]
-            for i in range(len(self.idx_ranges)):
-                begin, end = self.idx_ranges[i]
-                if dist_idx >= end: continue
-                local_idx = list(key)
-                local_idx[self.distaxis] = dist_idx - begin
-                self.view.push({'value' : value}, targets=self.targets_in_use[i])
-                self.view.execute("%s%s = value" % (self.name, repr(local_idx)), targets=self.targets_in_use[i])
-                return
+            target_idx = np.searchsorted(self.target_offsets, dist_idx, side="right") - 1
+            local_idx = list(key)
+            local_idx[self.distaxis] = dist_idx - self.target_offsets[target_idx]
+            self.view.push({'value' : value}, targets=self.target_ranks[target_idx])
+            self.view.execute("%s%s = value" % (self.name, repr(local_idx)), targets=self.target_ranks[target_idx])
+            return
 
         # assign value to sub-array of self
         sub_array = self[key]
@@ -247,14 +260,14 @@ class ndarray(object):
 
         :return: numpy-array
         """
-        local_arrays = self.view.pull(self.name, targets=self.targets_in_use)
+        local_arrays = self.view.pull(self.name, targets=self.target_ranks)
         return np.concatenate(local_arrays, axis=self.distaxis)
 
     def copy(self):
         """Returns a hard copy of this array.
         """
-        result = ndarray(self.shape, self.distaxis, self.dtype, self.idx_ranges, self.targets_in_use, True)
-        self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.targets_in_use)
+        result = ndarray(self.shape, self.distaxis, self.dtype, self.target_offsets, self.target_ranks, True)
+        self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.target_ranks)
         return result
 
     def dist_like(self, other):
@@ -275,8 +288,8 @@ class ndarray(object):
         assert self.distaxis == other.distaxis # todo: add this feature
 
         # if self is already distributed like *other* do nothing
-        if self.targets_in_use == other.targets_in_use:
-            if self.idx_ranges == other.idx_ranges:
+        if np.array_equal(self.target_offsets, other.target_offsets):
+            if self.target_ranks == other.target_ranks:
                 return self
 
         # communication meta-data
@@ -294,26 +307,29 @@ class ndarray(object):
         # loop the common decomposition of self and other.
         # the current partition is given by [begin, end)
         while not begin == self.shape[self.distaxis]:
-            end = min(self.idx_ranges[self_idx][1], other.idx_ranges[other_idx][1])
+            end_self = self.target_offsets[self_idx+1] if self_idx+1 < len(self.target_offsets) else self.shape[self.distaxis]
+            end_other = other.target_offsets[other_idx+1] if other_idx+1 < len(other.target_offsets) else other.shape[other.distaxis]
+            end = min(end_self, end_other)
+            partition_size = end - begin
 
             # source's meta-data
-            src_targets[self_idx].append(other.targets_in_use[other_idx])
+            src_targets[self_idx].append(other.target_ranks[other_idx])
             src_tags[self_idx].append(tag)
-            src_distaxis_sizes[self_idx].append(end - begin)
+            src_distaxis_sizes[self_idx].append(partition_size)
 
             # destination's meta-data
-            dest_targets[other_idx].append(self.targets_in_use[self_idx])
+            dest_targets[other_idx].append(self.target_ranks[self_idx])
             dest_tags[other_idx].append(tag)
-            dest_distaxis_sizes[other_idx].append(end - begin)
+            dest_distaxis_sizes[other_idx].append(partition_size)
 
             # go to the next common partition
-            if end == self.idx_ranges[self_idx][1]:
+            if end == end_self:
                 if not end == self.shape[self.distaxis]:
                     src_targets.append([])
                     src_tags.append([])
                     src_distaxis_sizes.append([])
                 self_idx += 1
-            if end == other.idx_ranges[other_idx][1]:
+            if end == end_other:
                 if not end == self.shape[self.distaxis]:
                     dest_targets.append([])
                     dest_tags.append([])
@@ -324,26 +340,26 @@ class ndarray(object):
             tag += 1
 
         # push communication meta-data to the targets
-        self.view.scatter('src_targets', src_targets, targets=self.targets_in_use)
-        self.view.scatter('src_tags', src_tags, targets=self.targets_in_use)
-        self.view.scatter('src_distaxis_sizes', src_distaxis_sizes, targets=self.targets_in_use)
+        self.view.scatter('src_targets', src_targets, targets=self.target_ranks)
+        self.view.scatter('src_tags', src_tags, targets=self.target_ranks)
+        self.view.scatter('src_distaxis_sizes', src_distaxis_sizes, targets=self.target_ranks)
 
-        self.view.scatter('dest_targets', dest_targets, targets=other.targets_in_use)
-        self.view.scatter('dest_tags', dest_tags, targets=other.targets_in_use)
-        self.view.scatter('dest_distaxis_sizes', dest_distaxis_sizes, targets=other.targets_in_use)
+        self.view.scatter('dest_targets', dest_targets, targets=other.target_ranks)
+        self.view.scatter('dest_tags', dest_tags, targets=other.target_ranks)
+        self.view.scatter('dest_distaxis_sizes', dest_distaxis_sizes, targets=other.target_ranks)
 
         # result ndarray
-        result = ndarray(self.shape, self.distaxis, self.dtype, other.idx_ranges, other.targets_in_use)
+        result = ndarray(self.shape, self.distaxis, self.dtype, other.target_offsets, other.target_ranks)
 
         # send
         self.view.execute('%s_send_tasks = interengine.scatterArrayMPI_async(%s, src_targets[0], src_tags[0], src_distaxis_sizes[0], %d, target2rank)' \
-            % (self.name, self.name, self.distaxis), targets=self.targets_in_use)
+            % (self.name, self.name, self.distaxis), targets=self.target_ranks)
 
         # receive
         self.view.execute("""\
             {0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysMPI_async({1}, dest_targets[0], dest_tags[0], dest_distaxis_sizes[0], {2}, target2rank)
             """.format(self.name, result.name, self.distaxis),\
-            targets=result.targets_in_use)
+            targets=result.target_ranks)
 
         # finish communication
         self.view.execute('''\
@@ -355,7 +371,7 @@ class ndarray(object):
                 interengine.finish_communication({1}, dest_distaxis_sizes[0], {2}, {0}_recv_bufs)
                 del {0}_recv_tasks, {0}_recv_bufs
             '''.format(self.name, result.name, self.distaxis),
-            targets=list(set(self.targets_in_use + result.targets_in_use)))
+            targets=tuple(set(self.target_ranks + result.target_ranks)))
 
         return result
 

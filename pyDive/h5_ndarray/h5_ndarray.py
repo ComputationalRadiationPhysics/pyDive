@@ -116,12 +116,12 @@ class h5_ndarray(object):
         result = factories.hollow(result_shape, self.distaxis, dtype=self.dtype)
 
         # create local slice objects for each engine
-        local_slices = helper.createLocalSlices(total_slices, self.distaxis, result.idx_ranges)
+        local_slices = helper.createLocalSlices(total_slices, self.distaxis, result.target_offsets, self.shape)
 
         # scatter slice objects to the engines
         view = com.getView()
-        view.scatter('window', local_slices, targets=result.targets_in_use)
-        view.execute('%s = %s[tuple(window[0])]' % (repr(result), self.dataset_name), targets=result.targets_in_use)
+        view.scatter('window', local_slices, targets=result.target_ranks)
+        view.execute('%s = %s[tuple(window[0])]' % (repr(result), self.dataset_name), targets=result.target_ranks)
 
         return result
 
@@ -149,15 +149,15 @@ class h5_ndarray(object):
         assert new_shape == value.shape
 
         # create local slice objects for each engine
-        local_slices = helper.createLocalSlices(clean_slices, value.distaxis, value.idx_ranges)
+        local_slices = helper.createLocalSlices(clean_slices, value.distaxis, value.target_offsets)
 
         # scatter slice objects to the engines
         view = com.getView()
-        view.scatter('window', local_slices, targets=value.targets_in_use)
+        view.scatter('window', local_slices, targets=value.target_ranks)
 
         # write 'value' to disk in parallel
         view.execute('%s[tuple(window[0])] = %s' % (self.dataset_name, repr(value)), \
-            targets=value.targets_in_use)
+            targets=value.target_ranks)
 
     def __str__(self):
         return "<hdf5 dset: " + self.dataset_path + ", " + str(self.shape) + ", " + str(self.dtype) + ">"

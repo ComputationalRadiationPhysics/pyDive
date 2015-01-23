@@ -20,7 +20,7 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-def getFirstSubIdx(slice_obj, begin, end):
+def getFirstSliceIdx(slice_obj, begin, end):
     if slice_obj.start > begin:
         if slice_obj.start >= end: return None
         return slice_obj.start
@@ -43,13 +43,13 @@ def view_of_shape(shape, window):
         new_shape.append((clean_slice.stop-1 - clean_slice.start) / clean_slice.step + 1)
     return new_shape, clean_view
 
-def createLocalSlices(slices, distaxis, idx_ranges):
-    # create local slice objects for each engine
-
-    local_slices = [list(slices) for i in range(len(idx_ranges))]
+# create local slice objects for each engine
+def createLocalSlices(slices, distaxis, target_offsets, shape):
+    local_slices = [list(slices) for i in range(len(target_offsets))]
     distaxis_slice = slices[distaxis]
-    for i in range(len(idx_ranges)):
-        begin, end = idx_ranges[i]
+    for i in range(len(target_offsets)):
+        begin = target_offsets[i]
+        end = target_offsets[i+1] if i+1 < len(target_offsets) else shape[distaxis]
 
         local_slices[i][distaxis] = slice(distaxis_slice.start + distaxis_slice.step * begin,\
                                           distaxis_slice.start + distaxis_slice.step * end,\

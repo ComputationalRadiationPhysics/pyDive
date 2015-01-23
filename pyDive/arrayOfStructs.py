@@ -156,12 +156,12 @@ class ArrayOfStructsClass(object):
         self.structOfArrays = structOfArrays
 
         if onTarget == 'False' and self.arraytype is ndarray:
-            #assert all(a.targets_in_use == firstArray.targets_in_use for name, a in items),\
-            #    "all ndarrays in structure-of-arrays ('structOfArrays') must have an identical 'targets_in_use' attribute"
+            #assert all(a.target_ranks == firstArray.target_ranks for name, a in items),\
+            #    "all ndarrays in structure-of-arrays ('structOfArrays') must have an identical 'target_ranks' attribute"
 
             self.distaxis = self.firstArray.distaxis
-            self.idx_ranges = self.firstArray.idx_ranges
-            self.targets_in_use = self.firstArray.targets_in_use
+            self.target_offsets = self.firstArray.target_offsets
+            self.target_ranks = self.firstArray.target_ranks
             view = com.getView()
             self.view = view
 
@@ -173,12 +173,12 @@ class ArrayOfStructsClass(object):
             # create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use
             names_tree = makeTree_fromTree(structOfArrays, lambda a: repr(a))
 
-            view.push({'names_tree' : names_tree}, targets=self.targets_in_use)
+            view.push({'names_tree' : names_tree}, targets=self.target_ranks)
 
             view.execute('''\
                 structOfArrays = arrayOfStructs.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
                 %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
-                targets=self.targets_in_use)
+                targets=self.target_ranks)
 
         if onTarget == 'False' and self.arraytype is h5_ndarray:
             self.distaxis = self.firstArray.distaxis
@@ -186,7 +186,7 @@ class ArrayOfStructsClass(object):
     def __del__(self):
         if onTarget == 'False' and self.arraytype is ndarray:
             # delete remote arrayOfStructs object
-            self.view.execute('del %s' % self.name, targets=self.targets_in_use)
+            self.view.execute('del %s' % self.name, targets=self.target_ranks)
 
     def __getattr__(self, name):
         if name in self.arraytype.__dict__.keys():

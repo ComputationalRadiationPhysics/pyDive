@@ -34,7 +34,7 @@ def __prepare_operand(operand, target):
 def unary_op(a, op):
     result = factories.hollow_like(a)
     view = com.getView()
-    view.execute("%s = %s%s" % (repr(result), op, repr(a)), targets=result.targets_in_use)
+    view.execute("%s = %s%s" % (repr(result), op, repr(a)), targets=result.target_ranks)
     return result
 
 def binary_op(lhs, rhs, op):
@@ -42,7 +42,7 @@ def binary_op(lhs, rhs, op):
 
     result = factories.hollow_like(lhs)
     view = com.getView()
-    view.execute("%s = %s %s %s" % (repr(result), repr(lhs), op, repr(rhs)), targets=result.targets_in_use)
+    view.execute("%s = %s %s %s" % (repr(result), repr(lhs), op, repr(rhs)), targets=result.target_ranks)
     return result
 
 def binary_rop(rhs, lhs, op):
@@ -50,14 +50,14 @@ def binary_rop(rhs, lhs, op):
 
     result = factories.hollow_like(rhs)
     view = com.getView()
-    view.execute("%s = %s %s %s" % (repr(result), repr(lhs), op, repr(rhs)), targets=result.targets_in_use)
+    view.execute("%s = %s %s %s" % (repr(result), repr(lhs), op, repr(rhs)), targets=result.target_ranks)
     return result
 
 def binary_iop(lhs, rhs, iop):
     rhs = __prepare_operand(rhs, lhs)
 
     view = com.getView()
-    view.execute("%s %s %s" % (repr(lhs), iop, repr(rhs)), targets=lhs.targets_in_use)
+    view.execute("%s %s %s" % (repr(lhs), iop, repr(rhs)), targets=lhs.target_ranks)
     return lhs
 
 def n_ary_fun(fun, *args):
@@ -68,7 +68,7 @@ def n_ary_fun(fun, *args):
 
     result = factories.hollow_like(a)
     view = com.getView()
-    view.execute("%s = %s(%s)" % (repr(result), fun, args_str), targets=result.targets_in_use)
+    view.execute("%s = %s(%s)" % (repr(result), fun, args_str), targets=result.target_ranks)
     #\todo: determine dtype from the result of fun and not from args[0]
     return result
 

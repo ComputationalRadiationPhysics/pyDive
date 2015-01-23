@@ -55,7 +55,7 @@ def zeros(shape, distaxis=0, dtype=np.float):
     """
     result = empty(shape, distaxis, dtype)
     view = com.getView()
-    view.execute("{0} = np.zeros({0}.shape, {0}.dtype)".format(result.name), targets=result.targets_in_use)
+    view.execute("{0} = np.zeros({0}.shape, {0}.dtype)".format(result.name), targets=result.target_ranks)
     return result
 
 def ones(shape, distaxis=0, dtype=np.float):
@@ -67,26 +67,26 @@ def ones(shape, distaxis=0, dtype=np.float):
     """
     result = empty(shape, distaxis, dtype)
     view = com.getView()
-    view.execute("{0} = np.ones({0}.shape, {0}.dtype)".format(result.name), targets=result.targets_in_use)
+    view.execute("{0} = np.ones({0}.shape, {0}.dtype)".format(result.name), targets=result.target_ranks)
     return result
 
 def hollow_like(a):
     """Return a new :ref:`pyDive.ndarray` with the same shape, distribution and type as *a* without allocating
     a local *numpy-array*.
     """
-    return ndarray.ndarray(a.shape, a.distaxis, a.dtype, a.idx_ranges, a.targets_in_use, no_allocation=True)
+    return ndarray.ndarray(a.shape, a.distaxis, a.dtype, a.target_offsets, a.target_ranks, no_allocation=True)
 
 def empty_like(a):
     """Return a new :ref:`pyDive.ndarray` with the same shape, distribution and type as *a* without initializing elements.
     """
-    return ndarray.ndarray(a.shape, a.distaxis, a.dtype, a.idx_ranges, a.targets_in_use)
+    return ndarray.ndarray(a.shape, a.distaxis, a.dtype, a.target_offsets, a.target_ranks)
 
 def zeros_like(a):
     """Return a new :ref:`pyDive.ndarray` with the same shape, distribution and type as *a* filled with zeros.
     """
     result = empty_like(a)
     view = com.getView()
-    view.execute("{0} = np.zeros({0}.shape, {0}.dtype)".format(result.name), targets=result.targets_in_use)
+    view.execute("{0} = np.zeros({0}.shape, {0}.dtype)".format(result.name), targets=result.target_ranks)
     return result
 
 def ones_like(a):
@@ -94,7 +94,7 @@ def ones_like(a):
     """
     result = empty_like(a)
     view = com.getView()
-    view.execute("{0} = np.zeros({0}.shape, {0}.dtype)".format(result.name), targets=result.targets_in_use)
+    view.execute("{0} = np.zeros({0}.shape, {0}.dtype)".format(result.name), targets=result.target_ranks)
     return result
 
 def array(array_like, distaxis=0):
@@ -109,13 +109,15 @@ def array(array_like, distaxis=0):
         result = ndarray.ndarray(array_like.shape, distaxis, array_like.dtype, no_allocation=True)
 
         tmp = np.rollaxis(array_like, distaxis)
-        sub_arrays = [tmp[begin:end] for begin, end in result.idx_ranges]
+
+        sub_arrays = [tmp[begin:end] for begin, end in \
+            zip(result.target_offsets, tuple(result.target_offsets[1:])+(result.shape[distaxis],))]
         # roll axis back
         sub_arrays = [np.rollaxis(ar, 0, distaxis+1) for ar in sub_arrays]
 
         view = com.getView()
-        view.scatter('sub_array', sub_arrays, targets=result.targets_in_use)
-        view.execute("%s = sub_array[0].copy()" % result.name, targets=result.targets_in_use)
+        view.scatter('sub_array', sub_arrays, targets=result.target_ranks)
+        view.execute("%s = sub_array[0].copy()" % result.name, targets=result.target_ranks)
         return result
     else:
         return array(np.array(array_like), distaxis)

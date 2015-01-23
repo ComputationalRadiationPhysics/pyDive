@@ -82,7 +82,7 @@ def map(f, *arrays, **kwargs):
     for cached_arrays in h5caching.cache_arrays(*arrays):
         array_names = [repr(a) for a in cached_arrays]
 
-        view.targets = cached_arrays[0].targets_in_use
+        view.targets = cached_arrays[0].target_ranks
         view.apply(interactive(map_wrapper), interactive(f), array_names, **kwargs)
 
     view.targets = tmp_targets # restore target list
@@ -111,7 +111,7 @@ def reduce(_array, op):
         cached_array = cached_arrays[0] # there is just one array in the list
         array_name = repr(cached_array)
 
-        view.targets = cached_array.targets_in_use
+        view.targets = cached_array.target_ranks
 
         targets_results = view.apply(interactive(reduce_wrapper), array_name, op.__name__)
         chunk_result = op.reduce(targets_results) # reduce over targets' results
@@ -161,7 +161,7 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     for cached_arrays in h5caching.cache_arrays(*arrays):
         array_names = [repr(a) for a in cached_arrays]
 
-        view.targets = cached_arrays[0].targets_in_use
+        view.targets = cached_arrays[0].target_ranks
         targets_results = view.apply(interactive(mapReduce_wrapper),\
             interactive(map_func), reduce_op.__name__, array_names, **kwargs)
 
