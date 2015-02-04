@@ -24,16 +24,16 @@ __doc__=\
 
 # ndarray
 import ndarray.ndarray
-import ndarray.factories
-hollow = ndarray.factories.hollow
-empty = ndarray.factories.empty
-zeros = ndarray.factories.zeros
-ones = ndarray.factories.ones
-hollow_like = ndarray.factories.hollow_like
-empty_like = ndarray.factories.empty_like
-zeros_like = ndarray.factories.zeros_like
-ones_like = ndarray.factories.ones_like
-array = ndarray.factories.array
+#import ndarray.factories
+#hollow = ndarray.factories.hollow
+empty = ndarray.ndarray.empty
+zeros = ndarray.ndarray.zeros
+ones = ndarray.ndarray.ones
+#hollow_like = ndarray.factories.hollow_like
+#empty_like = ndarray.factories.empty_like
+#zeros_like = ndarray.factories.zeros_like
+#ones_like = ndarray.factories.ones_like
+#array = ndarray.factories.array
 
 # h5_ndarray
 import h5_ndarray.factories

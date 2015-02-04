@@ -13,7 +13,7 @@ def test_slicing(init_pyDive):
             ref = (np.random.rand(*size) * 100.0).astype(dtype)
 
             for distaxis in range(len(size)):
-                test_array = pyDive.empty(size, distaxis, dtype)
+                test_array = pyDive.empty(size, dtype, distaxis)
                 test_array[:] = ref
 
                 slices = []
@@ -46,13 +46,15 @@ def test_interengine(init_pyDive):
             for distaxis in range(len(size)):
                 if size[distaxis] < 5: continue
 
-                test_array = pyDive.empty(size, distaxis, dtype)
+                test_array = pyDive.empty(size, dtype, distaxis)
                 test_array[:] = ref
 
                 slicesA = [slice(None)] * len(size)
                 slicesB = list(slicesA)
                 slicesA[distaxis] = slice(0, 5)
                 slicesB[distaxis] = slice(-5, None)
+
+                print size, distaxis
 
                 ref_sum = ref[slicesA] + ref[slicesB]
                 test_array_sum = test_array[slicesA] + test_array[slicesB]

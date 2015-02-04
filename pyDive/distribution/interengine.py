@@ -1,5 +1,5 @@
 """
-Copyright 2014 Heiko Burau
+Copyright 2015 Heiko Burau
 
 This file is part of pyDive.
 
@@ -19,7 +19,6 @@ and the GNU Lesser General Public License along with pyDive.
 If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
-
 import numpy as np
 from mpi4py import MPI
 
@@ -57,3 +56,35 @@ def finish_communication(out_array, distaxis_sizes, distaxis, recv_bufs):
         window[distaxis] = slice(pos, pos + distaxis_sizes[i])
         out_array[window] = recv_bufs[i]
         pos += distaxis_sizes[i]
+
+import os
+onTarget = os.environ.get("onTarget", 'False')
+
+# execute this code only if it is not executed on engine
+if onTarget == 'False':
+    import pyDive.IPParallelClient as com
+
+    def MPI_copier(source, dest):
+        view = com.getView()
+
+        # send
+        view.execute('%s_send_tasks = interengine.scatterArrayMPI_async(%s, src_targets[0], src_tags[0], src_distaxis_sizes[0], %d, target2rank)' \
+            % (source.name, source.name, source.distaxis), targets=source.target_ranks)
+
+        # receive
+        view.execute("""\
+            {0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysMPI_async({1}, dest_targets[0], dest_tags[0], dest_distaxis_sizes[0], {2}, target2rank)
+            """.format(source.name, dest.name, source.distaxis),\
+            targets=dest.target_ranks)
+
+        # finish communication
+        view.execute('''\
+            if "{0}_send_tasks" in locals():
+                MPI.Request.Waitall({0}_send_tasks)
+                del {0}_send_tasks
+            if "{0}_recv_tasks" in locals():
+                MPI.Request.Waitall({0}_recv_tasks)
+                interengine.finish_communication({1}, dest_distaxis_sizes[0], {2}, {0}_recv_bufs)
+                del {0}_recv_tasks, {0}_recv_bufs
+            '''.format(source.name, dest.name, source.distaxis),
+            targets=tuple(set(source.target_ranks + dest.target_ranks)))

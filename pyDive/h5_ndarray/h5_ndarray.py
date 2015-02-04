@@ -23,7 +23,7 @@ __doc__ = None
 #from mpi4py import MPI
 import h5py as h5
 from ..ndarray import ndarray, factories
-from ..ndarray import helper
+import pyDive.distribution.helper as helper
 from .. import IPParallelClient as com
 import numpy as np
 

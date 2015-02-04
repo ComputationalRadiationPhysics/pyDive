@@ -53,7 +53,7 @@ def init(profile='mpi'):
         os.environ["onTarget"] = 'True'
         from pyDive import arrayOfStructs
         from pyDive import algorithm
-        from pyDive.ndarray import interengine
+        from pyDive.distribution import interengine
          ''')
 
     # get number of processes per node (ppn)
