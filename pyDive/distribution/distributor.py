@@ -28,7 +28,7 @@ array_id = 0
 
 class DistributedGenericArray(object):
     arraytype = None
-    target_factoryname = None
+    target_modulename = None
     interengine_copier = None
 
     def __init__(self, shape, dtype=np.float, distaxis=0, target_offsets=None, target_ranks=None, no_allocation=False, **kwargs):
@@ -90,8 +90,9 @@ class DistributedGenericArray(object):
             localshapes.append(localshape)
 
             self.view.scatter('localshape', localshapes, targets=self.target_ranks)
-            self.view.push({'kwargs' : kwargs}, targets=self.target_ranks)
-            self.view.execute('%s = %s(localshape[0], **kwargs)' % (self.name, self.__class__.target_factoryname), targets=self.target_ranks)
+            self.view.push({'kwargs' : kwargs, 'dtype' : dtype}, targets=self.target_ranks)
+            self.view.execute('%s = %s(shape=localshape[0], dtype=dtype, **kwargs)' % \
+                (self.name, self.__class__.target_modulename + "." + self.__class__.arraytype.__name__), targets=self.target_ranks)
 
     def __del__(self):
         self.view.execute('del %s' % self.name, targets=self.target_ranks)
@@ -382,12 +383,12 @@ def distribute(arraytype, newclassname, target_modulename, interengine_copier=No
 
     result = type(newclassname, (), result_dict)
     result.arraytype = arraytype
-    result.target_factoryname = target_modulename + "." + arraytype.__name__
+    result.target_modulename = target_modulename
     result.interengine_copier = interengine_copier
 
     return result
 
-def generate_ufuncs(ufunc_names):
+def generate_ufuncs(ufunc_names, target_modulename):
 
     def ufunc_wrapper(ufunc_name, args, kwargs):
         arg0 = args[0]
@@ -403,14 +404,47 @@ def generate_ufuncs(ufunc_names):
         result.nbytes = np.dtype(result.dtype).itemsize * np.prod(result.shape)
         return result
 
-    return {ufunc_name: lambda *args, **kwargs: ufunc_wrapper(target_modulename + "." + ufunc_name, args, kwargs) for ufunc_name in ufunc_names}
+    make_ufunc = lambda ufunc_name: lambda *args, **kwargs: ufunc_wrapper(target_modulename + "." + ufunc_name, args, kwargs)
+
+    return {ufunc_name: make_ufunc(ufunc_name) for ufunc_name in ufunc_names}
 
 def generate_factories(arraytype, factory_names, dtype_default):
-    return {factory_name : lambda shape, dtype=dtype_default, distaxis=0, **kwargs:\
-        arraytype(shape, dtype, distaxis, None, None, False, **kwargs)
-        for factory_name in factory_names}
+
+    def factory_wrapper(factory_name, shape, dtype, distaxis, kwargs):
+        result = arraytype(shape, dtype, distaxis, None, None, True)
+
+        localshapes = []
+        for i in range(len(result.target_offsets)-1):
+            localshape = np.array(result.shape)
+            localshape[distaxis] = result.target_offsets[i+1] - result.target_offsets[i]
+            localshapes.append(localshape)
+        localshape = np.array(result.shape)
+        localshape[distaxis] = result.shape[distaxis] - result.target_offsets[-1]
+        localshapes.append(localshape)
+
+        view = com.getView()
+        view.scatter('localshape', localshapes, targets=result.target_ranks)
+        view.push({'kwargs' : kwargs, 'dtype' : dtype}, targets=result.target_ranks)
+
+        view.execute("{0} = {1}(shape=localshape[0], dtype=dtype, **kwargs)".format(result.name, factory_name),\
+            targets=result.target_ranks)
+        return result
+
+    make_factory = lambda factory_name: lambda shape, dtype=dtype_default, distaxis=0, **kwargs:\
+        factory_wrapper(arraytype.target_modulename + "." + factory_name, shape, dtype, distaxis, kwargs)
+
+    return {factory_name : make_factory(factory_name) for factory_name in factory_names}
 
 def generate_factories_like(arraytype, factory_names):
-    return {factory_name : lambda a, **kwargs:\
-        arraytype(a.shape, a.dtype, a.distaxis, None, None, False, **kwargs)
-        for factory_name in factory_names}
+
+    def factory_like_wrapper(factory_name, other, kwargs):
+        result = arraytype(other.shape, other.dtype, other.distaxis, other.target_offsets, other.target_ranks, True)
+        view = com.getView()
+        view.push({'kwargs' : kwargs}, targets=result.target_ranks)
+        view.execute("{0} = {1}({2}, **kwargs)".format(result.name, factory_name, other.name), targets=result.target_ranks)
+        return result
+
+    make_factory = lambda factory_name: lambda other, **kwargs: \
+        factory_like_wrapper(arraytype.target_modulename + "." + factory_name, other, kwargs)
+
+    return {factory_name : make_factory(factory_name) for factory_name in factory_names}

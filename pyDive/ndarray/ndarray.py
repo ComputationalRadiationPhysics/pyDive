@@ -28,8 +28,18 @@ ndarray = distributor.distribute(np.ndarray, "ndarray", "np", interengine_copier
 
 factories = distributor.generate_factories(ndarray, ("empty", "zeros", "ones"), np.float)
 factories.update(distributor.generate_factories_like(ndarray, ("empty_like", "zeros_like", "ones_like")))
+
 globals().update(factories)
 
+def array(array_like, distaxis=0):
+    np_array = np.array(array_like)
+    result = empty(np_array.shape, np_array.dtype, distaxis)
+    result[:] = np_array
+    return result
+
+factories.update({"array" : array})
+
 ufunc_names = [key for key, value in np.__dict__.items() if isinstance(value, np.ufunc)]
-ufuncs = distributor.generate_ufuncs(ufunc_names)
+ufuncs = distributor.generate_ufuncs(ufunc_names, "np")
+
 globals().update(ufuncs)

@@ -24,43 +24,36 @@ __doc__=\
 
 # ndarray
 import ndarray.ndarray
-#import ndarray.factories
-#hollow = ndarray.factories.hollow
-empty = ndarray.ndarray.empty
-zeros = ndarray.ndarray.zeros
-ones = ndarray.ndarray.ones
-#hollow_like = ndarray.factories.hollow_like
-#empty_like = ndarray.factories.empty_like
-#zeros_like = ndarray.factories.zeros_like
-#ones_like = ndarray.factories.ones_like
-#array = ndarray.factories.array
+globals().update(ndarray.ndarray.factories)
+globals().update(ndarray.ndarray.ufuncs)
+from ndarray.ndarray import ndarray
 
-# h5_ndarray
-import h5_ndarray.factories
-h5 = h5_ndarray.factories
+## h5_ndarray
+#import h5_ndarray.factories
+#h5 = h5_ndarray.factories
 
 # cloned_ndarray
 import cloned_ndarray.factories
 cloned = cloned_ndarray.factories
 
-# algorithm
-import algorithm
-map = algorithm.map
-reduce = algorithm.reduce
-mapReduce = algorithm.mapReduce
+## algorithm
+#import algorithm
+#map = algorithm.map
+#reduce = algorithm.reduce
+#mapReduce = algorithm.mapReduce
 
 # particle-mesh mappings
 import mappings
 mesh2particles = mappings.mesh2particles
 particles2mesh = mappings.particles2mesh
 
-# arrayOfStructs
-import arrayOfStructs
-arrayOfStructs = arrayOfStructs.arrayOfStructs
+## arrayOfStructs
+#import arrayOfStructs
+#arrayOfStructs = arrayOfStructs.arrayOfStructs
 
-# picongpu
-import picongpu
-picongpu = picongpu
+## picongpu
+#import picongpu
+#picongpu = picongpu
 
 # init
 import IPParallelClient
