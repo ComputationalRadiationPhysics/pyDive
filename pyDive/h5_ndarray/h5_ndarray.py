@@ -20,78 +20,50 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-#from mpi4py import MPI
 import h5py as h5
-from ..ndarray import ndarray, factories
 import pyDive.distribution.helper as helper
-from .. import IPParallelClient as com
 import numpy as np
 
-h5_ndarray_id = 0
+class h5_ndarray_local(object):
 
-class h5_ndarray(object):
-    """Represents a single hdf5-dataset like a virtual, cluster-wide array.
-        Data access goes through array slicing where data is written to respectively read from
-        :class:`pyDive.ndarray.ndarray.ndarray` objects in parallel using all engines.
-
-        Example: ::
-
-            h5_data = pyDive.h5.fromPath(<file_path>, "/data/0/fields/FieldB/x", distaxis=0)
-            data = h5_data[:] # read the entire dataset into engine-memory
-            data = data**2
-            h5_data[:] = data # write everything back
-
-    """
-    def __init__(self, h5_filename, dataset_path, distaxis=0, window=None):
-        """Creates an :class:`h5_ndarray` instance.
-        By using this method you may only load a single dataset. If you want to
-        load a *structure* of datasets at once see :func:`pyDive.h5_ndarray.factories.fromPath`.
-
-        :param str h5_filename: Path of the hdf5-file
-        :param str dataset_path: Path to the dataset within the hdf5-file
-        :param int distaxis: axis on which dataset is to be distributed over during data-access
-        :param window: This param let you specify a sub-part of the array as a virtual container.
-            Example: window=np.s_[:,:,::2]
-        :type window: list of slice objects (:obj:`numpy.s_`).
-
-        Notes:
-            - The dataset's attributes are stored in ``h5array.attrs``.
-        """
-        self.h5_filename = h5_filename
+    def __init__(self, filename, dataset_path, shape=None, window=None, offset=None):
+        self.filename = filename
         self.dataset_path = dataset_path
-        self.dataset = h5.File(h5_filename)[dataset_path]
-        self.attrs = self.dataset.attrs
-        #: axis of element-distribution
-        self.distaxis = distaxis
+
+        fileHandle = h5.File(filename, "r")
+        dataset = fileHandle[dataset_path]
+        self.attrs = dataset.attrs
         #: datatype of a single data value
-        self.dtype = self.dataset.dtype
+        self.dtype = dataset.dtype
+        if shape is None:
+            shape = dataset.shape
+        self.shape = shape
+        fileHandle.close()
 
-        self.arraytype = self.__class__
-
-        if not window:
-            window = [slice(None)] * len(self.dataset.shape)
-        self.shape, self.window = helper.view_of_shape(self.dataset.shape, window)
+        if window is None:
+            window = [slice(0, s) for s in shape]
+        self.window = window
+        if offset is None:
+            offset = (0,) * len(shape)
+        self.offset = offset
 
         #: total bytes consumed by the elements of the array.
         self.nbytes = self.dtype.itemsize * np.prod(self.shape)
 
-        # generate a unique variable name used on target representing this instance
-        global h5_ndarray_id
-        self.name = 'h5_ndarray' + str(h5_ndarray_id)
-        h5_ndarray_id += 1
+    def load(self):
+        fileHandle = h5.File(self.filename, "r")
+        dataset = fileHandle[self.dataset_path]
 
-        # create dataset object on each target
-        self.dataset_name = self.name + "_dataset"
-        self.fileHandle_name = self.name + "_file"
-        view = com.getView()
-        view.execute("%s = h5.File('%s', 'r')"\
-            % (self.fileHandle_name, h5_filename))
-        view.execute("%s = %s['%s']"\
-            % (self.dataset_name, self.fileHandle_name, dataset_path))
+        window = list(self.window)
+        for i in range(len(window)):
+            if type(window[i]) is int:
+                window[i] += self.offset[i]
+            else:
+                window[i] = slice(window[i].start + self.offset[i], window[i].stop + self.offset[i], window[i].step)
 
-    def __del__(self):
-        view = com.getView()
-        view.execute("%s.close()" % self.fileHandle_name)
+        result = dataset[tuple(window)]
+        fileHandle.close()
+        return result
 
     def __getitem__(self, args):
         if args == slice(None):
@@ -100,64 +72,21 @@ class h5_ndarray(object):
         if not isinstance(args, list) and not isinstance(args, tuple):
             args = [args]
 
-        assert len(self.shape) == len(args)
+        assert len(args) == len(self.shape),\
+            "number of arguments (%d) does not correspond to the dimension (%d)"\
+                 % (len(args), len(self.shape))
 
         assert not all(type(arg) is int for arg in args),\
             "single data access is not allowed"
 
-        result_shape, clean_slices = helper.view_of_shape(self.shape, args)
+        assert not any(type(arg) is int for arg in args)
 
-        # Applying 'clean_slices' after 'self.window', results in 'total_slices'
-        total_slices = [slice(self.window[i].start + clean_slices[i].start * self.window[i].step,\
-                              self.window[i].start + clean_slices[i].stop * self.window[i].step,\
-                              self.window[i].step * clean_slices[i].step) for i in range(len(args))]
+        result_shape, clean_view = helper.view_of_shape(self.shape, args)
 
-        # result ndarray
-        result = factories.hollow(result_shape, self.distaxis, dtype=self.dtype)
+        # Applying 'clean_slices' after 'self.window', results in 'result_window'
+        result_window = [slice(self.window[i].start + clean_view[i].start * self.window[i].step,\
+                               self.window[i].start + clean_view[i].stop * self.window[i].step,\
+                               self.window[i].step * clean_view[i].step) for i in range(len(args))]
 
-        # create local slice objects for each engine
-        local_slices = helper.createLocalSlices(total_slices, self.distaxis, result.target_offsets, self.shape)
+        return h5_ndarray_local(result_shape, self.filename, self.dataset_path, result_window, self.offset)
 
-        # scatter slice objects to the engines
-        view = com.getView()
-        view.scatter('window', local_slices, targets=result.target_ranks)
-        view.execute('%s = %s[tuple(window[0])]' % (repr(result), self.dataset_name), targets=result.target_ranks)
-
-        return result
-
-    def __setitem__(self, key, value):
-        assert isinstance(value, ndarray.ndarray), "assigned array has to be a pyDive ndarray"
-
-        if key == slice(None):
-            key = [sliceNone] * len(self.shape)
-
-        assert not all(type(key_comp) is int for key_comp in key),\
-            "single data access is not allowed"
-
-        if not isinstance(key, list) and not isinstance(key, tuple):
-            key = (key,)
-
-        assert len(key) == len(self.shape)
-
-        new_shape, clean_slices = helper.view_of_shape(self.shape, key)
-
-        # Applying 'clean_slices' after 'self.window'-slices result in 'total_slices'
-        total_slices = [slice(self.window[i].start + clean_slices[i].start * self.window[i].step,\
-                              self.window[i].start + clean_slices[i].stop * self.window[i].step,\
-                              self.window[i].step * clean_slices[i].step) for i in range(len(key))]
-
-        assert new_shape == value.shape
-
-        # create local slice objects for each engine
-        local_slices = helper.createLocalSlices(clean_slices, value.distaxis, value.target_offsets)
-
-        # scatter slice objects to the engines
-        view = com.getView()
-        view.scatter('window', local_slices, targets=value.target_ranks)
-
-        # write 'value' to disk in parallel
-        view.execute('%s[tuple(window[0])] = %s' % (self.dataset_name, repr(value)), \
-            targets=value.target_ranks)
-
-    def __str__(self):
-        return "<hdf5 dset: " + self.dataset_path + ", " + str(self.shape) + ", " + str(self.dtype) + ">"
