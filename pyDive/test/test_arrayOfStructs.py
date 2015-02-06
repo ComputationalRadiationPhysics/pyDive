@@ -14,3 +14,4 @@ def test_arrayOfStructs(init_pyDive):
     assert np.array_equal(fieldB_z, fields["fieldB"][:]["z"])
     assert np.array_equal(fieldB_z, fields[:]["fieldB/z"])
     assert np.array_equal(fieldB_z**2, (fields**2)["fieldB/z"])
+    assert np.array_equal(fieldB_z**2, (fields**2).fieldB.z)

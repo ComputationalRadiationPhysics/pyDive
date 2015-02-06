@@ -27,10 +27,10 @@ __doc__=\
 import os
 import os.path
 import re
-import h5_ndarray.factories
+import arrays.h5_ndarray as h5
 import arrayOfStructs
 
-def loadSteps(steps, folder_path, data_path, distaxis=0, window=None):
+def loadSteps(steps, folder_path, data_path, distaxis=0):
     """Python generator object looping all hdf5-data found in *folder_path*
         from timesteps appearing in *steps*.
 
@@ -43,9 +43,6 @@ def loadSteps(steps, folder_path, data_path, distaxis=0, window=None):
         :param str folder_path: Path to the folder containing the hdf5-files
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
         :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
-        :param window: This param let you specify a sub-part of the array as a virtual container.
-            Example: window=np.s_[:,:,::2]
-        :type window: list of slice objects (:ref:`numpy.s_`).
         :return: tuple of timestep and a :ref:`pyDive.h5_ndarray <pyDive.h5_ndarray.h5_ndarray.h5_ndarray>`
             or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.
 
@@ -69,14 +66,14 @@ def loadSteps(steps, folder_path, data_path, distaxis=0, window=None):
         full_filename = os.path.join(folder_path, filename)
         full_datapath = os.path.join("/data", str(timestep), data_path)
 
-        h5data = h5_ndarray.factories.fromPath(full_filename, full_datapath, distaxis, window)
+        h5data = h5.open(full_filename, full_datapath, distaxis)
 
         # add 'sim_unit' as 'unit' attribute
         def add_sim_unit(array):
             if 'sim_unit' in array.attrs:
                 setattr(array, "unit", array.attrs["sim_unit"])
             return array
-        if type(h5data) is h5_ndarray.h5_ndarray.h5_ndarray:
+        if type(h5data) is h5.h5_ndarray:
             h5data = add_sim_unit(h5data)
         else:
             h5data = arrayOfStructs.arrayOfStructs(\
@@ -96,7 +93,7 @@ def getSteps(folder_path):
         result.append(timestep)
     return result
 
-def loadAllSteps(folder_path, data_path, distaxis=0, window=None):
+def loadAllSteps(folder_path, data_path, distaxis=0):
     """Python generator object looping hdf5-data of all timesteps found in *folder_path*.
 
         This generator doesn't read or write any data elements from hdf5 but returns dataset-handles
@@ -107,9 +104,6 @@ def loadAllSteps(folder_path, data_path, distaxis=0, window=None):
         :param str folder_path: Path to the folder containing the hdf5-files
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
         :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
-        :param window: This param let you specify a sub-part of the array as a virtual container.
-            Example: window=np.s_[:,:,::2]
-        :type window: list of slice objects (:ref:`numpy.s_`).
         :return: tuple of timestep and a :ref:`pyDive.h5_ndarray <pyDive.h5_ndarray.h5_ndarray.h5_ndarray>`
             or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.
 
@@ -118,10 +112,10 @@ def loadAllSteps(folder_path, data_path, distaxis=0, window=None):
     """
     steps = getSteps(folder_path)
 
-    for timestep, data in loadSteps(steps, folder_path, data_path, distaxis, window):
+    for timestep, data in loadSteps(steps, folder_path, data_path, distaxis):
         yield timestep, data
 
-def loadStep(step, folder_path, data_path, distaxis=0, window=None):
+def loadStep(step, folder_path, data_path, distaxis=0):
     """Load hdf5-data from a single timestep found in *folder_path*.
 
         All datasets within *data_path* must have the same shape.
@@ -130,14 +124,11 @@ def loadStep(step, folder_path, data_path, distaxis=0, window=None):
         :param str folder_path: Path to the folder containing the hdf5-files
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
         :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
-        :param window: This param let you specify a sub-part of the array as a virtual container.
-            Example: window=np.s_[:,:,::2]
-        :type window: list of slice objects (:ref:`numpy.s_`).
         :return: :ref:`pyDive.h5_ndarray <pyDive.h5_ndarray.h5_ndarray.h5_ndarray>`
             or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`).
 
         Notes:
             - If the dataset has a '**sim_unit**' attribute its value is stored in ``h5array.unit``.
     """
-    step, field = loadSteps([step], folder_path, data_path, distaxis, window).next()
+    step, field = loadSteps([step], folder_path, data_path, distaxis).next()
     return field

@@ -50,9 +50,9 @@ particles2mesh = mappings.particles2mesh
 import arrayOfStructs
 arrayOfStructs = arrayOfStructs.arrayOfStructs
 
-## picongpu
-#import picongpu
-#picongpu = picongpu
+# picongpu
+import picongpu
+picongpu = picongpu
 
 # init
 import IPParallelClient
