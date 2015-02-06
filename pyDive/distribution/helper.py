@@ -43,6 +43,22 @@ def view_of_shape(shape, window):
         new_shape.append((clean_slice.stop-1 - clean_slice.start) / clean_slice.step + 1)
     return new_shape, clean_view
 
+def view_of_view(view, window):
+    result_view = []
+    window = iter(window)
+    for v in view:
+        if type(v) is int:
+            result_view.append(v)
+            continue
+        w = window.next()
+        if type(w) is int:
+            result_view.append(v.start + w * v.step)
+            continue
+
+        result_view.append(slice(v.start + w.start * v.step, v.start + w.stop * v.step, v.step * w.step))
+
+    return result_view
+
 # create local slice objects for each engine
 def createLocalSlices(slices, distaxis, target_offsets, shape):
     local_slices = [list(slices) for i in range(len(target_offsets))]

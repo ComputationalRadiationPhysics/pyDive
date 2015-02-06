@@ -37,7 +37,13 @@ def array(array_like, distaxis=0):
     result[:] = np_array
     return result
 
-factories.update({"array" : array})
+def hollow(shape, dtype=np.float, distaxis=0):
+    return ndarray(shape, dtype, distaxis, None, None, True)
+
+def hollow_like(other):
+    return ndarray(other.shape, other.dtype, other.distaxis, other.target_offsets, other.target_ranks, True)
+
+factories.update({"array" : array, "hollow" : hollow, "hollow_like" : hollow_like})
 
 ufunc_names = [key for key, value in np.__dict__.items() if isinstance(value, np.ufunc)]
 ufuncs = distributor.generate_ufuncs(ufunc_names, "np")

@@ -30,6 +30,7 @@ class DistributedGenericArray(object):
     arraytype = None
     target_modulename = None
     interengine_copier = None
+    may_allocate = True
 
     def __init__(self, shape, dtype=np.float, distaxis=0, target_offsets=None, target_ranks=None, no_allocation=False, **kwargs):
         #: size of the array on each axis
@@ -79,23 +80,38 @@ class DistributedGenericArray(object):
         if no_allocation:
             self.view.push({self.name : None}, targets=self.target_ranks)
         else:
-            # generate a list of the local shape on each target in use
-            localshapes = []
-            for i in range(len(self.target_offsets)-1):
-                localshape = np.array(self.shape)
-                localshape[distaxis] = self.target_offsets[i+1] - self.target_offsets[i]
-                localshapes.append(localshape)
-            localshape = np.array(self.shape)
-            localshape[distaxis] = self.shape[distaxis] - self.target_offsets[-1]
-            localshapes.append(localshape)
+            target_shapes = self.target_shapes()
 
-            self.view.scatter('localshape', localshapes, targets=self.target_ranks)
+            self.view.scatter('target_shape', target_shapes, targets=self.target_ranks)
             self.view.push({'kwargs' : kwargs, 'dtype' : dtype}, targets=self.target_ranks)
-            self.view.execute('%s = %s(shape=localshape[0], dtype=dtype, **kwargs)' % \
+            self.view.execute('%s = %s(shape=target_shape[0], dtype=dtype, **kwargs)' % \
                 (self.name, self.__class__.target_modulename + "." + self.__class__.arraytype.__name__), targets=self.target_ranks)
 
     def __del__(self):
         self.view.execute('del %s' % self.name, targets=self.target_ranks)
+
+    def target_shapes(self):
+        # generate a list of the local shape on each target in use
+        targetshapes = []
+        for i in range(len(self.target_offsets)-1):
+            targetshape = np.array(self.shape)
+            targetshape[self.distaxis] = self.target_offsets[i+1] - self.target_offsets[i]
+            targetshapes.append(targetshape)
+        targetshape = np.array(self.shape)
+        targetshape[self.distaxis] = self.shape[self.distaxis] - self.target_offsets[-1]
+        targetshapes.append(targetshape)
+
+        return targetshapes
+
+    def target_offset_vectors(self):
+        # generate a list of the local offset vectors on each target in use
+        target_offset_vectors = []
+        for target_offset in self.target_offsets:
+            target_offset_vector = [0] * len(self.shape)
+            target_offset_vector[self.distaxis] = target_offset
+            target_offset_vectors.append(target_offset_vector)
+
+        return target_offset_vectors
 
     def __getitem__(self, args):
         if args == slice(None):
@@ -176,6 +192,7 @@ class DistributedGenericArray(object):
             local_args = list(args)
             local_args[self.distaxis] = local_slice
             local_args_list.append(local_args)
+
         self.view.scatter('local_args', local_args_list, targets=result.target_ranks)
         self.view.execute('%s = %s[local_args[0]]' % (result.name, self.name), targets=result.target_ranks)
 
@@ -249,6 +266,8 @@ class DistributedGenericArray(object):
     def copy(self):
         """Returns a hard copy of this array.
         """
+        assert self.__class__.may_allocate == True, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
+
         result = self.__class__(self.shape, self.dtype, self.distaxis, self.target_offsets, self.target_ranks, no_allocation=True, **self.kwargs)
         self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.target_ranks)
         return result
@@ -266,6 +285,7 @@ class DistributedGenericArray(object):
         :return: new array with the same content as *self* but distributed like *other*.
             If *self* is already distributed like *other* nothing is done and *self* is returned.
         """
+        assert self.__class__.may_allocate == True, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
         assert self.shape == other.shape,\
             "Shapes do not match: " + str(self.shape) + " <-> " + str(other.shape)
         assert self.distaxis == other.distaxis # todo: add this feature
@@ -332,7 +352,7 @@ class DistributedGenericArray(object):
         self.view.scatter('dest_distaxis_sizes', dest_distaxis_sizes, targets=other.target_ranks)
 
         # result ndarray
-        result = self.__class__(self.shape, self.dtype, self.distaxis, other.target_offsets, other.target_ranks, **self.kwargs)
+        result = self.__class__(self.shape, self.dtype, self.distaxis, other.target_offsets, other.target_ranks, False, **self.kwargs)
 
         self.__class__.interengine_copier(self, result)
 
@@ -359,7 +379,7 @@ class DistributedGenericArray(object):
 
 #----------------------------------------------------------------
 
-def distribute(arraytype, newclassname, target_modulename, interengine_copier=None):
+def distribute(arraytype, newclassname, target_modulename, interengine_copier=None, may_allocate = True):
     binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow", "lshift", "rshift", "and", "xor", "or"]
 
     binary_iops = ["__i" + op + "__" for op in binary_ops]
@@ -385,6 +405,7 @@ def distribute(arraytype, newclassname, target_modulename, interengine_copier=No
     result.arraytype = arraytype
     result.target_modulename = target_modulename
     result.interengine_copier = interengine_copier
+    result.may_allocate = may_allocate
 
     return result
 
@@ -411,7 +432,7 @@ def generate_ufuncs(ufunc_names, target_modulename):
 def generate_factories(arraytype, factory_names, dtype_default):
 
     def factory_wrapper(factory_name, shape, dtype, distaxis, kwargs):
-        result = arraytype(shape, dtype, distaxis, None, None, True)
+        result = arraytype(shape, dtype, distaxis, None, None, True, **kwargs)
 
         localshapes = []
         for i in range(len(result.target_offsets)-1):
@@ -438,7 +459,7 @@ def generate_factories(arraytype, factory_names, dtype_default):
 def generate_factories_like(arraytype, factory_names):
 
     def factory_like_wrapper(factory_name, other, kwargs):
-        result = arraytype(other.shape, other.dtype, other.distaxis, other.target_offsets, other.target_ranks, True)
+        result = arraytype(other.shape, other.dtype, other.distaxis, other.target_offsets, other.target_ranks, True, **kwargs)
         view = com.getView()
         view.push({'kwargs' : kwargs}, targets=result.target_ranks)
         view.execute("{0} = {1}({2}, **kwargs)".format(result.name, factory_name, other.name), targets=result.target_ranks)

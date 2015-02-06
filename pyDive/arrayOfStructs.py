@@ -68,8 +68,6 @@ import os
 onTarget = os.environ.get("onTarget", 'False')
 if onTarget == 'False':
     import IPParallelClient as com
-    from ndarray.ndarray import ndarray as ndarray
-    from h5_ndarray.h5_ndarray import h5_ndarray as h5_ndarray
     from IPython.parallel import interactive
 import numpy as np
 
@@ -155,10 +153,7 @@ class ArrayOfStructsClass(object):
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
 
-        if onTarget == 'False' and self.arraytype is ndarray:
-            #assert all(a.target_ranks == firstArray.target_ranks for name, a in items),\
-            #    "all ndarrays in structure-of-arrays ('structOfArrays') must have an identical 'target_ranks' attribute"
-
+        if onTarget == 'False' and hasattr(self.firstArray, "distaxis"):
             self.distaxis = self.firstArray.distaxis
             self.target_offsets = self.firstArray.target_offsets
             self.target_ranks = self.firstArray.target_ranks
@@ -180,11 +175,8 @@ class ArrayOfStructsClass(object):
                 %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
                 targets=self.target_ranks)
 
-        if onTarget == 'False' and self.arraytype is h5_ndarray:
-            self.distaxis = self.firstArray.distaxis
-
     def __del__(self):
-        if onTarget == 'False' and self.arraytype is ndarray:
+        if onTarget == 'False' and hasattr(self.firstArray, "distaxis"):
             # delete remote arrayOfStructs object
             self.view.execute('del %s' % self.name, targets=self.target_ranks)
 
