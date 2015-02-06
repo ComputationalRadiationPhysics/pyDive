@@ -23,14 +23,13 @@ __doc__=\
 """Make most used functions and modules directly accessable from pyDive."""
 
 # ndarray
-import ndarray.ndarray
-globals().update(ndarray.ndarray.factories)
-globals().update(ndarray.ndarray.ufuncs)
-from ndarray.ndarray import ndarray
+import arrays.ndarray
+globals().update(arrays.ndarray.factories)
+globals().update(arrays.ndarray.ufuncs)
+from arrays.ndarray import ndarray
 
-## h5_ndarray
-#import h5_ndarray.factories
-#h5 = h5_ndarray.factories
+# h5_ndarray
+import arrays.h5_ndarray as h5
 
 # cloned_ndarray
 import cloned_ndarray.factories
@@ -47,9 +46,9 @@ import mappings
 mesh2particles = mappings.mesh2particles
 particles2mesh = mappings.particles2mesh
 
-## arrayOfStructs
-#import arrayOfStructs
-#arrayOfStructs = arrayOfStructs.arrayOfStructs
+# arrayOfStructs
+import arrayOfStructs
+arrayOfStructs = arrayOfStructs.arrayOfStructs
 
 ## picongpu
 #import picongpu

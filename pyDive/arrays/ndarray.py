@@ -21,13 +21,13 @@ If not, see <http://www.gnu.org/licenses/>.
 __doc__ = None
 
 import numpy as np
-import pyDive.distribution.distributor as distributor
+import pyDive.distribution.single_axis as single_axis
 from pyDive.distribution.interengine import MPI_copier
 
-ndarray = distributor.distribute(np.ndarray, "ndarray", "np", interengine_copier=MPI_copier)
+ndarray = single_axis.distribute(np.ndarray, "ndarray", "np", interengine_copier=MPI_copier)
 
-factories = distributor.generate_factories(ndarray, ("empty", "zeros", "ones"), np.float)
-factories.update(distributor.generate_factories_like(ndarray, ("empty_like", "zeros_like", "ones_like")))
+factories = single_axis.generate_factories(ndarray, ("empty", "zeros", "ones"), np.float)
+factories.update(single_axis.generate_factories_like(ndarray, ("empty_like", "zeros_like", "ones_like")))
 
 globals().update(factories)
 
@@ -46,6 +46,6 @@ def hollow_like(other):
 factories.update({"array" : array, "hollow" : hollow, "hollow_like" : hollow_like})
 
 ufunc_names = [key for key, value in np.__dict__.items() if isinstance(value, np.ufunc)]
-ufuncs = distributor.generate_ufuncs(ufunc_names, "np")
+ufuncs = single_axis.generate_ufuncs(ufunc_names, "np")
 
 globals().update(ufuncs)

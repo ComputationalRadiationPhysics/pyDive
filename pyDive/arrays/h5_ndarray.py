@@ -90,12 +90,12 @@ onTarget = os.environ.get("onTarget", 'False')
 
 # execute this code only if it is not executed on engine
 if onTarget == 'False':
-    from pyDive import ndarray, hollow_like
-    import pyDive.distribution.distributor as distributor
+    from pyDive.arrays.ndarray import hollow_like
+    import pyDive.distribution.single_axis as single_axis
     import pyDive.IPParallelClient as com
     from .. import arrayOfStructs
 
-    h5_ndarray = distributor.distribute(h5_ndarray_local, "h5_ndarray", "h5_ndarray", may_allocate=False)
+    h5_ndarray = single_axis.distribute(h5_ndarray_local, "h5_ndarray", "h5_ndarray", may_allocate=False)
 
     def load(self):
         result = hollow_like(self)
@@ -103,6 +103,7 @@ if onTarget == 'False':
         view.execute("{0} = {1}.load()".format(result.name, self.name), targets=result.target_ranks)
         return result
     h5_ndarray.load = load
+    del load
 
     def open_dset(filename, dataset_path, distaxis=0):
         fileHandle = h5.File(filename, "r")
