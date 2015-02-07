@@ -63,7 +63,7 @@ def init(profile='mpi'):
         return socket.gethostname()
     hostnames = view.apply(interactive(hostname))
     global ppn
-    ppn = min(Counter(hostnames).values())
+    ppn = max(Counter(hostnames).values())
 
     # mpi ranks
     get_rank = interactive(lambda: MPI.COMM_WORLD.Get_rank())

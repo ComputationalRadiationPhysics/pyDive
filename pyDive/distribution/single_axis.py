@@ -285,7 +285,6 @@ class DistributedGenericArray(object):
         :return: new array with the same content as *self* but distributed like *other*.
             If *self* is already distributed like *other* nothing is done and *self* is returned.
         """
-        assert self.__class__.may_allocate == True, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
         assert self.shape == other.shape,\
             "Shapes do not match: " + str(self.shape) + " <-> " + str(other.shape)
         assert self.distaxis == other.distaxis # todo: add this feature
@@ -294,6 +293,8 @@ class DistributedGenericArray(object):
         if np.array_equal(self.target_offsets, other.target_offsets):
             if self.target_ranks == other.target_ranks:
                 return self
+
+        assert self.__class__.may_allocate, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
 
         # communication meta-data
         src_targets = [[]]

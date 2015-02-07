@@ -9,9 +9,10 @@ def test_particles2mesh(init_pyDive):
     shape = [256, 256]
     density = pyDive.cloned.zeros(shape)
 
-    particles = pyDive.h5.fromPath(input_file, "/particles")
+    particles = pyDive.h5.open(input_file, "/particles")
 
     def particles2density(particles, density):
+        particles = particles.load()
         total_pos = particles["cellidx"].astype(np.float32) + particles["pos"]
 
         # convert total_pos to an (N, 2) shaped array
@@ -31,8 +32,8 @@ def test_particles2mesh(init_pyDive):
     np.testing.assert_array_almost_equal(ref_density, test_density)
 
 def test_mesh2particles(init_pyDive):
-    particles = pyDive.h5.fromPath(input_file, "/particles")[:]
-    field = pyDive.h5.fromPath(input_file, "/fields/fieldB/z")[:].gather()
+    particles = pyDive.h5.open(input_file, "/particles").load()
+    field = pyDive.h5.open(input_file, "/fields/fieldB/z").load().gather()
 
     field_strengths = pyDive.empty(particles.shape)
 

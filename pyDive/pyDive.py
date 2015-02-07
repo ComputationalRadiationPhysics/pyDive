@@ -35,11 +35,14 @@ import arrays.h5_ndarray as h5
 import cloned_ndarray.factories
 cloned = cloned_ndarray.factories
 
+# fragmentation
+from fragment import fragment
+
 ## algorithm
-#import algorithm
-#map = algorithm.map
-#reduce = algorithm.reduce
-#mapReduce = algorithm.mapReduce
+import algorithm
+map = algorithm.map
+reduce = algorithm.reduce
+mapReduce = algorithm.mapReduce
 
 # particle-mesh mappings
 import mappings

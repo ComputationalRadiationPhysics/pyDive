@@ -24,12 +24,12 @@ import os
 # check whether this code is executed on target or not
 onTarget = os.environ.get("onTarget", 'False')
 if onTarget == 'False':
-    from ndarray import *
-    from h5_ndarray.h5_ndarray import *
-    from cloned_ndarray import *
+    from arrays.ndarray import ndarray
+    from arrays.h5_ndarray import h5_ndarray
+    from cloned_ndarray.cloned_ndarray import cloned_ndarray
     import IPParallelClient as com
     from IPython.parallel import interactive
-    from h5_ndarray import h5caching
+    from fragment import fragment, hdd_arraytypes
 import numpy as np
 
 def map(f, *arrays, **kwargs):
@@ -77,18 +77,38 @@ def map(f, *arrays, **kwargs):
     view = com.getView()
 
     tmp_targets = view.targets # save current target list
+    view.targets = arrays[0].target_ranks
 
-    # loop all cache chunks
-    for cached_arrays in h5caching.cache_arrays(*arrays):
-        array_names = [repr(a) for a in cached_arrays]
+    hdd_arrays = [a for a in arrays if a.arraytype in hdd_arraytypes or type(a) in hdd_arraytypes]
+    if hdd_arrays:
+        cloned_arrays = [a for a in arrays if a.arraytype is cloned_ndarray or type(a) is cloned_ndarray]
+        other_arrays = [a for a in arrays if a.arraytype is not cloned_ndarray and type(a) is not cloned_ndarray]
 
-        view.targets = cached_arrays[0].target_ranks
+        cloned_arrays_ids = [id(a) for a in cloned_arrays]
+        other_arrays_ids = [id(a) for a in other_arrays]
+
+        for fragments in fragment(*other_arrays):
+            it_other_arrays = iter(other_arrays)
+            it_cloned_arrays = iter(cloned_arrays)
+
+            array_names = []
+            for a in arrays:
+                if id(a) in cloned_arrays_ids:
+                    array_names.append(repr(it_cloned_arrays.next()))
+                    continue
+                if id(a) in other_arrays_ids:
+                    array_names.append(repr(it_other_arrays.next()))
+                    continue
+
+            view.apply(interactive(map_wrapper), interactive(f), array_names, **kwargs)
+    else:
+        array_names = [repr(a) for a in arrays]
         view.apply(interactive(map_wrapper), interactive(f), array_names, **kwargs)
 
     view.targets = tmp_targets # restore target list
 
-def reduce(_array, op):
-    """Perform a tree-like reduction over all axes of *_array*.
+def reduce(array, op):
+    """Perform a tree-like reduction over all axes of *array*.
 
     :param _array: *pyDive.ndarray*, *pyDive.h5_ndarray* or *pyDive.cloned_ndarray* to be reduced
     :param numpy-ufunc op: reduce operation, e.g. *numpy.add*.
@@ -97,28 +117,33 @@ def reduce(_array, op):
     the data will be read block-wise so that a block fits into memory.
     """
     def reduce_wrapper(array_name, op_name):
-        _array = globals()[array_name]
+        array = globals()[array_name]
         op =  eval("np." + op_name)
-        return algorithm.__tree_reduce(_array, axis=None, op=op) # reduction over all axes
+        return algorithm.__tree_reduce(array, axis=None, op=op) # reduction over all axes
 
     view = com.getView()
 
     tmp_targets = view.targets # save current target list
+    view.targets = array.target_ranks
 
     result = None
-    # loop all cache chunks
-    for cached_arrays in h5caching.cache_arrays(_array):
-        cached_array = cached_arrays[0] # there is just one array in the list
-        array_name = repr(cached_array)
 
-        view.targets = cached_array.target_ranks
+    if array.arraytype in hdd_arraytypes or type(array) in hdd_arraytypes:
+        for chunk in fragment(array):
+            array_name = repr(chunk)
+
+            targets_results = view.apply(interactive(reduce_wrapper), array_name, op.__name__)
+            chunk_result = op.reduce(targets_results) # reduce over targets' results
+
+            if result is None:
+                result = chunk_result
+            else:
+                result = op(result, chunk_result)
+    else:
+        array_name = repr(array)
 
         targets_results = view.apply(interactive(reduce_wrapper), array_name, op.__name__)
-        chunk_result = op.reduce(targets_results) # reduce over targets' results
-        if result is None:
-            result = chunk_result
-        else:
-            result = op(result, chunk_result)
+        result = op.reduce(targets_results) # reduce over targets' results
 
     view.targets = tmp_targets # restore target list
     return result
@@ -155,21 +180,45 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
 
     view = com.getView()
     tmp_targets = view.targets # save current target list
+    view.targets = arrays[0].target_ranks
 
     result = None
-    # loop all cache chunks
-    for cached_arrays in h5caching.cache_arrays(*arrays):
-        array_names = [repr(a) for a in cached_arrays]
 
-        view.targets = cached_arrays[0].target_ranks
+    hdd_arrays = [a for a in arrays if a.arraytype in hdd_arraytypes or type(a) in hdd_arraytypes]
+    if hdd_arrays:
+        cloned_arrays = [a for a in arrays if a.arraytype is cloned_ndarray or type(a) is cloned_ndarray]
+        other_arrays = [a for a in arrays if a.arraytype is not cloned_ndarray and type(a) is not cloned_ndarray]
+
+        cloned_arrays_ids = [id(a) for a in cloned_arrays]
+        other_arrays_ids = [id(a) for a in other_arrays]
+
+        for fragments in fragment(*other_arrays):
+            it_other_arrays = iter(other_arrays)
+            it_cloned_arrays = iter(cloned_arrays)
+
+            array_names = []
+            for a in arrays:
+                if id(a) in cloned_arrays_ids:
+                    array_names.append(repr(it_cloned_arrays.next()))
+                    continue
+                if id(a) in other_arrays_ids:
+                    array_names.append(repr(it_other_arrays.next()))
+                    continue
+
+            targets_results = view.apply(interactive(mapReduce_wrapper),\
+                interactive(map_func), reduce_op.__name__, array_names, **kwargs)
+
+            fragment_result = reduce_op.reduce(targets_results) # reduce over targets' results
+            if result is None:
+                result = fragment_result
+            else:
+                result = reduce_op(result, fragment_result)
+    else:
+        array_names = [repr(a) for a in arrays]
         targets_results = view.apply(interactive(mapReduce_wrapper),\
             interactive(map_func), reduce_op.__name__, array_names, **kwargs)
 
-        chunk_result = reduce_op.reduce(targets_results) # reduce over targets' results
-        if result is None:
-            result = chunk_result
-        else:
-            result = reduce_op(result, chunk_result)
+        result = reduce_op.reduce(targets_results) # reduce over targets' results
 
     view.targets = tmp_targets # restore target list
 
