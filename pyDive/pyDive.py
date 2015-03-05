@@ -28,8 +28,17 @@ globals().update(arrays.ndarray.factories)
 globals().update(arrays.ndarray.ufuncs)
 from arrays.ndarray import ndarray
 
-# h5_ndarray
-import arrays.h5_ndarray as h5
+# hdf5
+try:
+    import arrays.h5_ndarray as h5
+except ImportError:
+    pass
+
+# adios
+try:
+    import arrays.ad_ndarray as adios
+except ImportError:
+    pass
 
 # cloned_ndarray
 import cloned_ndarray.factories

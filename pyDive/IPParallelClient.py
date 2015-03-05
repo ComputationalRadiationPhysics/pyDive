@@ -54,7 +54,14 @@ def init(profile='mpi'):
         from pyDive import arrayOfStructs
         from pyDive import algorithm
         from pyDive.distribution import interengine
-        import pyDive.arrays.h5_ndarray as h5_ndarray
+        try:
+            import pyDive.arrays.h5_ndarray as h5_ndarray
+        except ImportError:
+            pass
+        try:
+            import pyDive.arrays.ad_ndarray as ad_ndarray
+        except ImportError:
+            pass
          ''')
 
     # get number of processes per node (ppn)
