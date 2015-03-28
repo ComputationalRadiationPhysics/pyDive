@@ -22,12 +22,20 @@ __doc__ = None
 
 import IPParallelClient as com
 from IPython.parallel import interactive
-from arrays.h5_ndarray import h5_ndarray
+try:
+    from arrays.h5_ndarray import h5_ndarray
+except ImportError:
+    h5_ndarray = None
+try:
+    from arrays.ad_ndarray import ad_ndarray
+except ImportError:
+    ad_ndarray = None
 import math
 
-hdd_arraytypes = (h5_ndarray,)
+#: list of array types that store their elements on hard disk
+hdd_arraytypes = (h5_ndarray, ad_ndarray)
 
-def __bestStepSize(arrays, fraction):
+def __bestStepSize(arrays, memory_limit):
     view = com.getView()
 
     # minimum amount of memory available and memory needed, both per engine
@@ -38,7 +46,7 @@ def __bestStepSize(arrays, fraction):
     # edge length of the whole array
     edge_length = arrays[0].shape[arrays[0].distaxis]
     # maximum edge length on one engine according to the available memory
-    step_size = fraction * edge_length * mem_av / mem_needed
+    step_size = memory_limit * edge_length * mem_av / mem_needed
 
     if step_size >= edge_length:
         return edge_length
@@ -47,12 +55,40 @@ def __bestStepSize(arrays, fraction):
     return pow(2, int(math.log(step_size, 2)))
 
 def fragment(*arrays, **kwargs):
+    """Returns fragments of each array in *arrays*, where each fragment fits into the combined
+    main memory of all cluster nodes. The fragmentation is done by array slicing along the distributed axis.
+    The edge size of the fragments is a power of two except for the last fragment.
+
+    :param array: distributed arrays (e.g. pyDive.ndarray, pyDive.h5_ndarray, ...)
+    :param kwargs: optional keyword arguments are: ``memory_limit`` and ``offset``.
+    :param float memory_limit: fraction of the combined main memory of all engines reserved for fragmentation.
+        Defaults to ``0.25``.
+    :param bool offset: If ``True`` the returned tuple is extended by the fragments' offset (along the distributed axis).
+        Defaults to ``False``.
+    :raises AssertionError: If not all arrays have the same shape.
+    :raises AssertionError: If not all arrays are distributed along the same axis.
+    :return: generator object (list) of tuples. Each tuple consists of one fragment for each array in *arrays*.
+
+    Note that *arrays* may contain an arbitrary number of distributed arrays of any type.
+    While the fragments' size is solely calculated based on the memory consumption of
+    arrays that stores their elements on hard disk (see :obj:`hdd_arraytypes`), the fragmentation itself is applied on all arrays.
+
+    Example: ::
+
+        big_h5_array = pyDive.h5.open("monster.h5", "/")
+        # big_h5_array.load() # crash
+
+        for h5_array, offset in pyDive.fragment(big_h5_array, offset=True):
+            a = h5_array.load() # no crash
+            print "This fragment's offset is", offset, "on axis:", a.distaxis
+
+    """
     # default keyword arguments
-    kwargs_defaults = {"fraction" : 0.25, "offset" : False}
+    kwargs_defaults = {"memory_limit" : 0.25, "offset" : False}
     kwargs_defaults.update(kwargs)
     kwargs = kwargs_defaults
 
-    fraction = kwargs["fraction"]
+    memory_limit = kwargs["memory_limit"]
     offset = kwargs["offset"]
 
     if not arrays: return
@@ -66,7 +102,7 @@ def fragment(*arrays, **kwargs):
     # calculate the best suitable step size (-> fragment's edge size) according to the amount
     # of available memory on the engines
     hdd_arrays = [a for a in arrays if a.arraytype in hdd_arraytypes or type(a) in hdd_arraytypes]
-    step = __bestStepSize(hdd_arrays, fraction)
+    step = __bestStepSize(hdd_arrays, memory_limit)
 
     shape = arrays[0].shape
     distaxis = arrays[0].distaxis

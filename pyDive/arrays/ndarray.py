@@ -32,15 +32,30 @@ factories.update(single_axis.generate_factories_like(ndarray, ("empty_like", "ze
 globals().update(factories)
 
 def array(array_like, distaxis=0):
+    """Create a pyDive.ndarray instance from an array-like object.
+
+    :param array_like: Any object exposing the array interface, e.g. numpy-array, python sequence, ...
+    :param int distaxis: distributed axis
+    """
     np_array = np.array(array_like)
     result = empty(np_array.shape, np_array.dtype, distaxis)
     result[:] = np_array
     return result
 
 def hollow(shape, dtype=np.float, distaxis=0):
+    """Create a pyDive.ndarray instance distributed across all engines without allocating a local
+    numpy-array.
+
+    :param ints shape: shape of array
+    :param dtype: datatype of a single element
+    :param int distaxis: distributed axis
+    """
     return ndarray(shape, dtype, distaxis, None, None, True)
 
 def hollow_like(other):
+    """Create a pyDive.ndarray instance with the same
+    shape, distribution and type as ``other`` without allocating a local numpy-array.
+    """
     return ndarray(other.shape, other.dtype, other.distaxis, other.target_offsets, other.target_ranks, True)
 
 factories.update({"array" : array, "hollow" : hollow, "hollow_like" : hollow_like})

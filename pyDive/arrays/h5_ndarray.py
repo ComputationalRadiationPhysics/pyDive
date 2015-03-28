@@ -98,6 +98,10 @@ if onTarget == 'False':
     h5_ndarray = single_axis.distribute(h5_ndarray_local, "h5_ndarray", "h5_ndarray", may_allocate=False)
 
     def load(self):
+        """Load array from file into main memory of all engines in parallel.
+
+        :return: pyDive.ndarray instance
+        """
         result = hollow_like(self)
         view = com.getView()
         view.execute("{0} = {1}.load()".format(result.name, self.name), targets=result.target_ranks)
@@ -106,6 +110,13 @@ if onTarget == 'False':
     del load
 
     def open_dset(filename, dataset_path, distaxis=0):
+        """Create a pyDive.h5.h5_ndarray instance from file.
+
+        :param filename: name of hdf5 file.
+        :param dataset_path: path within hdf5 file to a single dataset.
+        :param distaxis int: distributed axis
+        :return: pyDive.h5.h5_ndarray instance
+        """
         fileHandle = h5.File(filename, "r")
         dataset = fileHandle[dataset_path]
         dtype = dataset.dtype
@@ -126,6 +137,14 @@ if onTarget == 'False':
         return result
 
     def open(filename, datapath, distaxis=0):
+        """Create an pyDive.h5.h5_ndarray instance respectively a structure of
+        pyDive.h5.h5_ndarray instances from file.
+
+        :param filename: name of hdf5 file.
+        :param dataset_path: path within hdf5 file to a single dataset or hdf5 group.
+        :param distaxis int: distributed axis
+        :return: pyDive.h5.h5_ndarray instance / structure of pyDive.h5.h5_ndarray instances
+        """
         hFile = h5.File(filename, 'r')
         datapath = datapath.rstrip("/")
         group_or_dataset = hFile[datapath]

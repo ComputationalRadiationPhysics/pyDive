@@ -63,14 +63,16 @@ to the profile's name.
 Overview
 --------
 
-pyDive knows three kinds of arrays associated to a separate python package respectively:
-  - :obj:`pyDive.ndarray` -> Stores array elements in cluster nodes' memory.
-  - :obj:`pyDive.h5_ndarray` -> Stores array elements in a hdf5-file.
+pyDive knows different kinds of distributed arrays, all corresponding to a local, non-distributed array.
+  - numpy -> :obj:`pyDive.ndarray` -> Stores array elements in cluster nodes' memory.
+  - hdf5 -> :obj:`pyDive.arrays.h5_ndarray` -> Stores array elements in a hdf5-file.
+  - adios -> :obj:`pyDive.arrays.ad_ndarray` -> Stores array elements in a adios-file.
   - :obj:`pyDive.cloned_ndarray` -> Holds independent copies of one array on cluster nodes.
 
 Among these three packages there are a few modules:
   - :mod:`pyDive.arrayOfStructs` -> structured datatypes
   - :mod:`pyDive.algorithm` -> map, reduce, mapReduce
+  - :mod:`pyDive.fragment` -> fragment file-disk array to fit into the cluster's main memory
   - :mod:`pyDive.mappings` -> particle-mesh mappings
   - :mod:`pyDive.picongpu` -> helper functions for picongpu-users
   - :mod:`pyDive.pyDive` -> shortcuts for most used functions

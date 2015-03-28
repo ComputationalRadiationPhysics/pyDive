@@ -27,8 +27,23 @@ import helper
 array_id = 0
 
 class DistributedGenericArray(object):
-    """Instances of {arraytype_name} are homogeneous, n-dimensional arrays whose elements are distributed along a single axis.
-    The {arraytype_name}-class is auto generated out of its local counterpart: {local_arraytype_name}.
+    """
+    Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
+    *cluster-wide* means that its elements are distributed across IPython.parallel-engines.
+    The distribution is done in one dimension along a single, user-specified axis.
+    The user can optionally specify which engine maps to which index range or leave the default that persuits an uniform distribution across all engines.
+
+    This **{arraytype_name}** - class is auto-generated out of its local counterpart: **{local_arraytype_name}**.
+
+    The implementation is based on IPython.parallel and local {local_arraytype_name} - arrays.
+    Every special operation {local_arraytype_name} implements ("__add__", "__le__", ...) is also
+    available for {arraytype_name}.
+
+    Note that array slicing is a cheap operation since no memory is copied.
+    However this can easily lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
+    Therefore call dist_like() first before doing any manual stuff on their local arrays.
+    However every cluster-wide array operation first equalizes the distribution of all involved arrays,
+    so an explicit call to dist_like() is rather unlikely in most use cases.
     """
     local_arraytype = None
     target_modulename = None
@@ -36,16 +51,17 @@ class DistributedGenericArray(object):
     may_allocate = True
 
     def __init__(self, shape, dtype=np.float, distaxis=0, target_offsets=None, target_ranks=None, no_allocation=False, **kwargs):
-        """Creates a instance of {arraytype_name}. This is a low-level method of instantiating an array, should be
+        """Creates an instance of {arraytype_name}. This is a low-level method of instantiating an array, it should rather be
         constructed using factory functions ("empty", "zeros", "open", ...)
 
-        :param shape ints: shape of array
+        :param ints shape: shape of array
         :param dtype: datatype of a single element
-        :param distaxis int: distributed axis
-        :param target_offsets ints: list of indices marking the offset along the distributed axis of each local array.
-        :param target_ranks ints: list of :term:``engine`` ranks holding the local arrays.
-        :param no_allocation bool: if ``True`` no instance of {local_arraytype_name} will be created on engine. Useful for
+        :param int distaxis: distributed axis
+        :param ints target_offsets: list of indices marking the offset along the distributed axis of each local array.
+        :param ints target_ranks: list of :term:`engine` ranks holding the local arrays.
+        :param bool no_allocation: if ``True`` no instance of {local_arraytype_name} will be created on engine. Useful for
             manual instantiation of the local array.
+        :param kwargs: additional keyword arguments are forwarded to the constructor of the local array.
         """
         #: size of the array on each axis
         self.shape = tuple(shape)
@@ -490,7 +506,21 @@ def generate_factories(arraytype, factory_names, dtype_default):
     make_factory = lambda factory_name: lambda shape, dtype=dtype_default, distaxis=0, **kwargs:\
         factory_wrapper(arraytype.target_modulename + "." + factory_name, shape, dtype, distaxis, kwargs)
 
-    return {factory_name : make_factory(factory_name) for factory_name in factory_names}
+    factories_dict = {factory_name : make_factory(factory_name) for factory_name in factory_names}
+
+    # add docstrings
+    for name, factory in factories_dict.items():
+        factory.__name__ = name
+        factory.__doc__ = \
+        """Create a *{0}* instance. This function calls its local counterpart *{1}* on each :term:`engine`.
+
+        :param ints shape: shape of array
+        :param dtype: datatype of a single element
+        :param int distaxis: distributed axis
+        :param kwargs: keyword arguments are passed to the local function *{1}*
+        """.format(arraytype.__name__, str(arraytype.local_arraytype.__module__) + "." + name)
+
+    return factories_dict
 
 def generate_factories_like(arraytype, factory_names):
 
@@ -504,4 +534,17 @@ def generate_factories_like(arraytype, factory_names):
     make_factory = lambda factory_name: lambda other, **kwargs: \
         factory_like_wrapper(arraytype.target_modulename + "." + factory_name, other, kwargs)
 
-    return {factory_name : make_factory(factory_name) for factory_name in factory_names}
+    factories_dict = {factory_name : make_factory(factory_name) for factory_name in factory_names}
+
+    # add docstrings
+    for name, factory in factories_dict.items():
+        factory.__name__ = name
+        factory.__doc__ = \
+        """Create a *{0}* instance with the same shape, dtype and distribution as ``other``.
+        This function calls its local counterpart *{1}* on each :term:`engine`.
+
+        :param other: other array
+        :param kwargs: keyword arguments are passed to the local function *{1}*
+        """.format(arraytype.__name__, str(arraytype.local_arraytype.__module__) + "." + name)
+
+    return factories_dict

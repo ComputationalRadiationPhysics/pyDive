@@ -1,25 +1,30 @@
 .. _pyDive.ndarray:
 
-pyDive.ndarray package
-======================
+pyDive.arrays.ndarray module
+============================
 
-Submodules
-----------
+All of this module's functions and classes are also directly accessable from the :mod:`pyDive` module.
 
-pyDive.ndarray.ndarray module
------------------------------
+pyDive.ndarray class
+--------------------
 
-.. autoclass:: pyDive.ndarray.ndarray.ndarray
+.. autoclass:: pyDive.ndarray
     :members: __init__, gather, copy, dist_like
 
-pyDive.ndarray.factories module
--------------------------------
+Factory functions
+-----------------
+These are convenient functions to create a *pyDive.ndarray* instance.
 
-.. automodule:: pyDive.ndarray.factories
-    :members:
+.. automodule:: pyDive.arrays.ndarray
+    :members: array, empty, empty_like, hollow, hollow_like, zeros, zeros_like, ones, ones_like
 
-pyDive.ndarray.dist_math module
--------------------------------
+Universal functions
+-------------------
 
-.. automodule:: pyDive.ndarray.dist_math
+*numpy* knows the so called *ufuncs* (universal function). These are functions which can be applied
+elementwise on an array, like *sin*, *cos*, *exp*, *sqrt*, etc. All of these *ufuncs* from *numpy* are
+also available for *pyDive.ndarray* arrays, e.g. ::
+    
+    a = pyDive.ones([100])
+    a = pyDive.sin(a)
 
