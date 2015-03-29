@@ -1,3 +1,5 @@
+.. note:: All functions of these modules are also directly accessable from the ``pyDive`` module.
+
 pyDive.arrayOfStructs module
 ----------------------------
 
@@ -8,6 +10,12 @@ pyDive.algorithm module
 -----------------------
 
 .. automodule:: pyDive.algorithm
+    :members:
+
+pyDive.fragment module
+----------------------
+
+.. automodule:: pyDive.fragment
     :members:
 
 pyDive.mappings module

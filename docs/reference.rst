@@ -1,13 +1,14 @@
 Reference
 =========
 
-Packages
+Arrays
 --------
 
 .. toctree::
 
    pyDive.ndarray
-   pyDive.h5_ndarray
+   pyDive.h5
+   pyDive.adios
    pyDive.cloned_ndarray
 
 Modules

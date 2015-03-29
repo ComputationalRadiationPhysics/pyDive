@@ -20,7 +20,10 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-import adios as ad
+try:
+    import adios as ad
+except ImportError:
+    pass
 import pyDive.distribution.helper as helper
 import numpy as np
 
@@ -110,6 +113,10 @@ if onTarget == 'False':
     ad_ndarray = single_axis.distribute(ad_ndarray_local, "ad_ndarray", "ad_ndarray", may_allocate=False)
 
     def load(self):
+        """Load array from file into main memory of all engines in parallel.
+
+        :return: pyDive.ndarray instance
+        """
         result = hollow_like(self)
         view = com.getView()
         view.execute("{0} = {1}.load()".format(result.name, self.name), targets=result.target_ranks)
@@ -118,6 +125,13 @@ if onTarget == 'False':
     del load
 
     def open_variable(filename, variable_path, distaxis=0):
+        """Create a pyDive.adios.ad_ndarray instance from file.
+
+        :param filename: name of adios file.
+        :param variable_path: path within adios file to a single variable.
+        :param distaxis int: distributed axis
+        :return: pyDive.adios.ad_ndarray instance
+        """
         fileHandle = ad.file(filename)
         variable = fileHandle.var[variable_path]
         dtype = variable.type
@@ -138,6 +152,14 @@ if onTarget == 'False':
         return result
 
     def open(filename, datapath, distaxis=0):
+        """Create a pyDive.adios.ad_ndarray instance respectively a structure of
+        pyDive.adios.ad_ndarray instances from file.
+
+        :param filename: name of adios file.
+        :param datapath: path within adios file to a single variable or a group of variables.
+        :param distaxis int: distributed axis
+        :return: pyDive.adios.ad_ndarray instance
+        """
         fileHandle = ad.file(filename)
         variable_paths = fileHandle.var.keys()
         fileHandle.close()
@@ -162,6 +184,6 @@ if onTarget == 'False':
             # advance 'path_nodes_it' n times
             next(islice(path_nodes_it, n, n), None)
 
-            update_tree(structOfArrays, variable_path, path_nodes_it, path_nodes[-1])        
+            update_tree(structOfArrays, variable_path, path_nodes_it, path_nodes[-1])
 
         return arrayOfStructs.arrayOfStructs(structOfArrays)
