@@ -79,10 +79,10 @@ def map(f, *arrays, **kwargs):
     tmp_targets = view.targets # save current target list
     view.targets = arrays[0].target_ranks
 
-    hdd_arrays = [a for a in arrays if a.arraytype in hdd_arraytypes or type(a) in hdd_arraytypes]
+    hdd_arrays = [a for a in arrays if (hasattr(a, "arraytype") and a.arraytype in hdd_arraytypes) or type(a) in hdd_arraytypes]
     if hdd_arrays:
-        cloned_arrays = [a for a in arrays if a.arraytype is cloned_ndarray or type(a) is cloned_ndarray]
-        other_arrays = [a for a in arrays if a.arraytype is not cloned_ndarray and type(a) is not cloned_ndarray]
+        cloned_arrays = [a for a in arrays if (hasattr(a, "arraytype") and a.arraytype is cloned_ndarray) or type(a) is cloned_ndarray]
+        other_arrays = [a for a in arrays if not ((hasattr(a, "arraytype") and a.arraytype is cloned_ndarray) or type(a) is cloned_ndarray)]
 
         cloned_arrays_ids = [id(a) for a in cloned_arrays]
         other_arrays_ids = [id(a) for a in other_arrays]
@@ -128,7 +128,7 @@ def reduce(array, op):
 
     result = None
 
-    if array.arraytype in hdd_arraytypes or type(array) in hdd_arraytypes:
+    if (hasattr(array, "arraytype") and array.arraytype in hdd_arraytypes) or type(array) in hdd_arraytypes:
         for chunk in fragment(array):
             array_name = repr(chunk)
 
@@ -184,10 +184,10 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
 
     result = None
 
-    hdd_arrays = [a for a in arrays if a.arraytype in hdd_arraytypes or type(a) in hdd_arraytypes]
+    hdd_arrays = [a for a in arrays if (hasattr(a, "arraytype") and a.arraytype in hdd_arraytypes) or type(a) in hdd_arraytypes]
     if hdd_arrays:
-        cloned_arrays = [a for a in arrays if a.arraytype is cloned_ndarray or type(a) is cloned_ndarray]
-        other_arrays = [a for a in arrays if a.arraytype is not cloned_ndarray and type(a) is not cloned_ndarray]
+        cloned_arrays = [a for a in arrays if (hasattr(a, "arraytype") and a.arraytype is cloned_ndarray) or type(a) is cloned_ndarray]
+        other_arrays = [a for a in arrays if not ((hasattr(a, "arraytype") and a.arraytype is cloned_ndarray) or type(a) is cloned_ndarray)]
 
         cloned_arrays_ids = [id(a) for a in cloned_arrays]
         other_arrays_ids = [id(a) for a in other_arrays]

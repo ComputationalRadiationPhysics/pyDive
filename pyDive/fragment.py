@@ -101,7 +101,7 @@ def fragment(*arrays, **kwargs):
 
     # calculate the best suitable step size (-> fragment's edge size) according to the amount
     # of available memory on the engines
-    hdd_arrays = [a for a in arrays if a.arraytype in hdd_arraytypes or type(a) in hdd_arraytypes]
+    hdd_arrays = [a for a in arrays if (hasattr(a, "arraytype") and a.arraytype in hdd_arraytypes) or type(a) in hdd_arraytypes]
     step = __bestStepSize(hdd_arrays, memory_limit)
 
     shape = arrays[0].shape
