@@ -27,12 +27,42 @@ import helper
 array_id = 0
 
 class DistributedGenericArray(object):
-    arraytype = None
+    """
+    Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
+    *cluster-wide* means that its elements are distributed across IPython.parallel-engines.
+    The distribution is done in one dimension along a single, user-specified axis.
+    The user can optionally specify which engine maps to which index range or leave the default that persuits an uniform distribution across all engines.
+
+    This **{arraytype_name}** - class is auto-generated out of its local counterpart: **{local_arraytype_name}**.
+
+    The implementation is based on IPython.parallel and local {local_arraytype_name} - arrays.
+    Every special operation {local_arraytype_name} implements ("__add__", "__le__", ...) is also
+    available for {arraytype_name}.
+
+    Note that array slicing is a cheap operation since no memory is copied.
+    However this can easily lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
+    Therefore call dist_like() first before doing any manual stuff on their local arrays.
+    However every cluster-wide array operation first equalizes the distribution of all involved arrays,
+    so an explicit call to dist_like() is rather unlikely in most use cases.
+    """
+    local_arraytype = None
     target_modulename = None
     interengine_copier = None
     may_allocate = True
 
     def __init__(self, shape, dtype=np.float, distaxis=0, target_offsets=None, target_ranks=None, no_allocation=False, **kwargs):
+        """Creates an instance of {arraytype_name}. This is a low-level method of instantiating an array, it should rather be
+        constructed using factory functions ("empty", "zeros", "open", ...)
+
+        :param ints shape: shape of array
+        :param dtype: datatype of a single element
+        :param int distaxis: distributed axis
+        :param ints target_offsets: list of indices marking the offset along the distributed axis of each local array.
+        :param ints target_ranks: list of :term:`engine` ranks holding the local arrays.
+        :param bool no_allocation: if ``True`` no instance of {local_arraytype_name} will be created on engine. Useful for
+            manual instantiation of the local array.
+        :param kwargs: additional keyword arguments are forwarded to the constructor of the local array.
+        """
         #: size of the array on each axis
         self.shape = tuple(shape)
         ##: datatype of a single data value
@@ -85,7 +115,7 @@ class DistributedGenericArray(object):
             self.view.scatter('target_shape', target_shapes, targets=self.target_ranks)
             self.view.push({'kwargs' : kwargs, 'dtype' : dtype}, targets=self.target_ranks)
             self.view.execute('%s = %s(shape=target_shape[0], dtype=dtype, **kwargs)' % \
-                (self.name, self.__class__.target_modulename + "." + self.__class__.arraytype.__name__), targets=self.target_ranks)
+                (self.name, self.__class__.target_modulename + "." + self.__class__.local_arraytype.__name__), targets=self.target_ranks)
 
     def __del__(self):
         self.view.execute('del %s' % self.name, targets=self.target_ranks)
@@ -201,7 +231,7 @@ class DistributedGenericArray(object):
     def __setitem__(self, key, value):
         # if args is [:] then assign value to the entire ndarray
         if key == slice(None):
-            if isinstance(value, self.__class__.arraytype):
+            if isinstance(value, self.__class__.local_arraytype):
                 # assign local array to self (distributed array)
                 window = [slice(None)] * len(self.shape)
                 subarrays = []
@@ -246,14 +276,14 @@ class DistributedGenericArray(object):
         return self.name
 
     def gather(self):
-        """Gathers the local {0}-arrays from the *engines*, concatenates them and returns
+        """Gathers local instances of {local_arraytype_name} from *engines*, concatenates them and returns
         the result.
 
-        :return: {0}-array
+        :return: instance of {local_arraytype_name}
         """
         local_arrays = self.view.pull(self.name, targets=self.target_ranks)
 
-        result = self.__class__.arraytype(shape=self.shape, dtype=self.dtype, **self.kwargs)
+        result = self.__class__.local_arraytype(shape=self.shape, dtype=self.dtype, **self.kwargs)
         window = [slice(None)] * len(self.shape)
         for i, local_array in zip(range(len(self.target_offsets)), local_arrays):
             begin = self.target_offsets[i]
@@ -380,7 +410,9 @@ class DistributedGenericArray(object):
 
 #----------------------------------------------------------------
 
-def distribute(arraytype, newclassname, target_modulename, interengine_copier=None, may_allocate = True):
+import types
+
+def distribute(local_arraytype, newclassname, target_modulename, interengine_copier=None, may_allocate = True):
     binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow", "lshift", "rshift", "and", "xor", "or"]
 
     binary_iops = ["__i" + op + "__" for op in binary_ops]
@@ -389,7 +421,7 @@ def distribute(arraytype, newclassname, target_modulename, interengine_copier=No
     unary_ops = ["__neg__", "__pos__", "__abs__", "__invert__", "__complex__", "__int__", "__long__", "__float__", "__oct__", "__hex__"]
     comp_ops = ["__lt__", "__le__", "__eq__", "__ne__", "__ge__", "__gt__"]
 
-    special_ops_avail = set(name for name in arraytype.__dict__.keys() if name.endswith("__"))
+    special_ops_avail = set(name for name in local_arraytype.__dict__.keys() if name.endswith("__"))
 
     make_special_op = lambda op: lambda self, *args: self.__elementwise_op__(op, *args)
     make_special_iop = lambda op: lambda self, *args: self.__elementwise_iop__(op, *args)
@@ -398,15 +430,34 @@ def distribute(arraytype, newclassname, target_modulename, interengine_copier=No
         set(binary_ops + binary_rops + unary_ops + comp_ops) & special_ops_avail}
     special_iops_dict = {op : make_special_iop(op) for op in set(binary_iops) & special_ops_avail}
 
+    formated_doc_funs = ("__init__", "gather")
+
     result_dict = dict(DistributedGenericArray.__dict__)
+
+    # docs
+    result_dict["__doc__"] = result_dict["__doc__"].format(\
+        local_arraytype_name=local_arraytype.__module__ + "." +  local_arraytype.__name__,
+        arraytype_name=newclassname)
+    # copy methods which have formated docstrings because their docstrings are going to be modified
+    copied_methods = {k : types.FunctionType(v.func_code, v.func_globals, name=v.func_name, argdefs=v.func_defaults)\
+        for k,v in result_dict.items() if k in formated_doc_funs}
+    result_dict.update(copied_methods)
+
     result_dict.update(special_ops_dict)
     result_dict.update(special_iops_dict)
 
     result = type(newclassname, (), result_dict)
-    result.arraytype = arraytype
+    result.local_arraytype = local_arraytype
     result.target_modulename = target_modulename
     result.interengine_copier = interengine_copier
     result.may_allocate = may_allocate
+
+    # docs
+    for method in (v for k,v in result.__dict__.items() if k in formated_doc_funs):
+        method.__doc__ = method.__doc__.format(\
+            local_arraytype_name=local_arraytype.__module__ + "." +  local_arraytype.__name__,
+            arraytype_name=newclassname)
+
 
     return result
 
@@ -455,7 +506,21 @@ def generate_factories(arraytype, factory_names, dtype_default):
     make_factory = lambda factory_name: lambda shape, dtype=dtype_default, distaxis=0, **kwargs:\
         factory_wrapper(arraytype.target_modulename + "." + factory_name, shape, dtype, distaxis, kwargs)
 
-    return {factory_name : make_factory(factory_name) for factory_name in factory_names}
+    factories_dict = {factory_name : make_factory(factory_name) for factory_name in factory_names}
+
+    # add docstrings
+    for name, factory in factories_dict.items():
+        factory.__name__ = name
+        factory.__doc__ = \
+        """Create a *{0}* instance. This function calls its local counterpart *{1}* on each :term:`engine`.
+
+        :param ints shape: shape of array
+        :param dtype: datatype of a single element
+        :param int distaxis: distributed axis
+        :param kwargs: keyword arguments are passed to the local function *{1}*
+        """.format(arraytype.__name__, str(arraytype.local_arraytype.__module__) + "." + name)
+
+    return factories_dict
 
 def generate_factories_like(arraytype, factory_names):
 
@@ -469,4 +534,17 @@ def generate_factories_like(arraytype, factory_names):
     make_factory = lambda factory_name: lambda other, **kwargs: \
         factory_like_wrapper(arraytype.target_modulename + "." + factory_name, other, kwargs)
 
-    return {factory_name : make_factory(factory_name) for factory_name in factory_names}
+    factories_dict = {factory_name : make_factory(factory_name) for factory_name in factory_names}
+
+    # add docstrings
+    for name, factory in factories_dict.items():
+        factory.__name__ = name
+        factory.__doc__ = \
+        """Create a *{0}* instance with the same shape, dtype and distribution as ``other``.
+        This function calls its local counterpart *{1}* on each :term:`engine`.
+
+        :param other: other array
+        :param kwargs: keyword arguments are passed to the local function *{1}*
+        """.format(arraytype.__name__, str(arraytype.local_arraytype.__module__) + "." + name)
+
+    return factories_dict

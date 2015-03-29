@@ -33,7 +33,7 @@ if onTarget == 'False':
 import numpy as np
 
 def map(f, *arrays, **kwargs):
-    """Calls *f* on :term:`engine` with local numpy-arrays related to *arrays*.
+    """Applies *f* on :term:`engine` on local arrays related to *arrays*.
     Example: ::
 
         cluster_array = pyDive.ones(shape=[100], distaxis=0)
@@ -57,7 +57,7 @@ def map(f, *arrays, **kwargs):
     :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
 
     Notes:
-        - If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\
+        - If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\
             the data will be read block-wise so that a block fits into memory.
         - *map* chooses the list of *engines* from the **first** element of *arrays*. On these engines *f* is called.\
             If the first array is a *pyDive.h5_ndarray* all engines will be used.
@@ -110,10 +110,10 @@ def map(f, *arrays, **kwargs):
 def reduce(array, op):
     """Perform a tree-like reduction over all axes of *array*.
 
-    :param _array: *pyDive.ndarray*, *pyDive.h5_ndarray* or *pyDive.cloned_ndarray* to be reduced
+    :param array: *pyDive.ndarray*, *pyDive.h5_ndarray* or *pyDive.cloned_ndarray* to be reduced
     :param numpy-ufunc op: reduce operation, e.g. *numpy.add*.
 
-    If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\
+    If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\
     the data will be read block-wise so that a block fits into memory.
     """
     def reduce_wrapper(array_name, op_name):
@@ -149,7 +149,7 @@ def reduce(array, op):
     return result
 
 def mapReduce(map_func, reduce_op, *arrays, **kwargs):
-    """Calls *map_func* on :term:`engine` with local numpy-arrays related to *arrays*
+    """Applies *map_func* on :term:`engine` on local arrays related to *arrays*
     and reduces its result in a tree-like fashion over all axes.
     Example: ::
 
@@ -166,7 +166,7 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
 
     Notes:
-        - If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\
+        - If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\
             the data will be read block-wise so that a block fits into memory.
         - *mapReduce* chooses the list of *engines* from the **first** element of *arrays*. On these engines the mapReduce will be executed.\
             If the first array is a *pyDive.h5_ndarray* all engines will be used.
