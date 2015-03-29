@@ -3,7 +3,7 @@
 pyDive.arrays.ndarray module
 ============================
 
-All of this module's functions and classes are also directly accessable from the :mod:`pyDive` module.
+.. note:: All of this module's functions and classes are also directly accessable from the :mod:`pyDive` module.
 
 pyDive.ndarray class
 --------------------
