@@ -55,8 +55,8 @@ def __bestStepSize(arrays, memory_limit):
     return pow(2, int(math.log(step_size, 2)))
 
 def fragment(*arrays, **kwargs):
-    """Returns fragments of each array in *arrays*, where each fragment fits into the combined
-    main memory of all cluster nodes. The fragmentation is done by array slicing along the distributed axis.
+    """Create fragments of *arrays* so that each fragment will fit into the combined
+    main memory of all engines when calling ``load()``. The fragmentation is done by array slicing along the distributed axis.
     The edge size of the fragments is a power of two except for the last fragment.
 
     :param array: distributed arrays (e.g. pyDive.ndarray, pyDive.h5_ndarray, ...)
@@ -71,7 +71,8 @@ def fragment(*arrays, **kwargs):
 
     Note that *arrays* may contain an arbitrary number of distributed arrays of any type.
     While the fragments' size is solely calculated based on the memory consumption of
-    arrays that stores their elements on hard disk (see :obj:`hdd_arraytypes`), the fragmentation itself is applied on all arrays.
+    arrays that store their elements on hard disk (see :obj:`hdd_arraytypes`),
+    the fragmentation itself is applied on all arrays in the same way.
 
     Example: ::
 
@@ -81,7 +82,6 @@ def fragment(*arrays, **kwargs):
         for h5_array, offset in pyDive.fragment(big_h5_array, offset=True):
             a = h5_array.load() # no crash
             print "This fragment's offset is", offset, "on axis:", a.distaxis
-
     """
     # default keyword arguments
     kwargs_defaults = {"memory_limit" : 0.25, "offset" : False}
