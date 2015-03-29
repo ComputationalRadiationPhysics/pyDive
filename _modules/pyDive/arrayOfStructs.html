@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pyDive.arrayOfStructs &mdash; pyDive 1.0.2 beta documentation</title>
+    <title>pyDive.arrayOfStructs &mdash; pyDive 1.1 beta documentation</title>
     
-    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.2 beta',
+        VERSION:     '1.1 beta',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,11 +23,11 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="pyDive 1.0.2 beta documentation" href="../../index.html" />
+    <link rel="top" title="pyDive 1.1 beta documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -36,15 +36,32 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">pyDive 1.0.2 beta documentation</a> &raquo;</li>
-          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
-    </div>  
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <h1>Source code for pyDive.arrayOfStructs</h1><div class="highlight"><pre>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -97,13 +114,16 @@
 <span class="sd">    # equivalent to</span>
 <span class="sd">    half = fields[&quot;FieldE&quot;][::2][&quot;x&quot;]</span>
 
+<span class="sd">    # equivalent to</span>
+<span class="sd">    half = fields.FieldE.x[::2]</span>
+
 <span class="sd">The example shows that in fact *fields* can be treated as an array-of-structures</span>
 <span class="sd">**or** a structure-of-arrays depending on what is more appropriate.</span>
 
 <span class="sd">The goal is to make the virtual *array-of-structs*-object look like a real array. Therefore</span>
 <span class="sd">every method call or operation is forwarded to the individual arrays.::</span>
 
-<span class="sd">    new_field = fields[&quot;FieldE&quot;].astype(np.int) + fields[&quot;FieldB&quot;].astype(np.float)</span>
+<span class="sd">    new_field = fields.FieldE.astype(np.int) + fields.FieldB.astype(np.float)</span>
 
 <span class="sd">Here the forwarded method calls are ``astype`` and ``__add__``.</span>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -114,8 +134,6 @@
 <span class="n">onTarget</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;onTarget&quot;</span><span class="p">,</span> <span class="s">&#39;False&#39;</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
-    <span class="kn">from</span> <span class="nn">ndarray.ndarray</span> <span class="kn">import</span> <span class="n">ndarray</span> <span class="k">as</span> <span class="n">ndarray</span>
-    <span class="kn">from</span> <span class="nn">h5_ndarray.h5_ndarray</span> <span class="kn">import</span> <span class="n">h5_ndarray</span> <span class="k">as</span> <span class="n">h5_ndarray</span>
     <span class="kn">from</span> <span class="nn">IPython.parallel</span> <span class="kn">import</span> <span class="n">interactive</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
@@ -177,7 +195,7 @@
             <span class="n">f</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;VirtualArrayOfStructs&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">args</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;VirtualArrayOfStructs&quot;</span><span class="p">:</span>
             <span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">makeTree_fromTwoTrees</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">apply_binary</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">makeTree_fromTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">apply_unary</span><span class="p">)</span>
@@ -201,13 +219,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">nbytes</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">structOfArrays</span>
 
-        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">ndarray</span><span class="p">:</span>
-            <span class="c">#assert all(a.targets_in_use == firstArray.targets_in_use for name, a in items),\</span>
-            <span class="c">#    &quot;all ndarrays in structure-of-arrays (&#39;structOfArrays&#39;) must have an identical &#39;targets_in_use&#39; attribute&quot;</span>
-
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">,</span> <span class="s">&quot;distaxis&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">distaxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">distaxis</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">idx_ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">idx_ranges</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">targets_in_use</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">target_offsets</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">target_ranks</span>
             <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="o">=</span> <span class="n">view</span>
 
@@ -219,26 +234,23 @@
             <span class="c"># create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use</span>
             <span class="n">names_tree</span> <span class="o">=</span> <span class="n">makeTree_fromTree</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
 
-            <span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="s">&#39;names_tree&#39;</span> <span class="p">:</span> <span class="n">names_tree</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+            <span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="s">&#39;names_tree&#39;</span> <span class="p">:</span> <span class="n">names_tree</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
 
             <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;&#39;&#39;</span><span class="se">\</span>
 <span class="s">                structOfArrays = arrayOfStructs.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])</span>
 <span class="s">                </span><span class="si">%s</span><span class="s"> = arrayOfStructs.arrayOfStructs(structOfArrays)&#39;&#39;&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>\
-                <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">h5_ndarray</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">distaxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">distaxis</span>
+                <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">,</span> <span class="s">&quot;distaxis&quot;</span><span class="p">):</span>
             <span class="c"># delete remote arrayOfStructs object</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;del </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">targets_in_use</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;del </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">ForeachLeafDo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">__magicOperation__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ForeachLeafDo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">op</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
@@ -363,26 +375,9 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
-<div id="searchbox" style="display: none">
-  <h3>Quick search</h3>
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -391,13 +386,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">pyDive 1.0.2 beta documentation</a> &raquo;</li>
-          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2014, Heiko Burau.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

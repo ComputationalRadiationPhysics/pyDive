@@ -34,31 +34,31 @@ Load a single dataset: ::
 
     h5fieldB_z = pyDive.h5.fromPath("sample.h5", "/fields/fieldB/z", distaxis=0)
 
-    assert type(h5fieldB_z) is pyDive.h5_ndarray.h5_ndarray.h5_ndarray
+    assert type(h5fieldB_z) is pyDive.h5.h5_ndarray
 
-*h5fieldB_z* just holds a dataset *handle*. To read out data into memory do slicing: ::
+*h5fieldB_z* just holds a dataset *handle*. To read out data into memory call ``load()``: ::
 
-    fieldB_z = h5fieldB_z[:]
+    fieldB_z = h5fieldB_z.load()
 
-    assert type(fieldB_z) is pyDive.ndarray.ndarray.ndarray
+    assert type(fieldB_z) is pyDive.ndarray
 
 This loads the entire dataset into the main memory of all :term:`engines<engine>`. The array elements are distributed
 along ``distaxis=0``.
 
 We can also load a hdf5-group: ::
 
-    h5fieldE = pyDive.h5.fromPath("sample.h5", "/fields/fieldE", distaxis=0)
-    fieldE = h5fieldE[:] 
+    h5fieldE = pyDive.h5.open("sample.h5", "/fields/fieldE", distaxis=0)
+    fieldE = h5fieldE.load()
 
 *h5fieldE* and *fieldE* are some so called "virtual array-of-structures", see: :mod:`pyDive.arrayOfStructs`. ::
 
     >>> print h5fieldE
-    VirtualArrayOfStructs<array-type: <class 'pyDive.h5_ndarray.h5_ndarray.h5_ndarray'>, shape: [256, 256]>:
+    VirtualArrayOfStructs<array-type: <class 'pyDive.distribution.single_axis.h5_ndarray'>, shape: [256, 256]>:
       y -> float32
       x -> float32
 
     >>> print fieldE
-    VirtualArrayOfStructs<array-type: <class 'pyDive.ndarray.ndarray.ndarray'>, shape: [256, 256]>:
+    VirtualArrayOfStructs<array-type: <class 'pyDive.distribution.single_axis.ndarray'>, shape: [256, 256]>:
       y -> float32
       x -> float32
 
@@ -75,10 +75,10 @@ Computing the total field energy of an electromagnetic field means squaring and 
 
     h5input = "sample.h5"
 
-    h5fields = pyDive.h5.fromPath(h5input, "/fields", distaxis=0)
-    fields = h5fields[:] # read out all fields into cluster's main memory in parallel
+    h5fields = pyDive.h5.open(h5input, "/fields", distaxis=0)
+    fields = h5fields.load() # read out all fields into cluster's main memory in parallel
     
-    energy_field = fields["fieldE/x"]**2 + fields["fieldE/y"]**2 + fields["fieldB/z"]**2
+    energy_field = fields.fieldE.x**2 + fields.fieldE.y**2 + fields.fieldB.z**2
 
     total_energy = pyDive.reduce(energy_field, np.add)
     print total_energy
@@ -89,8 +89,8 @@ Output: ::
     557502.0
 
 Well this was just a very small hdf5-sample of 1.3 MB however in real world we deal with a lot greater data volumes.
-So what happens if *h5fields* is too large to be stored in the main memory of the whole cluster? The line ``fields = h5fields[:]`` will crash.
-In this case we want to load the hdf5 data piece by piece. The functions in :mod:`pyDive.algorithm` help us doing so: ::
+So what happens if *h5fields* is too large to be stored in the main memory of the whole cluster? The line ``fields = h5fields.load()`` will crash.
+In this case we want to load the hdf5 data piece by piece. The function :obj:`pyDive.fragment` helps us doing so: ::
 
     import pyDive
     import numpy as np
@@ -98,17 +98,32 @@ In this case we want to load the hdf5 data piece by piece. The functions in :mod
 
     h5input = "sample.h5"
 
-    h5fields = pyDive.h5.fromPath(h5input, "/fields", distaxis=0)
+    big_h5fields = pyDive.h5.open(h5input, "/fields", distaxis=0)
+    # big_h5fields.load() # would cause a crash
+    
+    total_energy = 0.0
+    for h5fields in pyDive.fragment(big_h5fields):
+        fields = h5fields.load()
 
-    def square_fields(npfields):
-        return npfields["fieldE/x"]**2 + npfields["fieldE/y"]**2 + npfields["fieldB/z"]**2
+        energy_field = fields.fieldE.x**2 + fields.fieldE.y**2 + fields.fieldB.z**2
+
+        total_energy += pyDive.reduce(energy_field, np.add)
+    
+    print total_energy
+
+An equivalent way to get this result is a :obj:`pyDive.mapReduce`: ::
+
+    ...
+    def square_fields(h5fields):
+        fields = h5fields.load()
+        return fields.fieldE.x**2 + fields.fieldE.y**2 + fields.fieldB.z**2
 
     total_energy = pyDive.mapReduce(square_fields, np.add, h5fields)
     print total_energy
 
-*square_fields* is called on each :term:`engine` where *npfield* is a structure (:mod:`pyDive.arrayOfStructs`) of numpy-arrays representing a sub part of the big *h5fields*.
+*square_fields* is called on each :term:`engine` where *h5fields* is a structure (:mod:`pyDive.arrayOfStructs`) of :obj:`h5_ndarrays` representing a sub part of the big *h5fields*.
 :func:`pyDive.algorithm.mapReduce` can be called with an arbitrary number of arrays including
-:obj:`pyDive.ndarrays`, :obj:`pyDive.h5_ndarrays` and :obj:`pyDive.cloned_ndarrays`. If there are :obj:`pyDive.h5_ndarrays` it will
+:obj:`pyDive.ndarrays`, :obj:`pyDive.h5.h5_ndarrays`, :obj:`pyDive.adios.ad_ndarrays` and :obj:`pyDive.cloned_ndarrays`. If there are :obj:`pyDive.h5.h5_ndarrays` or :obj:`pyDive.adios.ad_ndarrays` it will
 check whether they fit into the combined main memory of all cluster nodes as a whole and loads them piece by piece if not.
 
 Now let's say our dataset is really big and we just want to get a first estimate of the total energy: ::
@@ -116,41 +131,7 @@ Now let's say our dataset is really big and we just want to get a first estimate
   ...
   total_energy = pyDive.mapReduce(square_fields, np.add, h5fields[::10, ::10]) * 10.0**2
 
-This is valid if *h5fields[::10, ::10]* fits into the cluster's main memory. Remember that slicing on a :obj:`pyDive.h5_ndarray` always
-means data transfer between hdf5 and main memory. So in this case we also could have used the very first version: ::
-
-    import pyDive
-    import numpy as np
-    pyDive.init()
-
-    h5input = "sample.h5"
-
-    h5fields = pyDive.h5.fromPath(h5input, "/fields", distaxis=0)
-    fields = h5fields[::10, ::10]
-    
-    energy_field = fields["fieldE/x"]**2 + fields["fieldE/y"]**2 + fields["fieldB/z"]**2
-
-    total_energy = pyDive.reduce(energy_field, np.add) * 10.0**2
-    print total_energy
-
-But if *h5fields[::10, ::10]* doesn't fit we have to apply the slicing somewhere else in fact
-at the instanciation of *h5fields*: ::
-
-    import pyDive
-    import numpy as np
-    pyDive.init()
-
-    h5input = "sample.h5"
-
-    h5fields = pyDive.h5.fromPath(h5input, "/fields", distaxis=0, window=np.s_[::10, ::10])
-
-    def square_fields(npfields):
-        return npfields["fieldE/x"]**2 + npfields["fieldE/y"]**2 + npfields["fieldB/z"]**2
-
-    total_energy = pyDive.mapReduce(square_fields, np.add, h5fields) * 10.0**2
-    print total_energy
-
-This way the hdf5 data is sliced without involving file i/o.
+Slicing on pyDive-arrays is always allowed.
 
 If you use `picongpu <https://github.com/ComputationalRadiationPhysics/picongpu>`_
 here is an example of how to get the total field energy for each timestep (see :mod:`pyDive.picongpu`): ::
@@ -159,8 +140,9 @@ here is an example of how to get the total field energy for each timestep (see :
     import numpy as np
     pyDive.init()
 
-    def square_field(npfield):
-        return npfield["x"]**2 + npfield["y"]**2 + npfield["z"]**2
+    def square_field(h5field):
+        field = h5field.load()
+        return field.x**2 + field.x**2 + field.x**2
 
     for step, h5field in pyDive.picongpu.loadAllSteps("/.../simOutput", "fields/FieldE", distaxis=0):
         total_energy = pyDive.mapReduce(square_field, np.add, h5field)
@@ -192,11 +174,12 @@ This is the job of :class:`pyDive.cloned_ndarray.cloned_ndarray.cloned_ndarray`.
     particles = pyDive.h5.fromPath(h5input, "/particles", distaxis=0)
 
     def particles2density(particles, density):
-        total_pos = particles["cellidx"].astype(np.float32) + particles["pos"]
+        particles = particles.load()
+        total_pos = particles.cellidx.astype(np.float32) + particles.pos
 
         # convert total_pos to an (N, 2) shaped array
-        total_pos = np.hstack((total_pos["x"][:,np.newaxis],
-                               total_pos["y"][:,np.newaxis]))
+        total_pos = np.hstack((total_pos.x[:,np.newaxis],
+                               total_pos.y[:,np.newaxis]))
 
         par_weighting = np.ones(particles.shape)
         import pyDive.mappings
@@ -244,8 +227,9 @@ Example 3: Particle energy spectrum
 
     @pyDive.map
     def vel2spectrum(velocities, spectrum, bins):
+        velocities = velocities.load()
         mass = 1.0
-        energies = 0.5 * mass * (velocities["x"]**2 + velocities["y"]**2 + velocities["z"]**2)
+        energies = 0.5 * mass * (velocities.x**2 + velocities.y**2 + velocities.z**2)
 
         spectrum[:], bin_edges = np.histogram(energies, bins)
 

@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pyDive.algorithm &mdash; pyDive 1.0.2 beta documentation</title>
+    <title>pyDive.algorithm &mdash; pyDive 1.1 beta documentation</title>
     
-    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '1.0.2 beta',
+        VERSION:     '1.1 beta',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,11 +23,11 @@
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="top" title="pyDive 1.0.2 beta documentation" href="../../index.html" />
+    <link rel="top" title="pyDive 1.1 beta documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -36,15 +36,32 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">pyDive 1.0.2 beta documentation</a> &raquo;</li>
-          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
       </ul>
-    </div>  
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <h1>Source code for pyDive.algorithm</h1><div class="highlight"><pre>
 <span class="sd">&quot;&quot;&quot;</span>
@@ -73,16 +90,16 @@
 <span class="c"># check whether this code is executed on target or not</span>
 <span class="n">onTarget</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;onTarget&quot;</span><span class="p">,</span> <span class="s">&#39;False&#39;</span><span class="p">)</span>
 <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">ndarray</span> <span class="kn">import</span> <span class="o">*</span>
-    <span class="kn">from</span> <span class="nn">h5_ndarray.h5_ndarray</span> <span class="kn">import</span> <span class="o">*</span>
-    <span class="kn">from</span> <span class="nn">cloned_ndarray</span> <span class="kn">import</span> <span class="o">*</span>
+    <span class="kn">from</span> <span class="nn">arrays.ndarray</span> <span class="kn">import</span> <span class="n">ndarray</span>
+    <span class="kn">from</span> <span class="nn">arrays.h5_ndarray</span> <span class="kn">import</span> <span class="n">h5_ndarray</span>
+    <span class="kn">from</span> <span class="nn">cloned_ndarray.cloned_ndarray</span> <span class="kn">import</span> <span class="n">cloned_ndarray</span>
     <span class="kn">import</span> <span class="nn">IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
     <span class="kn">from</span> <span class="nn">IPython.parallel</span> <span class="kn">import</span> <span class="n">interactive</span>
-    <span class="kn">from</span> <span class="nn">h5_ndarray</span> <span class="kn">import</span> <span class="n">h5caching</span>
+    <span class="kn">from</span> <span class="nn">fragment</span> <span class="kn">import</span> <span class="n">fragment</span><span class="p">,</span> <span class="n">hdd_arraytypes</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <div class="viewcode-block" id="map"><a class="viewcode-back" href="../../modules.html#pyDive.algorithm.map">[docs]</a><span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Calls *f* on :term:`engine` with local numpy-arrays related to *arrays*.</span>
+    <span class="sd">&quot;&quot;&quot;Applies *f* on :term:`engine` on local arrays related to *arrays*.</span>
 <span class="sd">    Example: ::</span>
 
 <span class="sd">        cluster_array = pyDive.ones(shape=[100], distaxis=0)</span>
@@ -106,7 +123,7 @@
 <span class="sd">    :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
 
 <span class="sd">    Notes:</span>
-<span class="sd">        - If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\</span>
+<span class="sd">        - If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\</span>
 <span class="sd">            the data will be read block-wise so that a block fits into memory.</span>
 <span class="sd">        - *map* chooses the list of *engines* from the **first** element of *arrays*. On these engines *f* is called.\</span>
 <span class="sd">            If the first array is a *pyDive.h5_ndarray* all engines will be used.</span>
@@ -126,54 +143,79 @@
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
 
     <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="c"># save current target list</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">target_ranks</span>
 
-    <span class="c"># loop all cache chunks</span>
-    <span class="k">for</span> <span class="n">cached_arrays</span> <span class="ow">in</span> <span class="n">h5caching</span><span class="o">.</span><span class="n">cache_arrays</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">):</span>
-        <span class="n">array_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cached_arrays</span><span class="p">]</span>
+    <span class="n">hdd_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span> <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">hdd_arrays</span><span class="p">:</span>
+        <span class="n">cloned_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span> <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">cloned_ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">is</span> <span class="n">cloned_ndarray</span><span class="p">]</span>
+        <span class="n">other_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">cloned_ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">is</span> <span class="n">cloned_ndarray</span><span class="p">)]</span>
 
-        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">cached_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">targets_in_use</span>
+        <span class="n">cloned_arrays_ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cloned_arrays</span><span class="p">]</span>
+        <span class="n">other_arrays_ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">other_arrays</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">fragments</span> <span class="ow">in</span> <span class="n">fragment</span><span class="p">(</span><span class="o">*</span><span class="n">other_arrays</span><span class="p">):</span>
+            <span class="n">it_other_arrays</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">other_arrays</span><span class="p">)</span>
+            <span class="n">it_cloned_arrays</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">cloned_arrays</span><span class="p">)</span>
+
+            <span class="n">array_names</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">cloned_arrays_ids</span><span class="p">:</span>
+                    <span class="n">array_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">it_cloned_arrays</span><span class="o">.</span><span class="n">next</span><span class="p">()))</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">other_arrays_ids</span><span class="p">:</span>
+                    <span class="n">array_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">it_other_arrays</span><span class="o">.</span><span class="n">next</span><span class="p">()))</span>
+                    <span class="k">continue</span>
+
+            <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">map_wrapper</span><span class="p">),</span> <span class="n">interactive</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">array_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">]</span>
         <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">map_wrapper</span><span class="p">),</span> <span class="n">interactive</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">tmp_targets</span> <span class="c"># restore target list</span>
 </div>
-<div class="viewcode-block" id="reduce"><a class="viewcode-back" href="../../modules.html#pyDive.algorithm.reduce">[docs]</a><span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="n">_array</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Perform a tree-like reduction over all axes of *_array*.</span>
+<div class="viewcode-block" id="reduce"><a class="viewcode-back" href="../../modules.html#pyDive.algorithm.reduce">[docs]</a><span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Perform a tree-like reduction over all axes of *array*.</span>
 
-<span class="sd">    :param _array: *pyDive.ndarray*, *pyDive.h5_ndarray* or *pyDive.cloned_ndarray* to be reduced</span>
+<span class="sd">    :param array: *pyDive.ndarray*, *pyDive.h5_ndarray* or *pyDive.cloned_ndarray* to be reduced</span>
 <span class="sd">    :param numpy-ufunc op: reduce operation, e.g. *numpy.add*.</span>
 
-<span class="sd">    If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\</span>
+<span class="sd">    If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\</span>
 <span class="sd">    the data will be read block-wise so that a block fits into memory.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">reduce_wrapper</span><span class="p">(</span><span class="n">array_name</span><span class="p">,</span> <span class="n">op_name</span><span class="p">):</span>
-        <span class="n">_array</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">array_name</span><span class="p">]</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()[</span><span class="n">array_name</span><span class="p">]</span>
         <span class="n">op</span> <span class="o">=</span>  <span class="nb">eval</span><span class="p">(</span><span class="s">&quot;np.&quot;</span> <span class="o">+</span> <span class="n">op_name</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">__tree_reduce</span><span class="p">(</span><span class="n">_array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">op</span><span class="p">)</span> <span class="c"># reduction over all axes</span>
+        <span class="k">return</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">__tree_reduce</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="n">op</span><span class="p">)</span> <span class="c"># reduction over all axes</span>
 
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
 
     <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="c"># save current target list</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">target_ranks</span>
 
     <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="c"># loop all cache chunks</span>
-    <span class="k">for</span> <span class="n">cached_arrays</span> <span class="ow">in</span> <span class="n">h5caching</span><span class="o">.</span><span class="n">cache_arrays</span><span class="p">(</span><span class="n">_array</span><span class="p">):</span>
-        <span class="n">cached_array</span> <span class="o">=</span> <span class="n">cached_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c"># there is just one array in the list</span>
-        <span class="n">array_name</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">cached_array</span><span class="p">)</span>
 
-        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">cached_array</span><span class="o">.</span><span class="n">targets_in_use</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">array</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">fragment</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
+            <span class="n">array_name</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+
+            <span class="n">targets_results</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">reduce_wrapper</span><span class="p">),</span> <span class="n">array_name</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+            <span class="n">chunk_result</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
+
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">chunk_result</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">chunk_result</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">array_name</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
 
         <span class="n">targets_results</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">reduce_wrapper</span><span class="p">),</span> <span class="n">array_name</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
-        <span class="n">chunk_result</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
-        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">chunk_result</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">chunk_result</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
 
     <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">tmp_targets</span> <span class="c"># restore target list</span>
     <span class="k">return</span> <span class="n">result</span>
 </div>
 <div class="viewcode-block" id="mapReduce"><a class="viewcode-back" href="../../modules.html#pyDive.algorithm.mapReduce">[docs]</a><span class="k">def</span> <span class="nf">mapReduce</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">reduce_op</span><span class="p">,</span> <span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Calls *map_func* on :term:`engine` with local numpy-arrays related to *arrays*</span>
+    <span class="sd">&quot;&quot;&quot;Applies *map_func* on :term:`engine` on local arrays related to *arrays*</span>
 <span class="sd">    and reduces its result in a tree-like fashion over all axes.</span>
 <span class="sd">    Example: ::</span>
 
@@ -190,7 +232,7 @@
 <span class="sd">    :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
 
 <span class="sd">    Notes:</span>
-<span class="sd">        - If the hdf5 data exceeds the memory limit (see :obj:`pyDive.h5_ndarray.h5caching.fraction_of_av_mem_used`)\</span>
+<span class="sd">        - If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\</span>
 <span class="sd">            the data will be read block-wise so that a block fits into memory.</span>
 <span class="sd">        - *mapReduce* chooses the list of *engines* from the **first** element of *arrays*. On these engines the mapReduce will be executed.\</span>
 <span class="sd">            If the first array is a *pyDive.h5_ndarray* all engines will be used.</span>
@@ -204,21 +246,45 @@
 
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
     <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="c"># save current target list</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">target_ranks</span>
 
     <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="c"># loop all cache chunks</span>
-    <span class="k">for</span> <span class="n">cached_arrays</span> <span class="ow">in</span> <span class="n">h5caching</span><span class="o">.</span><span class="n">cache_arrays</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">):</span>
-        <span class="n">array_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cached_arrays</span><span class="p">]</span>
 
-        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">cached_arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">targets_in_use</span>
+    <span class="n">hdd_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span> <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">hdd_arrays</span><span class="p">:</span>
+        <span class="n">cloned_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span> <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">cloned_ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">is</span> <span class="n">cloned_ndarray</span><span class="p">]</span>
+        <span class="n">other_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">((</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">is</span> <span class="n">cloned_ndarray</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">is</span> <span class="n">cloned_ndarray</span><span class="p">)]</span>
+
+        <span class="n">cloned_arrays_ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">cloned_arrays</span><span class="p">]</span>
+        <span class="n">other_arrays_ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">other_arrays</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">fragments</span> <span class="ow">in</span> <span class="n">fragment</span><span class="p">(</span><span class="o">*</span><span class="n">other_arrays</span><span class="p">):</span>
+            <span class="n">it_other_arrays</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">other_arrays</span><span class="p">)</span>
+            <span class="n">it_cloned_arrays</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">cloned_arrays</span><span class="p">)</span>
+
+            <span class="n">array_names</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">cloned_arrays_ids</span><span class="p">:</span>
+                    <span class="n">array_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">it_cloned_arrays</span><span class="o">.</span><span class="n">next</span><span class="p">()))</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">other_arrays_ids</span><span class="p">:</span>
+                    <span class="n">array_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">it_other_arrays</span><span class="o">.</span><span class="n">next</span><span class="p">()))</span>
+                    <span class="k">continue</span>
+
+            <span class="n">targets_results</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">mapReduce_wrapper</span><span class="p">),</span>\
+                <span class="n">interactive</span><span class="p">(</span><span class="n">map_func</span><span class="p">),</span> <span class="n">reduce_op</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="n">fragment_result</span> <span class="o">=</span> <span class="n">reduce_op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">fragment_result</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">reduce_op</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">fragment_result</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">array_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">]</span>
         <span class="n">targets_results</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">interactive</span><span class="p">(</span><span class="n">mapReduce_wrapper</span><span class="p">),</span>\
             <span class="n">interactive</span><span class="p">(</span><span class="n">map_func</span><span class="p">),</span> <span class="n">reduce_op</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">array_names</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="n">chunk_result</span> <span class="o">=</span> <span class="n">reduce_op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
-        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">chunk_result</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">reduce_op</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">chunk_result</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">reduce_op</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">targets_results</span><span class="p">)</span> <span class="c"># reduce over targets&#39; results</span>
 
     <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">tmp_targets</span> <span class="c"># restore target list</span>
 
@@ -253,26 +319,9 @@
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
-<div id="searchbox" style="display: none">
-  <h3>Quick search</h3>
-    <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -281,13 +330,13 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="../../index.html">pyDive 1.0.2 beta documentation</a> &raquo;</li>
-          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2014, Heiko Burau.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.arrays.h5_ndarray module &mdash; pyDive 1.1 beta documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.1 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyDive 1.1 beta documentation" href="index.html" />
+    <link rel="up" title="Reference" href="reference.html" />
+    <link rel="next" title="pyDive.arrays.ad_ndarray module" href="pyDive.adios.html" />
+    <link rel="prev" title="pyDive.arrays.ndarray module" href="pyDive.ndarray.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyDive.adios.html" title="pyDive.arrays.ad_ndarray module"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pyDive.ndarray.html" title="pyDive.arrays.ndarray module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="reference.html" accesskey="U">Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pyDive.ndarray.html"
+                        title="previous chapter">pyDive.arrays.ndarray module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pyDive.adios.html"
+                        title="next chapter">pyDive.arrays.ad_ndarray module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pyDive.h5.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pydive-arrays-h5-ndarray-module">
+<span id="pydive-h5-ndarray"></span><h1>pyDive.arrays.h5_ndarray module<a class="headerlink" href="#pydive-arrays-h5-ndarray-module" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module has a shortcut: <code class="docutils literal"><span class="pre">pyDive.h5</span></code>.</p>
+</div>
+<dl class="class">
+<dt id="pyDive.arrays.h5_ndarray.h5_ndarray">
+<em class="property">class </em><code class="descclassname">pyDive.arrays.h5_ndarray.</code><code class="descname">h5_ndarray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.h5_ndarray.h5_ndarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
+<em>cluster-wide</em> means that its elements are distributed across IPython.parallel-engines.
+The distribution is done in one dimension along a single, user-specified axis.
+The user can optionally specify which engine maps to which index range or leave the default that persuits an uniform distribution across all engines.</p>
+<p>This <strong>h5_ndarray</strong> - class is auto-generated out of its local counterpart: <strong>pyDive.arrays.h5_ndarray.h5_ndarray_local</strong>.</p>
+<p>The implementation is based on IPython.parallel and local pyDive.arrays.h5_ndarray.h5_ndarray_local - arrays.
+Every special operation pyDive.arrays.h5_ndarray.h5_ndarray_local implements (&#8220;__add__&#8221;, &#8220;__le__&#8221;, ...) is also
+available for h5_ndarray.</p>
+<p>Note that array slicing is a cheap operation since no memory is copied.
+However this can easily lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
+Therefore call dist_like() first before doing any manual stuff on their local arrays.
+However every cluster-wide array operation first equalizes the distribution of all involved arrays,
+so an explicit call to dist_like() is rather unlikely in most use cases.</p>
+<dl class="method">
+<dt id="pyDive.arrays.h5_ndarray.h5_ndarray.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.h5_ndarray.h5_ndarray.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an instance of h5_ndarray. This is a low-level method of instantiating an array, it should rather be
+constructed using factory functions (&#8220;empty&#8221;, &#8220;zeros&#8221;, &#8220;open&#8221;, ...)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
+<li><strong>dtype</strong> &#8211; datatype of a single element</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>target_offsets</strong> (<em>ints</em>) &#8211; list of indices marking the offset along the distributed axis of each local array.</li>
+<li><strong>target_ranks</strong> (<em>ints</em>) &#8211; list of <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> ranks holding the local arrays.</li>
+<li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <code class="docutils literal"><span class="pre">True</span></code> no instance of pyDive.arrays.h5_ndarray.h5_ndarray_local will be created on engine. Useful for
+manual instantiation of the local array.</li>
+<li><strong>kwargs</strong> &#8211; additional keyword arguments are forwarded to the constructor of the local array.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyDive.arrays.h5_ndarray.h5_ndarray.load">
+<code class="descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.h5_ndarray.h5_ndarray.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load array from file into main memory of all engines in parallel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">pyDive.ndarray instance</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-pyDive.arrays.h5_ndarray"></span><dl class="function">
+<dt id="pyDive.arrays.h5_ndarray.open">
+<code class="descclassname">pyDive.arrays.h5_ndarray.</code><code class="descname">open</code><span class="sig-paren">(</span><em>filename</em>, <em>datapath</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/h5_ndarray.html#open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.h5_ndarray.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an pyDive.h5.h5_ndarray instance respectively a structure of
+pyDive.h5.h5_ndarray instances from file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> &#8211; name of hdf5 file.</li>
+<li><strong>dataset_path</strong> &#8211; path within hdf5 file to a single dataset or hdf5 group.</li>
+<li><strong>int</strong> (<em>distaxis</em>) &#8211; distributed axis</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">pyDive.h5.h5_ndarray instance / structure of pyDive.h5.h5_ndarray instances</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.arrays.h5_ndarray.open_dset">
+<code class="descclassname">pyDive.arrays.h5_ndarray.</code><code class="descname">open_dset</code><span class="sig-paren">(</span><em>filename</em>, <em>dataset_path</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/h5_ndarray.html#open_dset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.h5_ndarray.open_dset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a pyDive.h5.h5_ndarray instance from file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filename</strong> &#8211; name of hdf5 file.</li>
+<li><strong>dataset_path</strong> &#8211; path within hdf5 file to a single dataset.</li>
+<li><strong>int</strong> (<em>distaxis</em>) &#8211; distributed axis</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">pyDive.h5.h5_ndarray instance</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyDive.adios.html" title="pyDive.arrays.ad_ndarray module"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pyDive.ndarray.html" title="pyDive.arrays.ndarray module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="reference.html" >Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

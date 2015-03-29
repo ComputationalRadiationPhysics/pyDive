@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.fragment &mdash; pyDive 1.1 beta documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.1 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive 1.1 beta documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyDive.fragment</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Copyright 2014 Heiko Burau</span>
+
+<span class="sd">This file is part of pyDive.</span>
+
+<span class="sd">pyDive is free software: you can redistribute it and/or modify</span>
+<span class="sd">it under the terms of of either the GNU General Public License or</span>
+<span class="sd">the GNU Lesser General Public License as published by</span>
+<span class="sd">the Free Software Foundation, either version 3 of the License, or</span>
+<span class="sd">(at your option) any later version.</span>
+<span class="sd">pyDive is distributed in the hope that it will be useful,</span>
+<span class="sd">but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="sd">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="sd">GNU General Public License and the GNU Lesser General Public License</span>
+<span class="sd">for more details.</span>
+
+<span class="sd">You should have received a copy of the GNU General Public License</span>
+<span class="sd">and the GNU Lesser General Public License along with pyDive.</span>
+<span class="sd">If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">__doc__</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="kn">import</span> <span class="nn">IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
+<span class="kn">from</span> <span class="nn">IPython.parallel</span> <span class="kn">import</span> <span class="n">interactive</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">arrays.h5_ndarray</span> <span class="kn">import</span> <span class="n">h5_ndarray</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">h5_ndarray</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">arrays.ad_ndarray</span> <span class="kn">import</span> <span class="n">ad_ndarray</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">ad_ndarray</span> <span class="o">=</span> <span class="bp">None</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="c">#: list of array types that store their elements on hard disk</span>
+<span class="n">hdd_arraytypes</span> <span class="o">=</span> <span class="p">(</span><span class="n">h5_ndarray</span><span class="p">,</span> <span class="n">ad_ndarray</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">__bestStepSize</span><span class="p">(</span><span class="n">arrays</span><span class="p">,</span> <span class="n">memory_limit</span><span class="p">):</span>
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+
+    <span class="c"># minimum amount of memory available and memory needed, both per engine</span>
+    <span class="n">get_mem_av_node</span> <span class="o">=</span> <span class="n">interactive</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">available</span><span class="p">)</span>
+    <span class="n">mem_av</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">get_mem_av_node</span><span class="p">))</span> <span class="o">/</span> <span class="n">com</span><span class="o">.</span><span class="n">getPPN</span><span class="p">()</span>
+    <span class="n">mem_needed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">nbytes</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+
+    <span class="c"># edge length of the whole array</span>
+    <span class="n">edge_length</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">distaxis</span><span class="p">]</span>
+    <span class="c"># maximum edge length on one engine according to the available memory</span>
+    <span class="n">step_size</span> <span class="o">=</span> <span class="n">memory_limit</span> <span class="o">*</span> <span class="n">edge_length</span> <span class="o">*</span> <span class="n">mem_av</span> <span class="o">/</span> <span class="n">mem_needed</span>
+
+    <span class="k">if</span> <span class="n">step_size</span> <span class="o">&gt;=</span> <span class="n">edge_length</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">edge_length</span>
+
+    <span class="c"># round &#39;step_size&#39; down to nearest power of two</span>
+    <span class="k">return</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="fragment"><a class="viewcode-back" href="../../modules.html#pyDive.fragment.fragment">[docs]</a><span class="k">def</span> <span class="nf">fragment</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create fragments of *arrays* so that each fragment will fit into the combined</span>
+<span class="sd">    main memory of all engines when calling ``load()``. The fragmentation is done by array slicing along the distributed axis.</span>
+<span class="sd">    The edge size of the fragments is a power of two except for the last fragment.</span>
+
+<span class="sd">    :param array: distributed arrays (e.g. pyDive.ndarray, pyDive.h5_ndarray, ...)</span>
+<span class="sd">    :param kwargs: optional keyword arguments are: ``memory_limit`` and ``offset``.</span>
+<span class="sd">    :param float memory_limit: fraction of the combined main memory of all engines reserved for fragmentation.</span>
+<span class="sd">        Defaults to ``0.25``.</span>
+<span class="sd">    :param bool offset: If ``True`` the returned tuple is extended by the fragments&#39; offset (along the distributed axis).</span>
+<span class="sd">        Defaults to ``False``.</span>
+<span class="sd">    :raises AssertionError: If not all arrays have the same shape.</span>
+<span class="sd">    :raises AssertionError: If not all arrays are distributed along the same axis.</span>
+<span class="sd">    :return: generator object (list) of tuples. Each tuple consists of one fragment for each array in *arrays*.</span>
+
+<span class="sd">    Note that *arrays* may contain an arbitrary number of distributed arrays of any type.</span>
+<span class="sd">    While the fragments&#39; size is solely calculated based on the memory consumption of</span>
+<span class="sd">    arrays that store their elements on hard disk (see :obj:`hdd_arraytypes`),</span>
+<span class="sd">    the fragmentation itself is applied on all arrays in the same way.</span>
+
+<span class="sd">    Example: ::</span>
+
+<span class="sd">        big_h5_array = pyDive.h5.open(&quot;monster.h5&quot;, &quot;/&quot;)</span>
+<span class="sd">        # big_h5_array.load() # crash</span>
+
+<span class="sd">        for h5_array, offset in pyDive.fragment(big_h5_array, offset=True):</span>
+<span class="sd">            a = h5_array.load() # no crash</span>
+<span class="sd">            print &quot;This fragment&#39;s offset is&quot;, offset, &quot;on axis:&quot;, a.distaxis</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># default keyword arguments</span>
+    <span class="n">kwargs_defaults</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;memory_limit&quot;</span> <span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s">&quot;offset&quot;</span> <span class="p">:</span> <span class="bp">False</span><span class="p">}</span>
+    <span class="n">kwargs_defaults</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs_defaults</span>
+
+    <span class="n">memory_limit</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&quot;memory_limit&quot;</span><span class="p">]</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&quot;offset&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">arrays</span><span class="p">:</span> <span class="k">return</span>
+
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">distaxis</span> <span class="o">==</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">distaxis</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">),</span> \
+        <span class="s">&quot;all arrays must be distributed along the same axis&quot;</span>
+
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">),</span> \
+        <span class="s">&quot;all arrays must have the same shape&quot;</span>
+
+    <span class="c"># calculate the best suitable step size (-&gt; fragment&#39;s edge size) according to the amount</span>
+    <span class="c"># of available memory on the engines</span>
+    <span class="n">hdd_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span> <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">]</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">__bestStepSize</span><span class="p">(</span><span class="n">hdd_arrays</span><span class="p">,</span> <span class="n">memory_limit</span><span class="p">)</span>
+
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">distaxis</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">distaxis</span>
+    <span class="c"># list of slices representing the fragment&#39;s shape</span>
+    <span class="n">fragment_window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">begin</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">],</span> <span class="n">step</span><span class="p">):</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">begin</span> <span class="o">+</span> <span class="n">step</span><span class="p">,</span> <span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">])</span>
+        <span class="n">fragment_window</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="p">[</span><span class="n">fragment_window</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">offset</span><span class="p">:</span>
+            <span class="n">offset_vector</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">offset_vector</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">begin</span>
+            <span class="n">result</span> <span class="o">+=</span> <span class="p">[</span><span class="n">offset_vector</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">result</span>
+
+    <span class="k">return</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

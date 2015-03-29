@@ -6,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pyDive.ndarray package &mdash; pyDive 1.0.2 beta documentation</title>
+    <title>pyDive.arrays.ndarray module &mdash; pyDive 1.1 beta documentation</title>
     
-    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.0.2 beta',
+        VERSION:     '1.1 beta',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,13 +23,13 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="pyDive 1.0.2 beta documentation" href="index.html" />
+    <link rel="top" title="pyDive 1.1 beta documentation" href="index.html" />
     <link rel="up" title="Reference" href="reference.html" />
-    <link rel="next" title="pyDive.h5_ndarray package" href="pyDive.h5_ndarray.html" />
+    <link rel="next" title="pyDive.arrays.h5_ndarray module" href="pyDive.h5.html" />
     <link rel="prev" title="Reference" href="reference.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -39,95 +39,127 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pyDive.h5_ndarray.html" title="pyDive.h5_ndarray package"
+          <a href="pyDive.h5.html" title="pyDive.arrays.h5_ndarray module"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="reference.html" title="Reference"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pyDive 1.0.2 beta documentation</a> &raquo;</li>
-          <li><a href="reference.html" accesskey="U">Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="reference.html" accesskey="U">Reference</a> &raquo;</li> 
       </ul>
-    </div>  
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pyDive.arrays.ndarray module</a><ul>
+<li><a class="reference internal" href="#pydive-ndarray-class">pyDive.ndarray class</a></li>
+<li><a class="reference internal" href="#factory-functions">Factory functions</a></li>
+<li><a class="reference internal" href="#universal-functions">Universal functions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="reference.html"
+                        title="previous chapter">Reference</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pyDive.h5.html"
+                        title="next chapter">pyDive.arrays.h5_ndarray module</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pyDive.ndarray.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
-  <div class="section" id="pydive-ndarray-package">
-<span id="pydive-ndarray"></span><h1>pyDive.ndarray package<a class="headerlink" href="#pydive-ndarray-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="pydive-arrays-ndarray-module">
+<span id="pydive-ndarray"></span><h1>pyDive.arrays.ndarray module<a class="headerlink" href="#pydive-arrays-ndarray-module" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">All of this module&#8217;s functions and classes are also directly accessable from the <code class="xref py py-mod docutils literal"><span class="pre">pyDive</span></code> module.</p>
 </div>
-<div class="section" id="pydive-ndarray-ndarray-module">
-<h2>pyDive.ndarray.ndarray module<a class="headerlink" href="#pydive-ndarray-ndarray-module" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="pydive-ndarray-class">
+<h2>pyDive.ndarray class<a class="headerlink" href="#pydive-ndarray-class" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="pyDive.ndarray.ndarray.ndarray">
-<em class="property">class </em><tt class="descclassname">pyDive.ndarray.ndarray.</tt><tt class="descname">ndarray</tt><big>(</big><em>shape</em>, <em>distaxis=0</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>idx_ranges=None</em>, <em>targets_in_use=None</em>, <em>no_allocation=False</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/ndarray.html#ndarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.ndarray.ndarray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents a cluster-wide, multidimensional, homogenous array of fixed-size elements.
-<em>cluster-wide</em> means that its elements are distributed across <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">IPython.parallel-engines</em></a>.
-The distribution is done in one dimension along a user-specified axis. The user can optionally specify
-which engine maps to which index range or leave the default that persuits an uniform distribution
-across all engines.</p>
-<p>The implementation is based on <em>IPython.parallel</em> and local <em>numpy-arrays</em>. The design goal is
-to forward every <em>numpy-array</em> method onto the cluster-wide level. Currently <a class="reference internal" href="#pyDive.ndarray.ndarray.ndarray" title="pyDive.ndarray.ndarray.ndarray"><tt class="xref py py-class docutils literal"><span class="pre">pyDive.ndarray.ndarray.ndarray</span></tt></a>
-supports basic arithmetic operations (+ - * / ** //) as well as most of the numpy-<em>math</em>
-functions like sin, cos, abs, sqrt, ... (see <a class="reference internal" href="#module-pyDive.ndarray.dist_math" title="pyDive.ndarray.dist_math"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.ndarray.dist_math</span></tt></a>)</p>
-<p>Note that array slicing is a cheap operation since no memory is copied. However this can easily
-lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
-Therefore call <tt class="xref py py-meth docutils literal"><span class="pre">dist_like()</span></tt> first before doing any manual
-stuff on their local <em>numpy-arrays</em>.</p>
-<p>Every cluster-wide array operation first equalizes the distribution of all involved arrays if necessary.</p>
+<dt id="pyDive.ndarray">
+<em class="property">class </em><code class="descclassname">pyDive.</code><code class="descname">ndarray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
+<em>cluster-wide</em> means that its elements are distributed across IPython.parallel-engines.
+The distribution is done in one dimension along a single, user-specified axis.
+The user can optionally specify which engine maps to which index range or leave the default that persuits an uniform distribution across all engines.</p>
+<p>This <strong>ndarray</strong> - class is auto-generated out of its local counterpart: <strong>numpy.ndarray</strong>.</p>
+<p>The implementation is based on IPython.parallel and local numpy.ndarray - arrays.
+Every special operation numpy.ndarray implements (&#8220;__add__&#8221;, &#8220;__le__&#8221;, ...) is also
+available for ndarray.</p>
+<p>Note that array slicing is a cheap operation since no memory is copied.
+However this can easily lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
+Therefore call dist_like() first before doing any manual stuff on their local arrays.
+However every cluster-wide array operation first equalizes the distribution of all involved arrays,
+so an explicit call to dist_like() is rather unlikely in most use cases.</p>
 <dl class="method">
-<dt id="pyDive.ndarray.ndarray.ndarray.__init__">
-<tt class="descname">__init__</tt><big>(</big><em>shape</em>, <em>distaxis=0</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>idx_ranges=None</em>, <em>targets_in_use=None</em>, <em>no_allocation=False</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/ndarray.html#ndarray.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.ndarray.ndarray.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates an <a class="reference internal" href="#pyDive.ndarray.ndarray.ndarray" title="pyDive.ndarray.ndarray.ndarray"><tt class="xref py py-class docutils literal"><span class="pre">pyDive.ndarray.ndarray.ndarray</span></tt></a> instance. This is a low-level method for instanciating
-an array. Arrays should  be constructed using &#8216;empty&#8217;, &#8216;zeros&#8217;
-or &#8216;array&#8217; (see <a class="reference internal" href="#module-pyDive.ndarray.factories" title="pyDive.ndarray.factories"><tt class="xref py py-mod docutils literal"><span class="pre">pyDive.ndarray.factories</span></tt></a>).</p>
+<dt id="pyDive.ndarray.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an instance of ndarray. This is a low-level method of instantiating an array, it should rather be
+constructed using factory functions (&#8220;empty&#8221;, &#8220;zeros&#8221;, &#8220;open&#8221;, ...)</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>shape</strong> (<em>tuple of ints</em>) &#8211; size of the array on each axis</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
-<li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
-<li><strong>idx_ranges</strong> (<em>tuple/list of (int, int)</em>) &#8211; list of (begin, end) pairs indicating the index range the corresponding
-<a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a> (see <em class="xref std std-ref">targets_in_use</em>) is associated with</li>
-<li><strong>targets_in_use</strong> (<em>tuple/list of ints</em>) &#8211; list of <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a>-ids that share this array.</li>
-<li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <tt class="docutils literal"><span class="pre">True</span></tt> no actual memory, i.e. <em>numpy-array</em>, will be
-allocated on <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engine</em></a>. Useful when you want to assign an existing numpy array manually.</li>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
+<li><strong>dtype</strong> &#8211; datatype of a single element</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>target_offsets</strong> (<em>ints</em>) &#8211; list of indices marking the offset along the distributed axis of each local array.</li>
+<li><strong>target_ranks</strong> (<em>ints</em>) &#8211; list of <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> ranks holding the local arrays.</li>
+<li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <code class="docutils literal"><span class="pre">True</span></code> no instance of numpy.ndarray will be created on engine. Useful for
+manual instantiation of the local array.</li>
+<li><strong>kwargs</strong> &#8211; additional keyword arguments are forwarded to the constructor of the local array.</li>
 </ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name" colspan="2">Raises ValueError:</th></tr>
-<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><p class="first last">if just <em>idx_ranges</em> is given and <em>targets_in_use</em> not or vice versa</p>
 </td>
 </tr>
 </tbody>
 </table>
-<p>If <em>idx_ranges</em> and <em>targets_in_use</em> are both <tt class="docutils literal"><span class="pre">None</span></tt> they will be auto-generated
-so that the memory is equally distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> at its best.
-This means that the last engine may get less memory than the others.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyDive.ndarray.ndarray.ndarray.copy">
-<tt class="descname">copy</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/ndarray.html#ndarray.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.ndarray.ndarray.copy" title="Permalink to this definition">¶</a></dt>
+<dt id="pyDive.ndarray.copy">
+<code class="descname">copy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a hard copy of this array.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="pyDive.ndarray.ndarray.ndarray.dist_like">
-<tt class="descname">dist_like</tt><big>(</big><em>other</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/ndarray.html#ndarray.dist_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.ndarray.ndarray.dist_like" title="Permalink to this definition">¶</a></dt>
+<dt id="pyDive.ndarray.dist_like">
+<code class="descname">dist_like</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray.dist_like" title="Permalink to this definition">¶</a></dt>
 <dd><p>Redistributes a copy of this array (<em>self</em>) like <em>other</em> and returns the result.
 Checks whether redistribution is necessary and returns <em>self</em> if not.</p>
-<p>Redistribution involves inter-engine communication via MPI.</p>
+<p>Redistribution involves inter-engine communication.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>other</strong> (<a class="reference internal" href="#pyDive.ndarray.ndarray.ndarray" title="pyDive.ndarray.ndarray.ndarray"><tt class="xref py py-class docutils literal"><span class="pre">pyDive.ndarray.ndarray.ndarray</span></tt></a>) &#8211; target array</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>other</strong> (<em>distributed array</em>) &#8211; target array</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first simple">
@@ -145,15 +177,15 @@ If <em>self</em> is already distributed like <em>other</em> nothing is done and 
 </dd></dl>
 
 <dl class="method">
-<dt id="pyDive.ndarray.ndarray.ndarray.gather">
-<tt class="descname">gather</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/ndarray.html#ndarray.gather"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.ndarray.ndarray.gather" title="Permalink to this definition">¶</a></dt>
-<dd><p>Gathers the local <em>numpy-arrays</em> from the <em>engines</em>, concatenates them and returns
+<dt id="pyDive.ndarray.gather">
+<code class="descname">gather</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray.gather" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gathers local instances of numpy.ndarray from <em>engines</em>, concatenates them and returns
 the result.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">numpy-array</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">instance of numpy.ndarray</td>
 </tr>
 </tbody>
 </table>
@@ -162,20 +194,20 @@ the result.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-pyDive.ndarray.factories">
-<span id="pydive-ndarray-factories-module"></span><h2>pyDive.ndarray.factories module<a class="headerlink" href="#module-pyDive.ndarray.factories" title="Permalink to this headline">¶</a></h2>
-<p>This module holds high-level functions for instanciating <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarrays</em></a>.</p>
-<dl class="function">
-<dt id="pyDive.ndarray.factories.array">
-<tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">array</tt><big>(</big><em>array_like</em>, <em>distaxis=0</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.array" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarray package</em></a> from an array-like object.</p>
+<div class="section" id="factory-functions">
+<h2>Factory functions<a class="headerlink" href="#factory-functions" title="Permalink to this headline">¶</a></h2>
+<p>These are convenient functions to create a <em>pyDive.ndarray</em> instance.</p>
+<span class="target" id="module-pyDive.arrays.ndarray"></span><dl class="function">
+<dt id="pyDive.arrays.ndarray.array">
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">array</code><span class="sig-paren">(</span><em>array_like</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/ndarray.html#array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.ndarray.array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a pyDive.ndarray instance from an array-like object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>array_like</strong> (<em>array-like</em>) &#8211; Any object exposing the array interface, e.g. numpy-array, python sequence, ...</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
+<li><strong>array_like</strong> &#8211; Any object exposing the array interface, e.g. numpy-array, python sequence, ...</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
 </ul>
 </td>
 </tr>
@@ -184,17 +216,18 @@ the result.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pyDive.ndarray.factories.empty">
-<tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">empty</tt><big>(</big><em>shape</em>, <em>distaxis=0</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#empty"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.empty" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarray package</em></a> distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> without initializing elements.</p>
+<dt id="pyDive.arrays.ndarray.empty">
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">empty</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <em>ndarray</em> instance. This function calls its local counterpart <em>numpy.empty</em> on each <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
-<li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
+<li><strong>dtype</strong> &#8211; datatype of a single element</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>kwargs</strong> &#8211; keyword arguments are passed to the local function <em>numpy.empty</em></li>
 </ul>
 </td>
 </tr>
@@ -203,26 +236,17 @@ the result.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pyDive.ndarray.factories.empty_like">
-<tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">empty_like</tt><big>(</big><em>a</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#empty_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.empty_like" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarray package</em></a> with the same shape, distribution and type as <em>a</em> without initializing elements.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyDive.ndarray.factories.hollow">
-<tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">hollow</tt><big>(</big><em>shape</em>, <em>distaxis=0</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#hollow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.hollow" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>Return a new <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarray package</em></a> distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> without allocating a local</dt>
-<dd><em>numpy-array</em>.</dd>
-</dl>
+<dt id="pyDive.arrays.ndarray.empty_like">
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">empty_like</code><span class="sig-paren">(</span><em>other</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.empty_like" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <em>ndarray</em> instance with the same shape, dtype and distribution as <code class="docutils literal"><span class="pre">other</span></code>.
+This function calls its local counterpart <em>numpy.empty_like</em> on each <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
-<li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
+<li><strong>other</strong> &#8211; other array</li>
+<li><strong>kwargs</strong> &#8211; keyword arguments are passed to the local function <em>numpy.empty_like</em></li>
 </ul>
 </td>
 </tr>
@@ -231,24 +255,18 @@ the result.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pyDive.ndarray.factories.hollow_like">
-<tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">hollow_like</tt><big>(</big><em>a</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#hollow_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.hollow_like" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarray package</em></a> with the same shape, distribution and type as <em>a</em> without allocating
-a local <em>numpy-array</em>.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyDive.ndarray.factories.ones">
-<tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">ones</tt><big>(</big><em>shape</em>, <em>distaxis=0</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#ones"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.ones" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarray package</em></a> distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> filled with ones.</p>
+<dt id="pyDive.arrays.ndarray.hollow">
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">hollow</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/ndarray.html#hollow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.ndarray.hollow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a pyDive.ndarray instance distributed across all engines without allocating a local
+numpy-array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
-<li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
+<li><strong>dtype</strong> &#8211; datatype of a single element</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
 </ul>
 </td>
 </tr>
@@ -257,23 +275,25 @@ a local <em>numpy-array</em>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pyDive.ndarray.factories.ones_like">
-<tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">ones_like</tt><big>(</big><em>a</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#ones_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.ones_like" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarray package</em></a> with the same shape, distribution and type as <em>a</em> filled with ones.</p>
+<dt id="pyDive.arrays.ndarray.hollow_like">
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">hollow_like</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/ndarray.html#hollow_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.ndarray.hollow_like" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a pyDive.ndarray instance with the same
+shape, distribution and type as <code class="docutils literal"><span class="pre">other</span></code> without allocating a local numpy-array.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pyDive.ndarray.factories.zeros">
-<tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">zeros</tt><big>(</big><em>shape</em>, <em>distaxis=0</em>, <em>dtype=&lt;type 'float'&gt;</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#zeros"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.zeros" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarray package</em></a> distributed across all <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a> filled with zeros.</p>
+<dt id="pyDive.arrays.ndarray.zeros">
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">zeros</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.zeros" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <em>ndarray</em> instance. This function calls its local counterpart <em>numpy.zeros</em> on each <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of the array</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; axis on which memory is distributed across the <a class="reference internal" href="index.html#term-engine"><em class="xref std std-term">engines</em></a></li>
-<li><strong>dtype</strong> (<em>numpy-dtype</em>) &#8211; datatype of a single data value</li>
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
+<li><strong>dtype</strong> &#8211; datatype of a single element</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>kwargs</strong> &#8211; keyword arguments are passed to the local function <em>numpy.zeros</em></li>
 </ul>
 </td>
 </tr>
@@ -282,25 +302,73 @@ a local <em>numpy-array</em>.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="pyDive.ndarray.factories.zeros_like">
-<tt class="descclassname">pyDive.ndarray.factories.</tt><tt class="descname">zeros_like</tt><big>(</big><em>a</em><big>)</big><a class="reference internal" href="_modules/pyDive/ndarray/factories.html#zeros_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.ndarray.factories.zeros_like" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a new <a class="reference internal" href="#pydive-ndarray"><em>pyDive.ndarray package</em></a> with the same shape, distribution and type as <em>a</em> filled with zeros.</p>
+<dt id="pyDive.arrays.ndarray.zeros_like">
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">zeros_like</code><span class="sig-paren">(</span><em>other</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.zeros_like" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <em>ndarray</em> instance with the same shape, dtype and distribution as <code class="docutils literal"><span class="pre">other</span></code>.
+This function calls its local counterpart <em>numpy.zeros_like</em> on each <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>other</strong> &#8211; other array</li>
+<li><strong>kwargs</strong> &#8211; keyword arguments are passed to the local function <em>numpy.zeros_like</em></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.arrays.ndarray.ones">
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">ones</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.ones" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <em>ndarray</em> instance. This function calls its local counterpart <em>numpy.ones</em> on each <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
+<li><strong>dtype</strong> &#8211; datatype of a single element</li>
+<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>kwargs</strong> &#8211; keyword arguments are passed to the local function <em>numpy.ones</em></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.arrays.ndarray.ones_like">
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">ones_like</code><span class="sig-paren">(</span><em>other</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.ones_like" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <em>ndarray</em> instance with the same shape, dtype and distribution as <code class="docutils literal"><span class="pre">other</span></code>.
+This function calls its local counterpart <em>numpy.ones_like</em> on each <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>other</strong> &#8211; other array</li>
+<li><strong>kwargs</strong> &#8211; keyword arguments are passed to the local function <em>numpy.ones_like</em></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
-<div class="section" id="module-pyDive.ndarray.dist_math">
-<span id="pydive-ndarray-dist-math-module"></span><h2>pyDive.ndarray.dist_math module<a class="headerlink" href="#module-pyDive.ndarray.dist_math" title="Permalink to this headline">¶</a></h2>
-<p>Mathematical functions supporting <a class="reference internal" href="#pyDive.ndarray.ndarray.ndarray" title="pyDive.ndarray.ndarray.ndarray"><tt class="xref py py-class docutils literal"><span class="pre">pyDive.ndarray.ndarray.ndarray</span></tt></a>:</p>
-<p><strong>trigonometric</strong>:</p>
-<p>sin, cos, tan, arcsin, arccos, arctan</p>
-<p><strong>hyperbolic</strong>:</p>
-<p>sinh, cosh, tanh, arcsinh, arccosh, arctanh</p>
-<p><strong>rounding</strong>:</p>
-<p>around, round, rint, fix, floor, ceil, trunc</p>
-<p><strong>exponential and logarithmic</strong>:</p>
-<p>exp, expm1, exp2, log, log10, log2, log1p</p>
-<p><strong>misc</strong>:</p>
-<p>abs, sqrt, maximum, minimum</p>
+<div class="section" id="universal-functions">
+<h2>Universal functions<a class="headerlink" href="#universal-functions" title="Permalink to this headline">¶</a></h2>
+<p><em>numpy</em> knows the so called <em>ufuncs</em> (universal function). These are functions which can be applied
+elementwise on an array, like <em>sin</em>, <em>cos</em>, <em>exp</em>, <em>sqrt</em>, etc. All of these <em>ufuncs</em> from <em>numpy</em> are
+also available for <em>pyDive.ndarray</em> arrays, e.g.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">a</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="mi">100</span><span class="p">])</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -308,48 +376,9 @@ a local <em>numpy-array</em>.</p>
           </div>
         </div>
       </div>
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">pyDive.ndarray package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
-<li><a class="reference internal" href="#pydive-ndarray-ndarray-module">pyDive.ndarray.ndarray module</a></li>
-<li><a class="reference internal" href="#module-pyDive.ndarray.factories">pyDive.ndarray.factories module</a></li>
-<li><a class="reference internal" href="#module-pyDive.ndarray.dist_math">pyDive.ndarray.dist_math module</a></li>
-</ul>
-</li>
-</ul>
-
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="reference.html"
-                        title="previous chapter">Reference</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="pyDive.h5_ndarray.html"
-                        title="next chapter">pyDive.h5_ndarray package</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/pyDive.ndarray.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
-  <h3>Quick search</h3>
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
-        </div>
-      </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -359,18 +388,18 @@ a local <em>numpy-array</em>.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pyDive.h5_ndarray.html" title="pyDive.h5_ndarray package"
+          <a href="pyDive.h5.html" title="pyDive.arrays.h5_ndarray module"
              >next</a> |</li>
         <li class="right" >
           <a href="reference.html" title="Reference"
              >previous</a> |</li>
-        <li><a href="index.html">pyDive 1.0.2 beta documentation</a> &raquo;</li>
-          <li><a href="reference.html" >Reference</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="reference.html" >Reference</a> &raquo;</li> 
       </ul>
     </div>
-    <div class="footer">
+    <div class="footer" role="contentinfo">
         &copy; Copyright 2014, Heiko Burau.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
     </div>
   </body>
 </html>

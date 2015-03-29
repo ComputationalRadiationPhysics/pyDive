@@ -1,0 +1,281 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.arrays.ad_ndarray &mdash; pyDive 1.1 beta documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.1 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive 1.1 beta documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyDive.arrays.ad_ndarray</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Copyright 2015 Heiko Burau</span>
+
+<span class="sd">This file is part of pyDive.</span>
+
+<span class="sd">pyDive is free software: you can redistribute it and/or modify</span>
+<span class="sd">it under the terms of of either the GNU General Public License or</span>
+<span class="sd">the GNU Lesser General Public License as published by</span>
+<span class="sd">the Free Software Foundation, either version 3 of the License, or</span>
+<span class="sd">(at your option) any later version.</span>
+<span class="sd">pyDive is distributed in the hope that it will be useful,</span>
+<span class="sd">but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="sd">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="sd">GNU General Public License and the GNU Lesser General Public License</span>
+<span class="sd">for more details.</span>
+
+<span class="sd">You should have received a copy of the GNU General Public License</span>
+<span class="sd">and the GNU Lesser General Public License along with pyDive.</span>
+<span class="sd">If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">__doc__</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">adios</span> <span class="kn">as</span> <span class="nn">ad</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="kn">import</span> <span class="nn">pyDive.distribution.helper</span> <span class="kn">as</span> <span class="nn">helper</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="k">class</span> <span class="nc">ad_ndarray_local</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">variable_path</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variable_path</span> <span class="o">=</span> <span class="n">variable_path</span>
+
+        <span class="n">fileHandle</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">variable</span> <span class="o">=</span> <span class="n">fileHandle</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="n">variable_path</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">type</span>
+        <span class="k">if</span> <span class="n">shape</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">dims</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">fileHandle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shape</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">window</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+
+        <span class="c">#: total bytes consumed by the elements of the array.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">begin</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+                <span class="n">begin</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o</span><span class="o">+</span><span class="n">w</span><span class="p">)</span>
+                <span class="n">size</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">begin</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o</span><span class="o">+</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+                <span class="n">size</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">stop</span><span class="o">-</span><span class="n">w</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+
+        <span class="n">fileHandle</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">variable</span> <span class="o">=</span> <span class="n">fileHandle</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">variable_path</span><span class="p">]</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">begin</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">fileHandle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c"># remove all single dimensional axes unless they are a result of slicing, i.e. a[n,n+1]</span>
+        <span class="n">single_dim_axes</span> <span class="o">=</span> <span class="p">[</span><span class="n">axis</span> <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">))</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">[</span><span class="n">axis</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">single_dim_axes</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">single_dim_axes</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">),)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="p">]</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>\
+            <span class="s">&quot;number of arguments (</span><span class="si">%d</span><span class="s">) does not correspond to the dimension (</span><span class="si">%d</span><span class="s">)&quot;</span>\
+                 <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+        <span class="k">assert</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">),</span>\
+            <span class="s">&quot;single data access is not supported by adios&quot;</span>
+
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">arg</span><span class="o">.</span><span class="n">step</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">arg</span><span class="o">.</span><span class="n">step</span> <span class="o">==</span> <span class="bp">None</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">slice</span><span class="p">),</span>\
+            <span class="s">&quot;strided access in not supported by adios&quot;</span>
+
+        <span class="n">result_shape</span><span class="p">,</span> <span class="n">clean_view</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">view_of_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="c"># Applying &#39;clean_view&#39; after &#39;self.window&#39;, results in &#39;result_window&#39;</span>
+        <span class="n">result_window</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">view_of_view</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">window</span><span class="p">,</span> <span class="n">clean_view</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ad_ndarray_local</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">variable_path</span><span class="p">,</span> <span class="n">result_shape</span><span class="p">,</span> <span class="n">result_window</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span>
+
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="n">onTarget</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;onTarget&quot;</span><span class="p">,</span> <span class="s">&#39;False&#39;</span><span class="p">)</span>
+
+<span class="c"># execute this code only if it is not executed on engine</span>
+<span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">pyDive.arrays.ndarray</span> <span class="kn">import</span> <span class="n">hollow_like</span>
+    <span class="kn">import</span> <span class="nn">pyDive.distribution.single_axis</span> <span class="kn">as</span> <span class="nn">single_axis</span>
+    <span class="kn">import</span> <span class="nn">pyDive.IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
+    <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span>
+    <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">arrayOfStructs</span>
+
+    <span class="n">ad_ndarray</span> <span class="o">=</span> <span class="n">single_axis</span><span class="o">.</span><span class="n">distribute</span><span class="p">(</span><span class="n">ad_ndarray_local</span><span class="p">,</span> <span class="s">&quot;ad_ndarray&quot;</span><span class="p">,</span> <span class="s">&quot;ad_ndarray&quot;</span><span class="p">,</span> <span class="n">may_allocate</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Load array from file into main memory of all engines in parallel.</span>
+
+<span class="sd">        :return: pyDive.ndarray instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">hollow_like</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = {1}.load()&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="n">ad_ndarray</span><span class="o">.</span><span class="n">load</span> <span class="o">=</span> <span class="n">load</span>
+    <span class="k">del</span> <span class="n">load</span>
+
+<div class="viewcode-block" id="open_variable"><a class="viewcode-back" href="../../../pyDive.adios.html#pyDive.arrays.ad_ndarray.open_variable">[docs]</a>    <span class="k">def</span> <span class="nf">open_variable</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">variable_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a pyDive.adios.ad_ndarray instance from file.</span>
+
+<span class="sd">        :param filename: name of adios file.</span>
+<span class="sd">        :param variable_path: path within adios file to a single variable.</span>
+<span class="sd">        :param distaxis int: distributed axis</span>
+<span class="sd">        :return: pyDive.adios.ad_ndarray instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fileHandle</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">variable</span> <span class="o">=</span> <span class="n">fileHandle</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="n">variable_path</span><span class="p">]</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">type</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+        <span class="n">fileHandle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">ad_ndarray</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+
+        <span class="n">target_shapes</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">target_shapes</span><span class="p">()</span>
+        <span class="n">target_offset_vectors</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">target_offset_vectors</span><span class="p">()</span>
+
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&quot;shape&quot;</span><span class="p">,</span> <span class="n">target_shapes</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&quot;offset&quot;</span><span class="p">,</span> <span class="n">target_offset_vectors</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = ad_ndarray.ad_ndarray_local(&#39;{1}&#39;,&#39;{2}&#39;,shape=shape[0],offset=offset[0])&quot;</span>\
+            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">variable_path</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+</div>
+<div class="viewcode-block" id="open"><a class="viewcode-back" href="../../../pyDive.adios.html#pyDive.arrays.ad_ndarray.open">[docs]</a>    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">datapath</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a pyDive.adios.ad_ndarray instance respectively a structure of</span>
+<span class="sd">        pyDive.adios.ad_ndarray instances from file.</span>
+
+<span class="sd">        :param filename: name of adios file.</span>
+<span class="sd">        :param datapath: path within adios file to a single variable or a group of variables.</span>
+<span class="sd">        :param distaxis int: distributed axis</span>
+<span class="sd">        :return: pyDive.adios.ad_ndarray instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fileHandle</span> <span class="o">=</span> <span class="n">ad</span><span class="o">.</span><span class="n">file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">variable_paths</span> <span class="o">=</span> <span class="n">fileHandle</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">fileHandle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">update_tree</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">variable_path</span><span class="p">,</span> <span class="n">variable_path_iter</span><span class="p">,</span> <span class="n">leaf</span><span class="p">):</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">variable_path_iter</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="o">==</span> <span class="n">leaf</span><span class="p">:</span>
+                <span class="n">tree</span><span class="p">[</span><span class="n">leaf</span><span class="p">]</span> <span class="o">=</span> <span class="n">open_variable</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">variable_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="n">tree</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">update_tree</span><span class="p">(</span><span class="n">tree</span><span class="p">[</span><span class="n">node</span><span class="p">],</span> <span class="n">variable_path</span><span class="p">,</span> <span class="n">variable_path_iter</span><span class="p">,</span> <span class="n">leaf</span><span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">datapath</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">))</span>
+
+        <span class="n">structOfArrays</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">variable_path</span> <span class="ow">in</span> <span class="n">variable_paths</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">variable_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">datapath</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">path_nodes</span> <span class="o">=</span> <span class="n">variable_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">)</span>
+            <span class="n">path_nodes_it</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">path_nodes</span><span class="p">)</span>
+
+            <span class="c"># advance &#39;path_nodes_it&#39; n times</span>
+            <span class="nb">next</span><span class="p">(</span><span class="n">islice</span><span class="p">(</span><span class="n">path_nodes_it</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+
+            <span class="n">update_tree</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">variable_path</span><span class="p">,</span> <span class="n">path_nodes_it</span><span class="p">,</span> <span class="n">path_nodes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">arrayOfStructs</span><span class="o">.</span><span class="n">arrayOfStructs</span><span class="p">(</span><span class="n">structOfArrays</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>
