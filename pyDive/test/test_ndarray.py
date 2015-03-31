@@ -37,6 +37,17 @@ def test_slicing(init_pyDive):
 
                 assert np.array_equal(ref[slices], test_array[slices].gather())
 
+                # bitmask indexing
+                bitmask = pyDive.array(np.random.rand(*size) > 0.5, distaxis=test_array.distaxis)
+                assert ref[bitmask.gather()].shape == test_array[bitmask].shape
+                # ordering can be distinct, thus merely check if sets are equal
+                assert set(ref[bitmask.gather()]) == set(test_array[bitmask].gather())
+
+                ref2 = ref.copy()
+                test_array2 = test_array.copy()
+                ref2[bitmask.gather()] = 1
+                test_array2[bitmask] = 1
+                assert np.array_equal(ref2, test_array2.gather())
 
 def test_interengine(init_pyDive):
     for size in sizes:

@@ -144,6 +144,27 @@ class DistributedGenericArray(object):
         return target_offset_vectors
 
     def __getitem__(self, args):
+
+        # bitmask indexing
+        if isinstance(args, self.__class__) and args.dtype == bool:
+            bitmask = args
+            assert bitmask.shape == self.shape,\
+                "shape of bitmask (%s) does not correspond to shape of array (%s)"\
+                    % (str(bitmask.shape), str(self.shape))
+
+            bitmask = bitmask.dist_like(self) # equalize distribution if necessary
+            self.view.execute("tmp = {0}[{1}]; tmp_size = tmp.shape[0]".format(repr(self), repr(bitmask)), targets=self.target_ranks)
+            sizes = self.view.pull("tmp_size", targets=self.target_ranks)
+            new_target_ranks = [rank for rank, size in zip(self.target_ranks, sizes) if size > 0]
+            new_sizes = [size for size in sizes if size > 0]
+            partial_sum = lambda a, b: a + [a[-1] + b]
+            new_target_offsets = [0] + reduce(partial_sum, new_sizes[1:-1], new_sizes[0:1])
+            new_shape = [sum(new_sizes)]
+            # create resulting ndarray
+            result = self.__class__(new_shape, self.dtype, 0, new_target_offsets, new_target_ranks, no_allocation=True, **self.kwargs)
+            self.view.execute("{0} = tmp; del tmp".format(result.name), targets=result.target_ranks)
+            return result
+
         if args == slice(None):
             args = (slice(None),) * len(self.shape)
 
@@ -229,10 +250,16 @@ class DistributedGenericArray(object):
         return result
 
     def __setitem__(self, key, value):
+        # bitmask indexing
+        if isinstance(key, self.__class__) and key.dtype == bool:
+            bitmask = key.dist_like(self)
+            self.view.execute("%s[%s] = %s" % (repr(self), repr(bitmask), repr(value)), targets=self.target_ranks)
+            return
+
         # if args is [:] then assign value to the entire ndarray
         if key == slice(None):
+            # assign local array to self
             if isinstance(value, self.__class__.local_arraytype):
-                # assign local array to self (distributed array)
                 window = [slice(None)] * len(self.shape)
                 subarrays = []
                 for i in range(len(self.target_offsets)):
@@ -244,8 +271,14 @@ class DistributedGenericArray(object):
                 self.view.execute("%s[:] = subarray[0]" % self.name, targets=self.target_ranks)
                 return
 
-            other = value.dist_like(self)
-            self.view.execute("%s[:] = %s" % (self.name, other.name), targets=self.target_ranks)
+            # assign other array to self
+            if isinstance(value, self.__class__):
+                other = value.dist_like(self)
+                self.view.execute("%s[:] = %s" % (self.name, other.name), targets=self.target_ranks)
+                return
+
+            # assign single value to self
+            self.view.execute("%s[:] = %s" % (self.name, repr(value)), targets=self.target_ranks)
             return
 
         if not isinstance(key, list) and not isinstance(key, tuple):
