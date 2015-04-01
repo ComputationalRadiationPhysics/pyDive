@@ -223,16 +223,6 @@ class ArrayOfStructsClass(object):
 
         # slicing
         # -------
-        if args == slice(None):
-            args = (slice(None),) * len(self.shape)
-
-        if not isinstance(args, list) and not isinstance(args, tuple):
-            args = (args,)
-
-        assert len(args) == len(self.shape),\
-            "number of arguments (%d) does not correspond to the dimension (%d)"\
-                % (len(args), len(self.shape))
-
         result = makeTree_fromTree(self.structOfArrays, lambda a: a[args])
 
         # if args is a list of indices then return a single data value tree
@@ -263,16 +253,6 @@ class ArrayOfStructsClass(object):
 
         # slicing
         # -------
-        if args == slice(None):
-            args = (slice(None),) * len(self.shape)
-
-        if not isinstance(args, list) and not isinstance(args, tuple):
-            args = (args,)
-
-        assert len(args) == len(self.shape),\
-            "number of arguments (%d) does not correspond to the dimension (%d)"\
-                % (len(args), len(self.shape))
-
         def doArrayAssignmentWithSlice(treeA, treeB, name, arrayA, arrayB):
             treeA[name][args] = arrayB
 
