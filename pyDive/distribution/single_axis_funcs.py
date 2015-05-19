@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import types
+from single_axis import DistributedGenericArray
+import numpy as np
+import pyDive.IPParallelClient as com
 
 def distribute(local_arraytype, newclassname, target_modulename, interengine_copier=None, may_allocate = True):
     binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow", "lshift", "rshift", "and", "xor", "or"]
