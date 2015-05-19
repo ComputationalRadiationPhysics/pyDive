@@ -70,7 +70,7 @@ def loadSteps(steps, folder_path, data_path, distaxis=0):
 
         # add 'sim_unit' as 'unit' attribute
         def add_sim_unit(array):
-            if 'sim_unit' in array.attrs:
+            if hasattr(array, "attrs") and 'sim_unit' in array.attrs:
                 setattr(array, "unit", array.attrs["sim_unit"])
             return array
         if type(h5data) is h5.h5_ndarray:
