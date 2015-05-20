@@ -188,7 +188,7 @@ class DistributedGenericArray(object):
 
         return target_offset_vectors
 
-    def __get_linear_rank_idx(self, rank_idx_vector):
+    def __get_linear_rank_ids(self, rank_idx_vector):
         # convert rank_idx_vector to linear rank index
         # last dimension is iterated over first
         num_targets = [len(target_offsets_axis) for target_offsets_axis in self.target_offsets]
@@ -241,7 +241,7 @@ class DistributedGenericArray(object):
                 local_idx[distaxis] = dist_idx - target_offsets[rank_idx_component]
                 rank_idx_vector.append(rank_idx_component)
 
-            rank_idx = self.__get_linear_rank_ids(rank_idx_vector).next()
+            rank_idx = self._get_linear_rank_ids(rank_idx_vector).next()
             return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=self.target_ranks[rank_idx])
 
         if all(type(clean_view[distaxis]) is int for distaxis in self.distaxes):
@@ -253,7 +253,7 @@ class DistributedGenericArray(object):
                 clean_view[distaxis] = dist_idx - target_offsets[rank_idx_component]
                 rank_idx_vector.append(rank_idx_component)
 
-            rank_idx = self.__get_linear_rank_idx(rank_idx_vector).next()
+            rank_idx = self.___get_linear_rank_ids(rank_idx_vector).next()
             self.view.execute("sliced = %s%s" % (self.name, repr(clean_view)), targets=self.target_ranks[rank_idx])
             return self.view.pull("sliced", targets=self.target_ranks[rank_idx])
 
@@ -329,7 +329,7 @@ class DistributedGenericArray(object):
         new_target_ranks = []
         for idx in np.ndindex(*num_ranks_aa):
             rank_idx_vector = [new_rank_ids_aa[i][idx[i]] for i in range(len(idx))]
-            rank_idx = self.__get_linear_rank_idx(rank_idx_vector).next()
+            rank_idx = self.__get_linear_rank_ids(rank_idx_vector).next()
             new_target_ranks.append(self.target_ranks[rank_idx])
 
         # create resulting ndarray
@@ -360,13 +360,11 @@ class DistributedGenericArray(object):
         if key == slice(None):
             # assign local array to self
             if isinstance(value, self.__class__.local_arraytype):
-                window = [slice(None)] * len(self.shape)
                 subarrays = []
-                for i in range(len(self.target_offsets)):
-                    begin = self.target_offsets[i]
-                    end = self.target_offsets[i+1] if i+1 < len(self.target_offsets) else self.shape[self.distaxis]
-                    window[self.distaxis] = slice(begin, end)
+                for target_offset_vector, target_shape in zip(self.target_offset_vectors(), self.target_shapes()):
+                    window = [slice(start, start+length) for start, length in zip(target_offset_vector, target_shape)]
                     subarrays.append(value[window])
+
                 self.view.scatter("subarray", subarrays, targets=self.target_ranks)
                 self.view.execute("%s[:] = subarray[0]" % self.name, targets=self.target_ranks)
                 return
@@ -390,12 +388,17 @@ class DistributedGenericArray(object):
 
         # value assignment (key == list of indices)
         if all(type(k) is int for k in key):
-            dist_idx = key[self.distaxis]
-            target_idx = np.searchsorted(self.target_offsets, dist_idx, side="right") - 1
             local_idx = list(key)
-            local_idx[self.distaxis] = dist_idx - self.target_offsets[target_idx]
-            self.view.push({'value' : value}, targets=self.target_ranks[target_idx])
-            self.view.execute("%s%s = value" % (self.name, repr(local_idx)), targets=self.target_ranks[target_idx])
+            rank_idx_vector = []
+            for distaxis, target_offsets in zip(self.distaxes, self.target_offsets):
+                dist_idx = key[distaxis]
+                rank_idx_component = np.searchsorted(target_offsets, dist_idx, side="right") - 1
+                local_idx[distaxis] = dist_idx - target_offsets[rank_idx_component]
+                rank_idx_vector.append(rank_idx_component)
+
+            rank_idx = self.__get_linear_rank_ids(rank_idx_vector).next()
+            self.view.push({'value' : value}, targets=self.target_ranks[rank_idx])
+            self.view.execute("%s%s = value" % (self.name, repr(local_idx)), targets=self.target_ranks[rank_idx])
             return
 
         # assign value to sub-array of self
