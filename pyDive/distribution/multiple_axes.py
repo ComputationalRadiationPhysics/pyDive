@@ -434,7 +434,7 @@ class DistributedGenericArray(object):
         """
         assert self.__class__.may_allocate == True, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
 
-        result = self.__class__(self.shape, self.dtype, self.distaxis, self.target_offsets, self.target_ranks, no_allocation=True, **self.kwargs)
+        result = self.__class__(self.shape, self.dtype, self.distaxes, self.target_offsets, self.target_ranks, no_allocation=True, **self.kwargs)
         self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.target_ranks)
         return result
 
