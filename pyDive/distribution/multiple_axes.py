@@ -62,7 +62,8 @@ class DistributedGenericArray(object):
         :param target_offsets: For each distributed axis there is a (inner) list in the outer list.
             The inner list contains of the offsets of the local array.
         :type target_offsets: list of lists
-        :param ints target_ranks: List of :term:`engine` ranks holding the local arrays.
+        :param ints target_ranks: linear list of :term:`engine` ranks holding the local arrays.
+            The last distributed axis is iterated over first.
         :param bool no_allocation: if ``True`` no instance of {local_arraytype_name} will be created on engine. Useful for
             manual instantiation of the local array.
         :param kwargs: additional keyword arguments are forwarded to the constructor of the local array.
@@ -416,11 +417,11 @@ class DistributedGenericArray(object):
         local_arrays = self.view.pull(self.name, targets=self.target_ranks)
 
         result = self.__class__.local_arraytype(shape=self.shape, dtype=self.dtype, **self.kwargs)
-        window = [slice(None)] * len(self.shape)
-        for i, local_array in zip(range(len(self.target_offsets)), local_arrays):
-            begin = self.target_offsets[i]
-            end = self.target_offsets[i+1] if i+1 < len(self.target_offsets) else self.shape[self.distaxis]
-            window[self.distaxis] = slice(begin, end)
+
+        for target_offset_vector, target_shape, local_array \
+            in zip(self.target_offset_vectors(), self.target_shapes(), local_arrays):
+
+            window = [slice(start, start+length) for start, length in zip(target_offset_vector, target_shape)]
             result[window] = local_array
 
         return result
