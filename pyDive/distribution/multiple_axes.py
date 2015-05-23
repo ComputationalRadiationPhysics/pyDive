@@ -107,7 +107,7 @@ class DistributedGenericArray(object):
 
             for distaxis in sorted_distaxes[:-1]:
                 num_patches = self.shape[distaxis] / patch_edge_length
-                while float(num_targets_av[distaxis]) <= num_patches and prime_factors:
+                while float(num_targets_av[distaxis]) < num_patches and prime_factors:
                     num_targets_av[distaxis] *= prime_factors.pop()
             # the largest axis gets the remaining (largest) prime_factors
             if prime_factors:
