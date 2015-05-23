@@ -38,7 +38,49 @@ def test_slicing(init_pyDive):
                 assert np.array_equal(ref[slices], test_array[slices].gather())
 
                 # bitmask indexing
-                bitmask = pyDive.array(np.random.rand(*size) > 0.5, distaxis=test_array.distaxis)
+                bitmask = pyDive.array(np.random.rand(*size) > 0.5, distaxes=test_array.distaxes)
+                assert ref[bitmask.gather()].shape == test_array[bitmask].shape
+                # ordering can be distinct, thus merely check if sets are equal
+                assert set(ref[bitmask.gather()]) == set(test_array[bitmask].gather())
+
+                ref2 = ref.copy()
+                test_array2 = test_array.copy()
+                ref2[bitmask.gather()] = 1
+                test_array2[bitmask] = 1
+                assert np.array_equal(ref2, test_array2.gather())
+
+def test_multiple_axes(init_pyDive):
+    for size in sizes:
+        for dtype in dtypes:
+            ref = (np.random.rand(*size) * 100.0).astype(dtype)
+
+            for distaxes in [range(i+1) for i in range(len(size))]:
+                test_array = pyDive.empty(size, dtype, distaxes)
+                test_array[:] = ref
+
+                slices = []
+                for i in range(len(size)):
+                    start = size[i] / 3
+                    stop = size[i] - size[i] / 5
+                    step = 2
+                    slices.append(slice(start, stop, step))
+
+                assert np.array_equal(ref[slices], test_array[slices].gather())
+
+                slices = []
+                for i in range(len(size)):
+                    slices.append(slice(-5, None, None))
+
+                assert np.array_equal(ref[slices], test_array[slices].gather())
+
+                slices = []
+                for i in range(len(size)):
+                    slices.append(slice(0, 5, None))
+
+                assert np.array_equal(ref[slices], test_array[slices].gather())
+
+                # bitmask indexing
+                bitmask = pyDive.array(np.random.rand(*size) > 0.5, distaxes=test_array.distaxes)
                 assert ref[bitmask.gather()].shape == test_array[bitmask].shape
                 # ordering can be distinct, thus merely check if sets are equal
                 assert set(ref[bitmask.gather()]) == set(test_array[bitmask].gather())
@@ -71,3 +113,35 @@ def test_interengine(init_pyDive):
                 test_array_sum = test_array[slicesA] + test_array[slicesB]
 
                 assert np.array_equal(ref_sum, test_array_sum.gather())
+
+def test_interengine_multiple_axes(init_pyDive):
+    for size in sizes:
+        for dtype in dtypes:
+            ref = (np.random.rand(*size) * 100.0).astype(dtype)
+
+            print "size:", size
+
+            for distaxesA in [range(i+1) for i in range(len(size))]:
+                for distaxesB in [range(i,len(size)) for i in range(len(size))]:
+                    test_arrayA = pyDive.empty(size, dtype, distaxesA)
+                    test_arrayB = pyDive.empty(size, dtype, distaxesB)
+
+                    test_arrayA[:] = ref
+                    test_arrayB[:] = ref
+
+                    print "distaxesA:",distaxesA
+                    print "distaxesB:",distaxesB
+
+                    for distaxis in range(len(size)):
+                        print "distaxis",distaxis
+                        if size[distaxis] < 5: continue
+
+                        slicesA = [slice(None)] * len(size)
+                        slicesB = list(slicesA)
+                        slicesA[distaxis] = slice(0, 5)
+                        slicesB[distaxis] = slice(-5, None)
+
+                        ref_sum = ref[slicesA] + ref[slicesB]
+                        test_array_sum = test_arrayA[slicesA] + test_arrayB[slicesB]
+
+                        assert np.array_equal(ref_sum, test_array_sum.gather())

@@ -73,11 +73,11 @@ class DistributedGenericArray(object):
         self.shape = tuple(shape)
         ##: datatype of a single data value
         self.dtype = dtype
-        #: axes on which memory is distributed across the :term:`engines <engine>`
         if type(distaxes) not in (list, tuple):
             distaxes = (distaxes,)
+        #: axes on which memory is distributed across :term:`engines <engine>`
         self.distaxes = distaxes
-        ##: total bytes consumed by the elements of the array.
+        #: total bytes consumed by elements of this array.
         self.nbytes = np.dtype(dtype).itemsize * np.prod(self.shape)
         self.view = com.getView()
         self.kwargs = kwargs
@@ -92,6 +92,9 @@ class DistributedGenericArray(object):
             # create hypothetical patch with best surface-to-volume ratio
             patch_volume = np.prod([self.shape[distaxis] for distaxis in distaxes]) / float(len(self.view.targets))
             patch_edge_length = pow(patch_volume, 1.0/len(distaxes))
+
+            print patch_volume
+            print patch_edge_length
 
             def factorize(n):
                 if n == 1: yield 1; return
@@ -471,9 +474,10 @@ class DistributedGenericArray(object):
 
         tag = 0
         num_offsets = [len(common_offsets_sa) for common_offsets_sa in common_offsets]
+
         for idx in np.ndindex(*num_offsets):
-            my_rank_idx_vector = []
-            other_rank_idx_vector = []
+            my_rank_idx_vector = [0] * len(self.distaxes)
+            other_rank_idx_vector = [0] * len(other.distaxes)
             my_window = [slice(None)] * len(self.shape)
             other_window = [slice(None)] * len(self.shape)
 
@@ -485,8 +489,8 @@ class DistributedGenericArray(object):
                 if common_axis in self.distaxes and common_axis in other.distaxes:
                     my_rank_idx_comp = common_idx_pairs[i][idx[i],0]
                     other_rank_idx_comp = common_idx_pairs[i][idx[i],1]
-                    my_rank_idx_vector.append(my_rank_idx_comp)
-                    other_rank_idx_vector.append(other_rank_idx_comp)
+                    my_rank_idx_vector[self.distaxes.index(common_axis)] = my_rank_idx_comp
+                    other_rank_idx_vector[other.distaxes.index(common_axis)] = other_rank_idx_comp
 
                     my_offset = self.target_offsets[self.distaxes.index(common_axis)][my_rank_idx_comp]
                     my_window[common_axis] = slice(begin - my_offset, end - my_offset)
@@ -496,10 +500,10 @@ class DistributedGenericArray(object):
                     continue
 
                 if common_axis in self.distaxes:
-                    my_rank_idx_vector.append(idx[i])
+                    my_rank_idx_vector[self.distaxes.index(common_axis)] = idx[i]
                     other_window[common_axis] = slice(begin, end)
                 if common_axis in other.distaxes:
-                    other_rank_idx_vector.append(idx[i])
+                    other_rank_idx_vector[other.distaxes.index(common_axis)] = idx[i]
                     my_window[common_axis] = slice(begin, end)
 
             my_rank = self.target_ranks[self.__get_linear_rank_idx(my_rank_idx_vector)]
@@ -526,7 +530,7 @@ class DistributedGenericArray(object):
         arg_names = [repr(arg) for arg in args]
         arg_string = ",".join(arg_names)
 
-        result = self.__class__(self.shape, self.dtype, self.distaxis, self.target_offsets, self.target_ranks, no_allocation=True, **self.kwargs)
+        result = self.__class__(self.shape, self.dtype, self.distaxes, self.target_offsets, self.target_ranks, no_allocation=True, **self.kwargs)
 
         self.view.execute("{0} = {1}.{2}({3}); dtype={0}.dtype".format(repr(result), repr(self), op, arg_string), targets=self.target_ranks)
         result.dtype = self.view.pull("dtype", targets=result.target_ranks[0])
