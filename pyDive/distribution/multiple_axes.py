@@ -24,6 +24,7 @@ __doc__ = None
 import numpy as np
 import pyDive.IPParallelClient as com
 import helper
+from collections import defaultdict
 
 array_id = 0
 
@@ -188,13 +189,12 @@ class DistributedGenericArray(object):
 
         return target_offset_vectors
 
-    def __get_linear_rank_ids(self, rank_idx_vector):
+    def __get_linear_rank_idx(self, rank_idx_vector):
         # convert rank_idx_vector to linear rank index
         # last dimension is iterated over first
         num_targets = [len(target_offsets_axis) for target_offsets_axis in self.target_offsets]
         pitch = [int(np.prod(num_targets[i+1:])) for i in range(len(self.distaxes))]
-        while True:
-            yield sum(rank_idx_component * pitch_component for rank_idx_component, pitch_component in zip(rank_idx_vector, pitch))
+        return sum(rank_idx_component * pitch_component for rank_idx_component, pitch_component in zip(rank_idx_vector, pitch))
 
     def __getitem__(self, args):
 
@@ -253,7 +253,7 @@ class DistributedGenericArray(object):
                 clean_view[distaxis] = dist_idx - target_offsets[rank_idx_component]
                 rank_idx_vector.append(rank_idx_component)
 
-            rank_idx = self.___get_linear_rank_ids(rank_idx_vector).next()
+            rank_idx = self.___get_linear_rank_idx(rank_idx_vector)
             self.view.execute("sliced = %s%s" % (self.name, repr(clean_view)), targets=self.target_ranks[rank_idx])
             return self.view.pull("sliced", targets=self.target_ranks[rank_idx])
 
@@ -329,7 +329,7 @@ class DistributedGenericArray(object):
         new_target_ranks = []
         for idx in np.ndindex(*num_ranks_aa):
             rank_idx_vector = [new_rank_ids_aa[i][idx[i]] for i in range(len(idx))]
-            rank_idx = self.__get_linear_rank_ids(rank_idx_vector).next()
+            rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
             new_target_ranks.append(self.target_ranks[rank_idx])
 
         # create resulting ndarray
@@ -396,7 +396,7 @@ class DistributedGenericArray(object):
                 local_idx[distaxis] = dist_idx - target_offsets[rank_idx_component]
                 rank_idx_vector.append(rank_idx_component)
 
-            rank_idx = self.__get_linear_rank_ids(rank_idx_vector).next()
+            rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
             self.view.push({'value' : value}, targets=self.target_ranks[rank_idx])
             self.view.execute("%s%s = value" % (self.name, repr(local_idx)), targets=self.target_ranks[rank_idx])
             return
@@ -447,79 +447,75 @@ class DistributedGenericArray(object):
         :param other: target array
         :type other: distributed array
         :raises AssertionError: if the shapes of *self* and *other* don't match.
-        :raises AssertionError: if *self* and *other* are distributed along distinct axes.
         :return: new array with the same content as *self* but distributed like *other*.
             If *self* is already distributed like *other* nothing is done and *self* is returned.
         """
         assert self.shape == other.shape,\
             "Shapes do not match: " + str(self.shape) + " <-> " + str(other.shape)
-        assert self.distaxis == other.distaxis # todo: add this feature
 
         # if self is already distributed like *other* do nothing
-        if np.array_equal(self.target_offsets, other.target_offsets):
-            if self.target_ranks == other.target_ranks:
-                return self
+        if self.distaxes == other.distaxes:
+          if all(np.array_equal(my_target_offsets, other_target_offsets) \
+            for my_target_offsets, other_target_offsets in zip(self.target_offsets, other.target_offsets)):
+              if self.target_ranks == other.target_ranks:
+                  return self
 
         assert self.__class__.may_allocate, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
 
-        # communication meta-data
-        src_targets = [[]]
-        src_tags = [[]]
-        src_distaxis_sizes = [[]]
-        dest_targets = [[]]
-        dest_tags = [[]]
-        dest_distaxis_sizes = [[]]
+        # todo: optimization -> helper.common_decomposition should be a generator
+        common_axes, common_offsets, common_idx_pairs = \
+            helper.common_decomposition(self.distaxes, self.target_offsets, other.distaxes, other.target_offsets, self.shape)
 
-        self_idx = 0
-        other_idx = 0
+        my_commData = defaultdict(list)
+        other_commData = defaultdict(list)
+
         tag = 0
-        begin = 0
-        # loop the common decomposition of self and other.
-        # the current partition is given by [begin, end)
-        while not begin == self.shape[self.distaxis]:
-            end_self = self.target_offsets[self_idx+1] if self_idx+1 < len(self.target_offsets) else self.shape[self.distaxis]
-            end_other = other.target_offsets[other_idx+1] if other_idx+1 < len(other.target_offsets) else other.shape[other.distaxis]
-            end = min(end_self, end_other)
-            partition_size = end - begin
+        num_offsets = [len(common_offsets_sa) for common_offsets_sa in common_offsets]
+        for idx in np.ndindex(*num_offsets):
+            my_rank_idx_vector = []
+            other_rank_idx_vector = []
+            my_window = [slice(None)] * len(self.shape)
+            other_window = [slice(None)] * len(self.shape)
 
-            # source's meta-data
-            src_targets[self_idx].append(other.target_ranks[other_idx])
-            src_tags[self_idx].append(tag)
-            src_distaxis_sizes[self_idx].append(partition_size)
+            for i in range(len(idx)):
+                common_axis = common_axes[i]
+                begin = common_offsets[i][idx[i]]
+                end = common_offsets[i][idx[i]+1] if idx[i] < len(common_offsets[i]) -1 else self.shape[common_axes[i]]
 
-            # destination's meta-data
-            dest_targets[other_idx].append(self.target_ranks[self_idx])
-            dest_tags[other_idx].append(tag)
-            dest_distaxis_sizes[other_idx].append(partition_size)
+                if common_axis in self.distaxes and common_axis in other.distaxes:
+                    my_rank_idx_comp = common_idx_pairs[i][idx[i],0]
+                    other_rank_idx_comp = common_idx_pairs[i][idx[i],1]
+                    my_rank_idx_vector.append(my_rank_idx_comp)
+                    other_rank_idx_vector.append(other_rank_idx_comp)
 
-            # go to the next common partition
-            if end == end_self:
-                if not end == self.shape[self.distaxis]:
-                    src_targets.append([])
-                    src_tags.append([])
-                    src_distaxis_sizes.append([])
-                self_idx += 1
-            if end == end_other:
-                if not end == self.shape[self.distaxis]:
-                    dest_targets.append([])
-                    dest_tags.append([])
-                    dest_distaxis_sizes.append([])
-                other_idx += 1
+                    my_offset = self.target_offsets[self.distaxes.index(common_axis)][my_rank_idx_comp]
+                    my_window[common_axis] = slice(begin - my_offset, end - my_offset)
+                    other_offset = other.target_offsets[other.distaxes.index(common_axis)][other_rank_idx_comp]
+                    other_window[common_axis] = slice(begin - other_offset, end - other_offset)
 
-            begin = end
+                    continue
+
+                if common_axis in self.distaxes:
+                    my_rank_idx_vector.append(idx[i])
+                    other_window[common_axis] = slice(begin, end)
+                if common_axis in other.distaxes:
+                    other_rank_idx_vector.append(idx[i])
+                    my_window[common_axis] = slice(begin, end)
+
+            my_rank = self.target_ranks[self.__get_linear_rank_idx(my_rank_idx_vector)]
+            other_rank = other.target_ranks[other.__get_linear_rank_idx(other_rank_idx_vector)]
+
+            my_commData[my_rank].append((other_rank, my_window, tag))
+            other_commData[other_rank].append((my_rank, other_window, tag))
+
             tag += 1
 
         # push communication meta-data to engines
-        self.view.scatter('src_targets', src_targets, targets=self.target_ranks)
-        self.view.scatter('src_tags', src_tags, targets=self.target_ranks)
-        self.view.scatter('src_distaxis_sizes', src_distaxis_sizes, targets=self.target_ranks)
-
-        self.view.scatter('dest_targets', dest_targets, targets=other.target_ranks)
-        self.view.scatter('dest_tags', dest_tags, targets=other.target_ranks)
-        self.view.scatter('dest_distaxis_sizes', dest_distaxis_sizes, targets=other.target_ranks)
+        self.view.scatter('src_commData', my_commData.values(), targets=my_commData.keys())
+        self.view.scatter('dest_commData', other_commData.values(), targets=other_commData.keys())
 
         # result ndarray
-        result = self.__class__(self.shape, self.dtype, self.distaxis, other.target_offsets, other.target_ranks, False, **self.kwargs)
+        result = self.__class__(self.shape, self.dtype, other.distaxes, other.target_offsets, other.target_ranks, False, **self.kwargs)
 
         self.__class__.interengine_copier(self, result)
 
