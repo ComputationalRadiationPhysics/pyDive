@@ -62,7 +62,7 @@ def generate_ufuncs(ufunc_names, target_modulename):
         arg_string = ",".join(arg_names)
 
         view = com.getView()
-        result = arg0.__class__(arg0.shape, arg0.dtype, arg0.distaxis, arg0.target_offsets, arg0.target_ranks, no_allocation=True, **arg0.kwargs)
+        result = arg0.__class__(arg0.shape, arg0.dtype, arg0.distaxes, arg0.target_offsets, arg0.target_ranks, no_allocation=True, **arg0.kwargs)
 
         view.execute("{0} = {1}({2}); dtype={0}.dtype".format(repr(result), ufunc_name, arg_string), targets=arg0.target_ranks)
         result.dtype = view.pull("dtype", targets=result.target_ranks[0])
@@ -75,28 +75,21 @@ def generate_ufuncs(ufunc_names, target_modulename):
 
 def generate_factories(arraytype, factory_names, dtype_default):
 
-    def factory_wrapper(factory_name, shape, dtype, distaxis, kwargs):
-        result = arraytype(shape, dtype, distaxis, None, None, True, **kwargs)
+    def factory_wrapper(factory_name, shape, dtype, distaxes, kwargs):
+        result = arraytype(shape, dtype, distaxes, None, None, True, **kwargs)
 
-        localshapes = []
-        for i in range(len(result.target_offsets)-1):
-            localshape = np.array(result.shape)
-            localshape[distaxis] = result.target_offsets[i+1] - result.target_offsets[i]
-            localshapes.append(localshape)
-        localshape = np.array(result.shape)
-        localshape[distaxis] = result.shape[distaxis] - result.target_offsets[-1]
-        localshapes.append(localshape)
+        target_shapes = result.target_shapes()
 
         view = com.getView()
-        view.scatter('localshape', localshapes, targets=result.target_ranks)
+        view.scatter('target_shape', target_shapes, targets=result.target_ranks)
         view.push({'kwargs' : kwargs, 'dtype' : dtype}, targets=result.target_ranks)
 
-        view.execute("{0} = {1}(shape=localshape[0], dtype=dtype, **kwargs)".format(result.name, factory_name),\
+        view.execute("{0} = {1}(shape=target_shape[0], dtype=dtype, **kwargs)".format(result.name, factory_name),\
             targets=result.target_ranks)
         return result
 
-    make_factory = lambda factory_name: lambda shape, dtype=dtype_default, distaxis=0, **kwargs:\
-        factory_wrapper(arraytype.target_modulename + "." + factory_name, shape, dtype, distaxis, kwargs)
+    make_factory = lambda factory_name: lambda shape, dtype=dtype_default, distaxes=0, **kwargs:\
+        factory_wrapper(arraytype.target_modulename + "." + factory_name, shape, dtype, distaxes, kwargs)
 
     factories_dict = {factory_name : make_factory(factory_name) for factory_name in factory_names}
 
@@ -108,7 +101,7 @@ def generate_factories(arraytype, factory_names, dtype_default):
 
         :param ints shape: shape of array
         :param dtype: datatype of a single element
-        :param int distaxis: distributed axis
+        :param ints distaxes: distributed axes
         :param kwargs: keyword arguments are passed to the local function *{1}*
         """.format(arraytype.__name__, str(arraytype.local_arraytype.__module__) + "." + name)
 
@@ -117,7 +110,7 @@ def generate_factories(arraytype, factory_names, dtype_default):
 def generate_factories_like(arraytype, factory_names):
 
     def factory_like_wrapper(factory_name, other, kwargs):
-        result = arraytype(other.shape, other.dtype, other.distaxis, other.target_offsets, other.target_ranks, True, **kwargs)
+        result = arraytype(other.shape, other.dtype, other.distaxes, other.target_offsets, other.target_ranks, True, **kwargs)
         view = com.getView()
         view.push({'kwargs' : kwargs}, targets=result.target_ranks)
         view.execute("{0} = {1}({2}, **kwargs)".format(result.name, factory_name, other.name), targets=result.target_ranks)
