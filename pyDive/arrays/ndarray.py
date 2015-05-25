@@ -21,46 +21,46 @@ If not, see <http://www.gnu.org/licenses/>.
 __doc__ = None
 
 import numpy as np
-import pyDive.distribution.single_axis as single_axis
+import pyDive.distribution.multiple_axes as multiple_axes
 from pyDive.distribution.interengine import MPI_copier
 
-ndarray = single_axis.distribute(np.ndarray, "ndarray", "np", interengine_copier=MPI_copier)
+ndarray = multiple_axes.distribute(np.ndarray, "ndarray", "np", interengine_copier=MPI_copier)
 
-factories = single_axis.generate_factories(ndarray, ("empty", "zeros", "ones"), np.float)
-factories.update(single_axis.generate_factories_like(ndarray, ("empty_like", "zeros_like", "ones_like")))
+factories = multiple_axes.generate_factories(ndarray, ("empty", "zeros", "ones"), np.float)
+factories.update(multiple_axes.generate_factories_like(ndarray, ("empty_like", "zeros_like", "ones_like")))
 
 globals().update(factories)
 
-def array(array_like, distaxis=0):
+def array(array_like, distaxes=0):
     """Create a pyDive.ndarray instance from an array-like object.
 
     :param array_like: Any object exposing the array interface, e.g. numpy-array, python sequence, ...
-    :param int distaxis: distributed axis
+    :param ints distaxis: distributed axes
     """
     np_array = np.array(array_like)
-    result = empty(np_array.shape, np_array.dtype, distaxis)
+    result = empty(np_array.shape, np_array.dtype, distaxes)
     result[:] = np_array
     return result
 
-def hollow(shape, dtype=np.float, distaxis=0):
+def hollow(shape, dtype=np.float, distaxes=0):
     """Create a pyDive.ndarray instance distributed across all engines without allocating a local
     numpy-array.
 
     :param ints shape: shape of array
     :param dtype: datatype of a single element
-    :param int distaxis: distributed axis
+    :param ints distaxes: distributed axes
     """
-    return ndarray(shape, dtype, distaxis, None, None, True)
+    return ndarray(shape, dtype, distaxes, None, None, True)
 
 def hollow_like(other):
     """Create a pyDive.ndarray instance with the same
     shape, distribution and type as ``other`` without allocating a local numpy-array.
     """
-    return ndarray(other.shape, other.dtype, other.distaxis, other.target_offsets, other.target_ranks, True)
+    return ndarray(other.shape, other.dtype, other.distaxes, other.target_offsets, other.target_ranks, True)
 
 factories.update({"array" : array, "hollow" : hollow, "hollow_like" : hollow_like})
 
 ufunc_names = [key for key, value in np.__dict__.items() if isinstance(value, np.ufunc)]
-ufuncs = single_axis.generate_ufuncs(ufunc_names, "np")
+ufuncs = multiple_axes.generate_ufuncs(ufunc_names, "np")
 
 globals().update(ufuncs)

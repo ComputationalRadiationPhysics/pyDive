@@ -153,8 +153,8 @@ class ArrayOfStructsClass(object):
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
 
-        if onTarget == 'False' and hasattr(self.firstArray, "distaxis"):
-            self.distaxis = self.firstArray.distaxis
+        if onTarget == 'False' and hasattr(self.firstArray, "target_ranks"):
+            self.distaxes = self.firstArray.distaxes
             self.target_offsets = self.firstArray.target_offsets
             self.target_ranks = self.firstArray.target_ranks
             view = com.getView()
@@ -176,12 +176,12 @@ class ArrayOfStructsClass(object):
                 targets=self.target_ranks)
 
     def __del__(self):
-        if onTarget == 'False' and hasattr(self.firstArray, "distaxis"):
+        if onTarget == 'False' and hasattr(self.firstArray, "target_ranks"):
             # delete remote arrayOfStructs object
             self.view.execute('del %s' % self.name, targets=self.target_ranks)
 
     def __getattr__(self, name):
-        if name in self.arraytype.__dict__.keys():
+        if hasattr(self.firstArray, name):
             return ForeachLeafDo(self.structOfArrays, name)
 
         return self[name]
