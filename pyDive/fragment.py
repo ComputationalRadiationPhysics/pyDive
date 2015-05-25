@@ -44,7 +44,7 @@ def __bestStepSize(arrays, memory_limit):
     mem_needed = sum(a.nbytes for a in arrays) / len(view.targets)
 
     # edge length of the whole array
-    edge_length = arrays[0].shape[arrays[0].distaxis]
+    edge_length = arrays[0].shape[arrays[0].distaxes[0]]
     # maximum edge length on one engine according to the available memory
     step_size = memory_limit * edge_length * mem_av / mem_needed
 
@@ -56,7 +56,8 @@ def __bestStepSize(arrays, memory_limit):
 
 def fragment(*arrays, **kwargs):
     """Create fragments of *arrays* so that each fragment will fit into the combined
-    main memory of all engines when calling ``load()``. The fragmentation is done by array slicing along the distributed axis.
+    main memory of all engines when calling ``load()``. The fragmentation is done by array slicing
+    along the first distributed axis of ``arrays[0]``.
     The edge size of the fragments is a power of two except for the last fragment.
 
     :param array: distributed arrays (e.g. pyDive.ndarray, pyDive.h5_ndarray, ...)
@@ -93,9 +94,6 @@ def fragment(*arrays, **kwargs):
 
     if not arrays: return
 
-    assert all(a.distaxis == arrays[0].distaxis for a in arrays), \
-        "all arrays must be distributed along the same axis"
-
     assert all(a.shape == arrays[0].shape for a in arrays), \
         "all arrays must have the same shape"
 
@@ -105,7 +103,7 @@ def fragment(*arrays, **kwargs):
     step = __bestStepSize(hdd_arrays, memory_limit)
 
     shape = arrays[0].shape
-    distaxis = arrays[0].distaxis
+    distaxis = arrays[0].distaxes[0]
     # list of slices representing the fragment's shape
     fragment_window = [slice(None)] * len(shape)
 

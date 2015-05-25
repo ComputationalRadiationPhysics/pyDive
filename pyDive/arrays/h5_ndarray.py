@@ -91,11 +91,11 @@ onTarget = os.environ.get("onTarget", 'False')
 # execute this code only if it is not executed on engine
 if onTarget == 'False':
     from pyDive.arrays.ndarray import hollow_like
-    import pyDive.distribution.single_axis as single_axis
+    import pyDive.distribution.multiple_axes as multiple_axes
     import pyDive.IPParallelClient as com
     from .. import arrayOfStructs
 
-    h5_ndarray = single_axis.distribute(h5_ndarray_local, "h5_ndarray", "h5_ndarray", may_allocate=False)
+    h5_ndarray = multiple_axes.distribute(h5_ndarray_local, "h5_ndarray", "h5_ndarray", may_allocate=False)
 
     def load(self):
         """Load array from file into main memory of all engines in parallel.
@@ -109,12 +109,12 @@ if onTarget == 'False':
     h5_ndarray.load = load
     del load
 
-    def open_dset(filename, dataset_path, distaxis=0):
+    def open_dset(filename, dataset_path, distaxes=0):
         """Create a pyDive.h5.h5_ndarray instance from file.
 
         :param filename: name of hdf5 file.
         :param dataset_path: path within hdf5 file to a single dataset.
-        :param distaxis int: distributed axis
+        :param distaxes ints: distributed axes
         :return: pyDive.h5.h5_ndarray instance
         """
         fileHandle = h5.File(filename, "r")
@@ -123,7 +123,7 @@ if onTarget == 'False':
         shape = dataset.shape
         fileHandle.close()
 
-        result = h5_ndarray(shape, dtype, distaxis, None, None, True)
+        result = h5_ndarray(shape, dtype, distaxes, None, None, True)
 
         target_shapes = result.target_shapes()
         target_offset_vectors = result.target_offset_vectors()
@@ -136,13 +136,13 @@ if onTarget == 'False':
 
         return result
 
-    def open(filename, datapath, distaxis=0):
+    def open(filename, datapath, distaxes=0):
         """Create an pyDive.h5.h5_ndarray instance respectively a structure of
         pyDive.h5.h5_ndarray instances from file.
 
         :param filename: name of hdf5 file.
         :param dataset_path: path within hdf5 file to a single dataset or hdf5 group.
-        :param distaxis int: distributed axis
+        :param distaxes ints: distributed axes
         :return: pyDive.h5.h5_ndarray instance / structure of pyDive.h5.h5_ndarray instances
         """
         hFile = h5.File(filename, 'r')
@@ -150,7 +150,7 @@ if onTarget == 'False':
         group_or_dataset = hFile[datapath]
         if type(group_or_dataset) is not h5._hl.group.Group:
             # dataset
-            return open_dset(filename, datapath, distaxis)
+            return open_dset(filename, datapath, distaxes)
 
         def create_tree(group, tree, dataset_path):
             for key, value in group.items():
@@ -160,7 +160,7 @@ if onTarget == 'False':
                     create_tree(value, tree[key], dataset_path + "/" + key)
                 # dataset
                 else:
-                    tree[key] = open_dset(filename, dataset_path + "/" + key, distaxis)
+                    tree[key] = open_dset(filename, dataset_path + "/" + key, distaxes)
 
         group = group_or_dataset
         structOfArrays = {}

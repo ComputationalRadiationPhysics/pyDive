@@ -105,12 +105,12 @@ onTarget = os.environ.get("onTarget", 'False')
 # execute this code only if it is not executed on engine
 if onTarget == 'False':
     from pyDive.arrays.ndarray import hollow_like
-    import pyDive.distribution.single_axis as single_axis
+    import pyDive.distribution.multiple_axes as multiple_axes
     import pyDive.IPParallelClient as com
     from itertools import islice
     from .. import arrayOfStructs
 
-    ad_ndarray = single_axis.distribute(ad_ndarray_local, "ad_ndarray", "ad_ndarray", may_allocate=False)
+    ad_ndarray = multiple_axes.distribute(ad_ndarray_local, "ad_ndarray", "ad_ndarray", may_allocate=False)
 
     def load(self):
         """Load array from file into main memory of all engines in parallel.

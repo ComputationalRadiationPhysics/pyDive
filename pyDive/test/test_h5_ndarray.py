@@ -19,7 +19,7 @@ def test_h5_ndarray2(init_pyDive):
     window = np.s_[31:201:3, 2:233:5]
     dataset = "/fields/fieldE/x"
 
-    test_array = pyDive.h5.open(input_file, dataset, distaxis=1)
+    test_array = pyDive.h5.open(input_file, dataset, distaxes=1)
 
     ref_array = h5.File(input_file, "r")[dataset][window]
 
