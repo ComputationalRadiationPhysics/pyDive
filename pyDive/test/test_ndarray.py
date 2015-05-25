@@ -4,7 +4,7 @@ import random
 
 sizes = ((1,), (5,), (29,), (64,),
         (1, 1), (1, 5), (5, 29), (64, 1), (64, 64),
-        (1, 1, 1), (8, 8, 8), (1, 2, 3), (12, 37, 50))
+        (1, 1, 1), (8, 8, 8), (1, 2, 3), (12, 37, 50), (64,64,64))
 dtypes = (np.int,)
 
 def test_slicing(init_pyDive):
@@ -107,8 +107,6 @@ def test_interengine(init_pyDive):
                 slicesA[distaxis] = slice(0, 5)
                 slicesB[distaxis] = slice(-5, None)
 
-                print size, distaxis
-
                 ref_sum = ref[slicesA] + ref[slicesB]
                 test_array_sum = test_array[slicesA] + test_array[slicesB]
 
@@ -119,8 +117,6 @@ def test_interengine_multiple_axes(init_pyDive):
         for dtype in dtypes:
             ref = (np.random.rand(*size) * 100.0).astype(dtype)
 
-            print "size:", size
-
             for distaxesA in [range(i+1) for i in range(len(size))]:
                 for distaxesB in [range(i,len(size)) for i in range(len(size))]:
                     test_arrayA = pyDive.empty(size, dtype, distaxesA)
@@ -129,11 +125,7 @@ def test_interengine_multiple_axes(init_pyDive):
                     test_arrayA[:] = ref
                     test_arrayB[:] = ref
 
-                    print "distaxesA:",distaxesA
-                    print "distaxesB:",distaxesB
-
                     for distaxis in range(len(size)):
-                        print "distaxis",distaxis
                         if size[distaxis] < 5: continue
 
                         slicesA = [slice(None)] * len(size)

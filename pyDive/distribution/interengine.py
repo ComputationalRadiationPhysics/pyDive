@@ -23,12 +23,9 @@ import numpy as np
 from mpi4py import MPI
 
 def scatterArrayMPI_async(in_array, commData, target2rank):
-    send_bufs = [] # todo: check if necessary
     tasks = []
     for (dest_target, window, tag) in commData:
-        send_bufs.append(np.empty_like(in_array[window]))
-        send_bufs[-1][:] = in_array[window]
-        tasks.append(MPI.COMM_WORLD.Isend(send_bufs[-1], dest=target2rank[dest_target], tag=tag))
+        tasks.append(MPI.COMM_WORLD.Isend(in_array[window].copy(), dest=target2rank[dest_target], tag=tag))
 
     return tasks
 

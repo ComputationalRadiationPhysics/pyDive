@@ -93,9 +93,6 @@ class DistributedGenericArray(object):
             patch_volume = np.prod([self.shape[distaxis] for distaxis in distaxes]) / float(len(self.view.targets))
             patch_edge_length = pow(patch_volume, 1.0/len(distaxes))
 
-            print patch_volume
-            print patch_edge_length
-
             def factorize(n):
                 if n == 1: yield 1; return
                 for f in range(2,n//2+1) + [n]:
