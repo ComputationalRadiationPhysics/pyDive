@@ -165,7 +165,7 @@ class DistributedGenericArray(object):
         targetshapes = []
         num_targets = [len(target_offsets_axis) for target_offsets_axis in self.target_offsets]
         for rank_idx_vector in np.ndindex(*num_targets): # last dimension is iterated over first
-            targetshape = np.array(self.shape)
+            targetshape = list(self.shape)
             for distaxis_idx in range(len(self.distaxes)):
                 distaxis = self.distaxes[distaxis_idx]
                 i = rank_idx_vector[distaxis_idx]
@@ -253,7 +253,7 @@ class DistributedGenericArray(object):
                 clean_view[distaxis] = dist_idx - target_offsets[rank_idx_component]
                 rank_idx_vector.append(rank_idx_component)
 
-            rank_idx = self.___get_linear_rank_idx(rank_idx_vector)
+            rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
             self.view.execute("sliced = %s%s" % (self.name, repr(clean_view)), targets=self.target_ranks[rank_idx])
             return self.view.pull("sliced", targets=self.target_ranks[rank_idx])
 

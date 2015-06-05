@@ -62,6 +62,11 @@ def init(profile='mpi'):
             import pyDive.arrays.ad_ndarray as ad_ndarray
         except ImportError:
             pass
+        try:
+            import pyDive.arrays.gpu_ndarray_local
+            import pycuda.autoinit
+        except ImportError:
+            pass
          ''')
 
     # get number of processes per node (ppn)

@@ -21,6 +21,12 @@ If not, see <http://www.gnu.org/licenses/>.
 __doc__ = None
 import numpy as np
 from mpi4py import MPI
+try:
+    import pycuda.gpuarray
+except ImportError:
+    pass
+
+#----------- cpu -> cpu ----------------
 
 def scatterArrayMPI_async(in_array, commData, target2rank):
     tasks = []
@@ -38,9 +44,32 @@ def gatherArraysMPI_async(out_array, commData, target2rank):
 
     return tasks, recv_bufs
 
-def finish_communication(out_array, commData, recv_bufs):
+def finish_MPIcommunication(out_array, commData, recv_bufs):
     for (src_target, window, tag), recv_buf in zip(commData, recv_bufs):
         out_array[window] = recv_buf
+
+#----------- gpu -> cpu -> cpu -> gpu ----------------
+
+def scatterArrayGPU_async(in_array, commData, target2rank):
+    tasks = []
+    for (dest_target, window, tag) in commData:
+        tasks.append(MPI.COMM_WORLD.Isend(in_array[window].get(), dest=target2rank[dest_target], tag=tag))
+
+    return tasks
+
+def gatherArraysGPU_async(out_array, commData, target2rank):
+    recv_bufs = []
+    tasks = []
+    for (src_target, window, tag) in commData:
+        chunk = out_array[window]
+        recv_bufs.append(np.empty(shape=chunk.shape, dtype=chunk.dtype))
+        tasks.append(MPI.COMM_WORLD.Irecv(recv_bufs[-1], source=target2rank[src_target], tag=tag))
+
+    return tasks, recv_bufs
+
+def finish_GPUcommunication(out_array, commData, recv_bufs):
+    for (src_target, window, tag), recv_buf in zip(commData, recv_bufs):
+        out_array[window] = pycuda.gpuarray.to_gpu(recv_buf)
 
 import os
 onTarget = os.environ.get("onTarget", 'False')
@@ -69,7 +98,32 @@ if onTarget == 'False':
                 del {0}_send_tasks
             if "{0}_recv_tasks" in locals():
                 MPI.Request.Waitall({0}_recv_tasks)
-                interengine.finish_communication({1}, dest_commData[0], {0}_recv_bufs)
+                interengine.finish_MPIcommunication({1}, dest_commData[0], {0}_recv_bufs)
+                del {0}_recv_tasks, {0}_recv_bufs
+            '''.format(source.name, dest.name),
+            targets=tuple(set(source.target_ranks + dest.target_ranks)))
+
+    def GPU_copier(source, dest):
+        view = com.getView()
+
+        # send
+        view.execute('{0}_send_tasks = interengine.scatterArrayGPU_async({0}, src_commData[0], target2rank)'\
+            .format(source.name), targets=source.target_ranks)
+
+        # receive
+        view.execute("""\
+            {0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysGPU_async({1}, dest_commData[0], target2rank)
+            """.format(source.name, dest.name),\
+            targets=dest.target_ranks)
+
+        # finish communication
+        view.execute('''\
+            if "{0}_send_tasks" in locals():
+                MPI.Request.Waitall({0}_send_tasks)
+                del {0}_send_tasks
+            if "{0}_recv_tasks" in locals():
+                MPI.Request.Waitall({0}_recv_tasks)
+                interengine.finish_GPUcommunication({1}, dest_commData[0], {0}_recv_bufs)
                 del {0}_recv_tasks, {0}_recv_bufs
             '''.format(source.name, dest.name),
             targets=tuple(set(source.target_ranks + dest.target_ranks)))
