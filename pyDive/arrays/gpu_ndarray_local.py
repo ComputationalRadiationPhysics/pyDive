@@ -63,16 +63,58 @@ class gpu_ndarray(pycuda.gpuarray.GPUArray):
             return self.get(pagelocked=True)
 
         result = cuda.pagelocked_empty(self.shape, self.dtype)
+        itemsize = np.dtype(self.dtype).itemsize
         if len(self.shape) == 1:
             copy = cuda.Memcpy2D()
             copy.set_src_device(self.gpudata)
             copy.src_pitch = self.strides[0]
             copy.set_dst_host(result)
-            copy.dst_pitch = np.dtype(result.dtype).itemsize
-            copy.width_in_bytes = np.dtype(self.dtype).itemsize
+            copy.dst_pitch = itemsize
+            copy.width_in_bytes = itemsize
             copy.height = self.shape[0]
             copy(aligned=False)
             return result
+
+        elif len(self.shape) == 2:
+            if itemsize == self.strides[1]:
+                # contiguous block of memory for each row
+                copy = cuda.Memcpy2D()
+                copy.set_src_device(self.gpudata)
+                copy.src_pitch = self.strides[0]
+                copy.set_dst_host(result)
+                copy.dst_pitch = itemsize * result.shape[1]
+                copy.width_in_bytes = copy.dst_pitch
+                copy.height = self.shape[0]
+                copy(aligned=False)
+                return result
+            else:
+                # array has to copied column by column, because there a two different pitches
+                # which is not supported by cuda.
+                copy = cuda.Memcpy2D()
+                copy.set_src_device(self.gpudata)
+                copy.src_pitch = self.strides[0]
+                copy.set_dst_host(result)
+                copy.dst_pitch = itemsize
+                copy.width_in_bytes = itemsize
+                copy.height = self.shape[0]
+
+                for col in range(self.shape[1]):
+                    copy.src_x_in_bytes = col * self.strides[1]
+                    copy(aligned=False)
+                return result
+        elif len(self.shape) == 3:
+            copy = cuda.Memcpy3D()
+            copy.set_src_device(self.gpudata)
+            copy.src_pitch = self.strides[1]
+            copy.set_dst_host(result)
+            copy.dst_pitch = itemsize * result.shape[2]
+            copy.width_in_bytes = copy.dst_pitch
+            copy.height = self.shape[1]
+            copy.depth = self.shape[0]
+            copy()
+            return result
+        else:
+            raise RuntimeError("dimension %d is not supported." % len(self.shape))
 
     def __elementwise_op__(self, op, *args):
         pycuda_array = getattr(super(gpu_ndarray, self), op)(*args)
