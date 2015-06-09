@@ -23,7 +23,6 @@ __doc__ = None
 import pycuda.gpuarray
 import pycuda.driver as cuda
 import numpy as np
-import time
 
 def copy_non_contiguous(dst, src):
     """Copy ``src`` array to ``dst`` array. A gpu-array may have a non contiguous block of memory,
@@ -117,7 +116,7 @@ class gpu_ndarray(pycuda.gpuarray.GPUArray):
             else:
                 if self.flags.forc:
                     # both arrays are a contiguous block of memory
-                    cuda.memcpy_htod(self.gpudata, other, self.nbytes)
+                    cuda.memcpy_htod(self.gpudata, other)
                     return
 
             copy_non_contiguous(self, other)
