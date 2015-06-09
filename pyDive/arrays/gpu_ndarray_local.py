@@ -66,7 +66,7 @@ def copy_non_contiguous(dst, src):
             copy.height = src.shape[0]
             copy(aligned=False)
         else:
-            # arrays have to copied column by column, because there a two substantial pitches/strides
+            # arrays have to be copied column by column, because there a two substantial pitches/strides
             # which is not supported by cuda.
             copy.src_pitch = src.strides[0] if src_on_gpu else itemsize
             copy.dst_pitch = dst.strides[0] if dst_on_gpu else itemsize
@@ -135,6 +135,13 @@ class gpu_ndarray(pycuda.gpuarray.GPUArray):
         pycuda_array = super(gpu_ndarray, self).__getitem__(tuple(args))
         return self.__cast_from_base(pycuda_array)
 
+    def copy(self):
+        if self.flags.forc:
+            return super(gpu_ndarray, self).copy()
+        result = gpu_ndarray(shape=self.shape, dtype=self.dtype, allocator=self.allocator)
+        result[:] = self
+        return result
+
     def to_cpu(self):
         if self.flags.forc:
             return self.get(pagelocked=True)
@@ -144,10 +151,15 @@ class gpu_ndarray(pycuda.gpuarray.GPUArray):
         return result
 
     def __elementwise_op__(self, op, *args):
-        pycuda_array = getattr(super(gpu_ndarray, self), op)(*args)
+        # if arrays are not contiguous make a contiguous copy
+        my_array = self.copy() if not self.flags.forc else self
+        args = [arg.copy() if isinstance(arg, pycuda.gpuarray.GPUArray) and not arg.flags.forc else arg for arg in args]
+        pycuda_array = getattr(super(gpu_ndarray, my_array), op)(*args)
         return self.__cast_from_base(pycuda_array)
 
     def __elementwise_iop__(self, op, *args):
+        # if arrays are not contiguous make a contiguous copy
+        args = [arg.copy() if isinstance(arg, pycuda.gpuarray.GPUArray) and not arg.flags.forc else arg for arg in args]
         getattr(super(gpu_ndarray, self), op)(*args)
         return self
 
