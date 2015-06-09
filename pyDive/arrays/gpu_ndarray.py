@@ -23,7 +23,6 @@ __doc__ = None
 import numpy as np
 import pyDive.distribution.multiple_axes as multiple_axes
 from pyDive.distribution.interengine import GPU_copier
-import pycuda.gpuarray
 import pyDive.arrays.gpu_ndarray_local
 
 gpu_ndarray = multiple_axes.distribute(pyDive.arrays.gpu_ndarray_local.gpu_ndarray, "gpu_ndarray",\
