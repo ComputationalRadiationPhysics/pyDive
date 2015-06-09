@@ -40,6 +40,12 @@ try:
 except ImportError:
     pass
 
+# gpu
+try:
+    import arrays.gpu_ndarray as gpu
+except ImportError:
+    pass
+
 # cloned_ndarray
 import cloned_ndarray.factories
 cloned = cloned_ndarray.factories

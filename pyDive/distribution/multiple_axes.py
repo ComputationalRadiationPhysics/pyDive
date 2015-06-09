@@ -70,11 +70,17 @@ class DistributedGenericArray(object):
         :param kwargs: additional keyword arguments are forwarded to the constructor of the local array.
         """
         #: size of the array on each axis
-        self.shape = tuple(shape)
+        if type(shape) not in (list, tuple):
+            shape = (shape,)
+        elif type(shape) is not tuple:
+            shape = tuple(shape)
+        self.shape = shape
         ##: datatype of a single data value
         self.dtype = dtype
         if type(distaxes) not in (list, tuple):
             distaxes = (distaxes,)
+        elif type(distaxes) is not tuple:
+            distaxes = tuple(distaxes)
         #: axes on which memory is distributed across :term:`engines <engine>`
         self.distaxes = distaxes
         #: total bytes consumed by elements of this array.
@@ -83,7 +89,7 @@ class DistributedGenericArray(object):
         self.kwargs = kwargs
 
         assert len(distaxes) <= len(shape),\
-            "more distributed axes {} than dimensions {}".format(len(distaxes), len(shape))
+            "more distributed axes ({}) than dimensions ({})".format(len(distaxes), len(shape))
         for distaxis in distaxes:
             assert distaxis >= 0 and distaxis < len(self.shape),\
                 "distributed axis ({}) has to be within [0,{}]".format(distaxis, len(self.shape)-1)
@@ -136,6 +142,8 @@ class DistributedGenericArray(object):
         if target_ranks is None:
             num_targets = [len(target_offsets_axis) for target_offsets_axis in target_offsets]
             target_ranks = tuple(range(np.prod(num_targets)))
+        elif type(target_ranks) is not tuple:
+            target_ranks = tuple(target_ranks)
 
         self.target_offsets = target_offsets
         self.target_ranks = target_ranks
@@ -165,7 +173,7 @@ class DistributedGenericArray(object):
         targetshapes = []
         num_targets = [len(target_offsets_axis) for target_offsets_axis in self.target_offsets]
         for rank_idx_vector in np.ndindex(*num_targets): # last dimension is iterated over first
-            targetshape = np.array(self.shape)
+            targetshape = list(self.shape)
             for distaxis_idx in range(len(self.distaxes)):
                 distaxis = self.distaxes[distaxis_idx]
                 i = rank_idx_vector[distaxis_idx]
@@ -253,7 +261,7 @@ class DistributedGenericArray(object):
                 clean_view[distaxis] = dist_idx - target_offsets[rank_idx_component]
                 rank_idx_vector.append(rank_idx_component)
 
-            rank_idx = self.___get_linear_rank_idx(rank_idx_vector)
+            rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
             self.view.execute("sliced = %s%s" % (self.name, repr(clean_view)), targets=self.target_ranks[rank_idx])
             return self.view.pull("sliced", targets=self.target_ranks[rank_idx])
 
@@ -369,14 +377,9 @@ class DistributedGenericArray(object):
                 self.view.execute("%s[:] = subarray[0]" % self.name, targets=self.target_ranks)
                 return
 
-            # assign other array to self
-            if isinstance(value, self.__class__):
-                other = value.dist_like(self)
-                self.view.execute("%s[:] = %s" % (self.name, other.name), targets=self.target_ranks)
-                return
-
-            # assign single value to self
-            self.view.execute("%s[:] = %s" % (self.name, repr(value)), targets=self.target_ranks)
+            # assign other array or value to self
+            other = value.dist_like(self) if hasattr(value, "dist_like") else value
+            self.view.execute("%s[:] = %s" % (repr(self), repr(other)), targets=self.target_ranks)
             return
 
         if not isinstance(key, list) and not isinstance(key, tuple):

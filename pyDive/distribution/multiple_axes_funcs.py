@@ -53,26 +53,6 @@ def distribute(local_arraytype, newclassname, target_modulename, interengine_cop
 
     return result
 
-def generate_ufuncs(ufunc_names, target_modulename):
-
-    def ufunc_wrapper(ufunc_name, args, kwargs):
-        arg0 = args[0]
-        args = [arg.dist_like(arg0) if hasattr(arg, "target_ranks") else arg for arg in args]
-        arg_names = [repr(arg) for arg in args]
-        arg_string = ",".join(arg_names)
-
-        view = com.getView()
-        result = arg0.__class__(arg0.shape, arg0.dtype, arg0.distaxes, arg0.target_offsets, arg0.target_ranks, no_allocation=True, **arg0.kwargs)
-
-        view.execute("{0} = {1}({2}); dtype={0}.dtype".format(repr(result), ufunc_name, arg_string), targets=arg0.target_ranks)
-        result.dtype = view.pull("dtype", targets=result.target_ranks[0])
-        result.nbytes = np.dtype(result.dtype).itemsize * np.prod(result.shape)
-        return result
-
-    make_ufunc = lambda ufunc_name: lambda *args, **kwargs: ufunc_wrapper(target_modulename + "." + ufunc_name, args, kwargs)
-
-    return {ufunc_name: make_ufunc(ufunc_name) for ufunc_name in ufunc_names}
-
 def generate_factories(arraytype, factory_names, dtype_default):
 
     def factory_wrapper(factory_name, shape, dtype, distaxes, kwargs):
@@ -133,3 +113,23 @@ def generate_factories_like(arraytype, factory_names):
         """.format(arraytype.__name__, str(arraytype.local_arraytype.__module__) + "." + name)
 
     return factories_dict
+
+def generate_ufuncs(ufunc_names, target_modulename):
+
+    def ufunc_wrapper(ufunc_name, args, kwargs):
+        arg0 = args[0]
+        args = [arg.dist_like(arg0) if hasattr(arg, "target_ranks") else arg for arg in args]
+        arg_names = [repr(arg) for arg in args]
+        arg_string = ",".join(arg_names)
+
+        view = com.getView()
+        result = arg0.__class__(arg0.shape, arg0.dtype, arg0.distaxes, arg0.target_offsets, arg0.target_ranks, no_allocation=True, **arg0.kwargs)
+
+        view.execute("{0} = {1}({2}); dtype={0}.dtype".format(repr(result), ufunc_name, arg_string), targets=arg0.target_ranks)
+        result.dtype = view.pull("dtype", targets=result.target_ranks[0])
+        result.nbytes = np.dtype(result.dtype).itemsize * np.prod(result.shape)
+        return result
+
+    make_ufunc = lambda ufunc_name: lambda *args, **kwargs: ufunc_wrapper(target_modulename + "." + ufunc_name, args, kwargs)
+
+    return {ufunc_name: make_ufunc(ufunc_name) for ufunc_name in ufunc_names}
