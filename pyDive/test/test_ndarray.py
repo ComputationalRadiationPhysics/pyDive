@@ -107,10 +107,20 @@ def test_interengine(init_pyDive):
                 slicesA[distaxis] = slice(0, 5)
                 slicesB[distaxis] = slice(-5, None)
 
-                ref_sum = ref[slicesA] + ref[slicesB]
-                test_array_sum = test_array[slicesA] + test_array[slicesB]
+                test_array[slicesA] = test_array[slicesB]
+                ref[slicesA] = ref[slicesB]
 
-                assert np.array_equal(ref_sum, test_array_sum.gather())
+                assert np.array_equal(test_array.gather(), ref)
+
+                slicesA = [s/2 for s in size]
+                slicesB = list(slicesA)
+                slicesA[distaxis] = slice(0, 5)
+                slicesB[distaxis] = slice(-5, None)
+
+                test_array[slicesA] = test_array[slicesB]
+                ref[slicesA] = ref[slicesB]
+
+                assert np.array_equal(test_array.gather(), ref)
 
 def test_interengine_multiple_axes(init_pyDive):
     for size in sizes:

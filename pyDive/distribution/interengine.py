@@ -53,7 +53,7 @@ def finish_MPIcommunication(out_array, commData, recv_bufs):
 def scatterArrayGPU_async(in_array, commData, target2rank):
     tasks = []
     for (dest_target, window, tag) in commData:
-        tasks.append(MPI.COMM_WORLD.Isend(in_array[window].get(), dest=target2rank[dest_target], tag=tag))
+        tasks.append(MPI.COMM_WORLD.Isend(in_array[window].to_cpu(), dest=target2rank[dest_target], tag=tag))
 
     return tasks
 

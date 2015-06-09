@@ -32,8 +32,8 @@ def copy_non_contiguous(dst, src):
 
     assert src.dtype == dst.dtype,\
         "src ({}) and dst ({}) must have the same datatype.".format(str(src.dtype), str(dst.dtype))
-    assert src.shape == dst.shape,\
-        "Shapes do not match: " + str(src.shape) + " <-> " + str(dst.shape)
+    assert all(s1 == s2 for s1, s2 in zip(dst.shape, src.shape)),\
+        "Shapes do not match: " + str(dst.shape) + " <-> " + str(src.shape)
 
     itemsize = np.dtype(src.dtype).itemsize
     copy = cuda.Memcpy2D()
@@ -56,15 +56,8 @@ def copy_non_contiguous(dst, src):
         copy(aligned=False)
 
     elif len(src.shape) == 2:
-        if (itemsize == src.strides[1] if src_on_gpu else True) and \
-           (itemsize == dst.strides[1] if dst_on_gpu else True):
-            # both arrays have a contiguous block of memory for each row
-            copy.src_pitch = src.strides[0] if src_on_gpu else itemsize * src.shape[1]
-            copy.dst_pitch = dst.strides[0] if dst_on_gpu else itemsize * src.shape[1]
-            copy.width_in_bytes = itemsize * src.shape[1]
-            copy.height = src.shape[0]
-            copy(aligned=False)
-        else:
+        if (itemsize != src.strides[1] if src_on_gpu else False) or \
+           (itemsize != dst.strides[1] if dst_on_gpu else False):
             # arrays have to be copied column by column, because there a two substantial pitches/strides
             # which is not supported by cuda.
             copy.src_pitch = src.strides[0] if src_on_gpu else itemsize
@@ -76,8 +69,23 @@ def copy_non_contiguous(dst, src):
                 copy.src_x_in_bytes = col * src.strides[1] if src_on_gpu else col * itemsize
                 copy.dst_x_in_bytes = col * dst.strides[1] if dst_on_gpu else col * itemsize
                 copy(aligned=False)
+        else:
+            # both arrays have a contiguous block of memory for each row
+            copy.src_pitch = src.strides[0] if src_on_gpu else itemsize * src.shape[1]
+            copy.dst_pitch = dst.strides[0] if dst_on_gpu else itemsize * src.shape[1]
+            copy.width_in_bytes = itemsize * src.shape[1]
+            copy.height = src.shape[0]
+            copy(aligned=False)
 
     elif len(src.shape) == 3:
+        if (src.strides[0] != src.shape[1] * src.strides[1] if src_on_gpu else False) or \
+           (dst.strides[0] != dst.shape[1] * dst.strides[1] if dst_on_gpu else False):
+            # arrays have to be copied plane by plane, because there a substantial pitche/stride
+            # for the z-axis which is not supported by cuda.
+            for plane in range(src.shape[0]):
+                copy_non_contiguous(dst[plane,:,:], src[plane,:,:])
+            return
+
         copy = cuda.Memcpy3D()
         if src_on_gpu:
             copy.set_src_device(src.gpudata)
@@ -103,7 +111,7 @@ class gpu_ndarray(pycuda.gpuarray.GPUArray):
 
     def __init__(self, shape, dtype, allocator=cuda.mem_alloc,\
                     base=None, gpudata=None, strides=None, order="C"):
-        super(gpu_ndarray, self).__init__(shape, dtype, allocator, base, gpudata, strides, order)
+        super(gpu_ndarray, self).__init__(shape, np.dtype(dtype), allocator, base, gpudata, strides, order)
 
     def __setitem__(self, key, other):
         # if args is [:] then assign `other` to the entire ndarray
@@ -124,7 +132,7 @@ class gpu_ndarray(pycuda.gpuarray.GPUArray):
 
         # assign `other` to sub-array of self
         sub_array = self[key]
-        sub_array[:] = value
+        sub_array[:] = other
 
     def __cast_from_base(self, pycuda_array):
         return gpu_ndarray(pycuda_array.shape, pycuda_array.dtype, pycuda_array.allocator,\

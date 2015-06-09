@@ -70,7 +70,11 @@ class DistributedGenericArray(object):
         :param kwargs: additional keyword arguments are forwarded to the constructor of the local array.
         """
         #: size of the array on each axis
-        self.shape = tuple(shape)
+        if type(shape) not in (list, tuple):
+            shape = (shape,)
+        elif type(shape) is not tuple:
+            shape = tuple(shape)
+        self.shape = shape
         ##: datatype of a single data value
         self.dtype = dtype
         if type(distaxes) not in (list, tuple):
