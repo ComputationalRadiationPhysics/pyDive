@@ -255,7 +255,7 @@ class DistributedGenericArray(object):
                 local_idx[distaxis] = dist_idx - target_offsets[rank_idx_component]
                 rank_idx_vector.append(rank_idx_component)
 
-            rank_idx = self._get_linear_rank_ids(rank_idx_vector).next()
+            rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
             return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=self.target_ranks[rank_idx])
 
         if all(type(clean_view[distaxis]) is int for distaxis in self.distaxes):
