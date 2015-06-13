@@ -87,6 +87,7 @@ class DistributedGenericArray(object):
         self.nbytes = np.dtype(dtype).itemsize * np.prod(self.shape)
         self.view = com.getView()
         self.kwargs = kwargs
+        self.local_copy_is_dirty = False
 
         assert len(distaxes) <= len(shape),\
             "more distributed axes ({}) than dimensions ({})".format(len(distaxes), len(shape))
@@ -169,7 +170,7 @@ class DistributedGenericArray(object):
         self.view.execute('del %s' % self.name, targets=self.target_ranks)
 
     def target_shapes(self):
-        # generate a list of the local shape on each target in use
+        """generate a list of the local shape on each target in use"""
         targetshapes = []
         num_targets = [len(target_offsets_axis) for target_offsets_axis in self.target_offsets]
         for rank_idx_vector in np.ndindex(*num_targets): # last dimension is iterated over first
@@ -184,7 +185,7 @@ class DistributedGenericArray(object):
         return targetshapes
 
     def target_offset_vectors(self):
-        # generate a list of the local offset vectors on each target in use
+        """generate a list of the local offset vectors on each target in use"""
         target_offset_vectors = []
         num_targets = [len(target_offsets_axis) for target_offsets_axis in self.target_offsets]
         for rank_idx_vector in np.ndindex(*num_targets): # last dimension is iterated over first
@@ -358,6 +359,7 @@ class DistributedGenericArray(object):
         return result
 
     def __setitem__(self, key, value):
+        self.local_copy_is_dirty = True
         # bitmask indexing
         if isinstance(key, self.__class__) and key.dtype == bool:
             bitmask = key.dist_like(self)
@@ -413,6 +415,22 @@ class DistributedGenericArray(object):
 
     def __repr__(self):
         return self.name
+
+    @property
+    def local_copy(self):
+        if not hasattr(self, "_local_copy") or self.local_copy_is_dirty:
+            self._local_copy = self.gather()
+            self.local_copy_is_dirty = False
+        return self._local_copy
+
+    def __getattr__(self, name):
+        """If the requested attribute is an attribute of the local array and not of this array then
+        gather() is called and the request is forwarded to the gathered array. This makes this
+        distributed array more behaving like a local array."""
+        if not hasattr(self.__class__.local_arraytype, name):
+            raise AttributeError(name)
+
+        return getattr(self.local_copy, name)
 
     def gather(self):
         """Gathers local instances of {local_arraytype_name} from *engines*, concatenates them and returns
