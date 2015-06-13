@@ -47,6 +47,11 @@ class DistributedGenericArray(object):
     Therefore call dist_like() first before doing any manual stuff on their local arrays.
     However every cluster-wide array operation first equalizes the distribution of all involved arrays,
     so an explicit call to dist_like() is rather unlikely in most use cases.
+
+    If you try to access an attribute that is only available for the local array, the request
+    is forwarded to an internal local copy of the entire distributed array (see: :meth:`gather()`).
+    This internal copy is only created when you want to access it and is held until ``__setitem__`` is called,
+    i.e. the array's content is manipulated.
     """
     local_arraytype = None
     target_modulename = None
@@ -61,7 +66,7 @@ class DistributedGenericArray(object):
         :param dtype: datatype of a single element
         :param ints distaxes: distributed axes. Accepts a single integer too.
         :param target_offsets: For each distributed axis there is a (inner) list in the outer list.
-            The inner list contains of the offsets of the local array.
+            The inner list contains the offsets of the local array.
         :type target_offsets: list of lists
         :param ints target_ranks: linear list of :term:`engine` ranks holding the local arrays.
             The last distributed axis is iterated over first.
@@ -435,6 +440,15 @@ class DistributedGenericArray(object):
     def gather(self):
         """Gathers local instances of {local_arraytype_name} from *engines*, concatenates them and returns
         the result.
+
+        .. note:: You may not call this method explicitly because if you try to access an attribute
+            of the local array ({local_arraytype_name}), ``gather()`` is called implicitly before the request is forwarded
+            to that internal gathered array. Just access attributes like you do for the local array.
+            The internal copy is held until ``__setitem__`` is called, e.g. ``a[1] = 3.0``, setting
+            a dirty flag to the local copy.
+
+        .. warning:: If another array overlapping this array is manipulating its data there is no chance to set
+            the dirty flag so you have to keep in mind to call ``gather()`` explicitly in this case!
 
         :return: instance of {local_arraytype_name}
         """
