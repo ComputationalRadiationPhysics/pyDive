@@ -30,6 +30,7 @@ if onTarget == 'False':
     import IPParallelClient as com
     from IPython.parallel import interactive
     from fragment import fragment, hdd_arraytypes
+    from structured import VirtualArrayOfStructs
 import numpy as np
 
 def map(f, *arrays, **kwargs):
@@ -77,7 +78,7 @@ def map(f, *arrays, **kwargs):
     view = com.getView()
 
     tmp_targets = view.targets # save current target list
-    if hasattr(arrays[0], "arraytype"):
+    if type(arrays[0]) == VirtualArrayOfStructs:
         view.targets = arrays[0].firstArray.target_ranks
     else:
         view.targets = arrays[0].target_ranks
@@ -127,7 +128,10 @@ def reduce(array, op):
     view = com.getView()
 
     tmp_targets = view.targets # save current target list
-    view.targets = array.target_ranks
+    if type(array) == VirtualArrayOfStructs:
+        view.targets = array.firstArray.target_ranks
+    else:
+        view.targets = array.target_ranks
 
     result = None
 
@@ -183,7 +187,10 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
 
     view = com.getView()
     tmp_targets = view.targets # save current target list
-    view.targets = arrays[0].target_ranks
+    if type(arrays[0]) == VirtualArrayOfStructs:
+        view.targets = arrays[0].firstArray.target_ranks
+    else:
+        view.targets = arrays[0].target_ranks
 
     result = None
 

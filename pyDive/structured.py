@@ -116,7 +116,7 @@ def treeItems(tree):
         else:
             yield key, value
 
-class ForeachLeafDo(object):
+class ForeachLeafCall(object):
     def __init__(self, tree, op):
         self.tree = tree
         self.op = op
@@ -162,12 +162,12 @@ class VirtualArrayOfStructs(object):
 
     def __getattr__(self, name):
         if hasattr(self.firstArray, name):
-            return ForeachLeafDo(self.structOfArrays, name)
+            return ForeachLeafCall(self.structOfArrays, name)
 
         return self[name]
 
     def __special_operation__(self, op, *args):
-        return ForeachLeafDo(self.structOfArrays, op)(*args)
+        return ForeachLeafCall(self.structOfArrays, op)(*args)
 
     def __repr__(self):
         # if arrays are distributed create a local representation of this object on engine
@@ -184,7 +184,7 @@ class VirtualArrayOfStructs(object):
             arrayOfStructs_id += 1
 
             # create a VirtualArrayOfStructs object containing the local arrays on the targets in use
-            names_tree = makeTree_fromTree(structOfArrays, lambda a: repr(a))
+            names_tree = makeTree_fromTree(self.structOfArrays, lambda a: repr(a))
 
             view.push({'names_tree' : names_tree}, targets=self.target_ranks)
 
@@ -231,6 +231,8 @@ class VirtualArrayOfStructs(object):
         result = makeTree_fromTree(self.structOfArrays, lambda a: a[args])
 
         # if args is a list of indices then return a single data value tree
+        if type(args) not in (list, tuple):
+            args = (args,)
         if all(type(arg) is int for arg in args):
             return result
 
@@ -265,7 +267,7 @@ class VirtualArrayOfStructs(object):
 
 # Add special methods like "__add__", "__sub__", ... that call __special_operation__
 # forwarding them to the individual arrays.
-# All ordinary methods and attributes are forwarded by __getattr__
+# All ordinary methods are forwarded by __getattr__
 
 binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow", "lshift", "rshift", "and", "xor", "or"]
 
