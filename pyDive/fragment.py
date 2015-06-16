@@ -35,16 +35,19 @@ import math
 #: list of array types that store their elements on hard disk
 hdd_arraytypes = (h5_ndarray, ad_ndarray)
 
-def __bestStepSize(arrays, memory_limit):
+def __bestStepSize(arrays, axis, memory_limit):
     view = com.getView()
 
     # minimum amount of memory available and memory needed, both per engine
     get_mem_av_node = interactive(lambda: psutil.virtual_memory().available)
+    tmp_targets = view.targets
+    view.targets = 'all'
     mem_av = min(view.apply(get_mem_av_node)) / com.getPPN()
-    mem_needed = sum(a.nbytes for a in arrays) / len(view.targets)
+    mem_needed = sum(a.nbytes for a in arrays) / len(view)
+    view.targets = tmp_targets
 
     # edge length of the whole array
-    edge_length = arrays[0].shape[arrays[0].distaxes[0]]
+    edge_length = arrays[0].shape[axis]
     # maximum edge length on one engine according to the available memory
     step_size = memory_limit * edge_length * mem_av / mem_needed
 
@@ -57,7 +60,7 @@ def __bestStepSize(arrays, memory_limit):
 def fragment(*arrays, **kwargs):
     """Create fragments of *arrays* so that each fragment will fit into the combined
     main memory of all engines when calling ``load()``. The fragmentation is done by array slicing
-    along the first distributed axis of ``arrays[0]``.
+    along the longest axis of ``arrays[0]``.
     The edge size of the fragments is a power of two except for the last fragment.
 
     :param array: distributed arrays (e.g. pyDive.ndarray, pyDive.h5_ndarray, ...)
@@ -100,21 +103,21 @@ def fragment(*arrays, **kwargs):
     # calculate the best suitable step size (-> fragment's edge size) according to the amount
     # of available memory on the engines
     hdd_arrays = [a for a in arrays if (hasattr(a, "arraytype") and a.arraytype in hdd_arraytypes) or type(a) in hdd_arraytypes]
-    step = __bestStepSize(hdd_arrays, memory_limit)
+    longest_axis = max(range(len(arrays[0].shape)), key=lambda axis : arrays[0].shape[axis])
+    step = __bestStepSize(hdd_arrays, longest_axis, memory_limit)
 
     shape = arrays[0].shape
-    distaxis = arrays[0].distaxes[0]
     # list of slices representing the fragment's shape
     fragment_window = [slice(None)] * len(shape)
 
-    for begin in range(0, shape[distaxis], step):
-        end = min(begin + step, shape[distaxis])
-        fragment_window[distaxis] = slice(begin, end)
+    for begin in range(0, shape[longest_axis], step):
+        end = min(begin + step, shape[longest_axis])
+        fragment_window[longest_axis] = slice(begin, end)
 
         result = [a[fragment_window] for a in arrays]
         if offset:
             offset_vector = [0] * len(shape)
-            offset_vector[distaxis] = begin
+            offset_vector[longest_axis] = begin
             result += [offset_vector]
         if len(result) == 1:
             yield result[0]

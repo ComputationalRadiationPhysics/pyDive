@@ -7,7 +7,7 @@ def test_arrayOfStructs(init_pyDive):
     fieldB_z = np.random.rand(100, 100)
 
     fields = {"fieldE": {"x" : fieldE_x, "y" : fieldE_y}, "fieldB" : {"z" : fieldB_z}}
-    fields = pyDive.arrayOfStructs(fields)
+    fields = pyDive.structured(fields)
 
     assert np.array_equal(fieldB_z, fields["fieldB/z"])
     assert np.array_equal(fieldB_z, fields["fieldB"]["z"])

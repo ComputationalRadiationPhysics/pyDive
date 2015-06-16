@@ -64,9 +64,9 @@ import mappings
 mesh2particles = mappings.mesh2particles
 particles2mesh = mappings.particles2mesh
 
-# arrayOfStructs
-import arrayOfStructs
-arrayOfStructs = arrayOfStructs.arrayOfStructs
+# structured
+import structured
+structured = structured.structured
 
 # picongpu
 import picongpu

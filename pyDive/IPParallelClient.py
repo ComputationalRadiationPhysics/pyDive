@@ -51,7 +51,7 @@ def init(profile='mpi'):
         import psutil
         import math
         os.environ["onTarget"] = 'True'
-        from pyDive import arrayOfStructs
+        from pyDive import structured
         from pyDive import algorithm
         from pyDive.distribution import interengine
         try:

@@ -93,7 +93,7 @@ if onTarget == 'False':
     from pyDive.arrays.ndarray import hollow_like
     import pyDive.distribution.multiple_axes as multiple_axes
     import pyDive.IPParallelClient as com
-    from .. import arrayOfStructs
+    from .. import structured
 
     h5_ndarray = multiple_axes.distribute(h5_ndarray_local, "h5_ndarray", "h5_ndarray", may_allocate=False)
 
@@ -165,4 +165,4 @@ if onTarget == 'False':
         group = group_or_dataset
         structOfArrays = {}
         create_tree(group, structOfArrays, datapath)
-        return arrayOfStructs.arrayOfStructs(structOfArrays)
+        return structured.structured(structOfArrays)

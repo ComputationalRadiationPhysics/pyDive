@@ -20,7 +20,7 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 
 __doc__ =\
-"""The *arrayOfStructs* module addresses the common problem when dealing with
+"""The *structured* module addresses the common problem when dealing with
 structured data: While the user likes an array-of-structures layout the machine prefers a structure-of-arrays.
 In pyDive the method of choice is a *virtual* *array-of-structures*-object. It holds array-like attributes
 such as shape and dtype and allows for slicing but is operating on a structure-of-arrays internally.
@@ -38,7 +38,7 @@ Example: ::
                          "z" : fieldb_z}
                     }
 
-    fields = pyDive.arrayOfStructs(treeOfArrays)
+    fields = pyDive.structured(treeOfArrays)
 
     half = fields[::2]["FieldE/x"]
     # equivalent to
@@ -116,7 +116,7 @@ def treeItems(tree):
         else:
             yield key, value
 
-class ForeachLeafDo(object):
+class ForeachLeafCall(object):
     def __init__(self, tree, op):
         self.tree = tree
         self.op = op
@@ -133,12 +133,12 @@ class ForeachLeafDo(object):
             structOfArrays = makeTree_fromTwoTrees(self.tree, args[0].structOfArrays, apply_binary)
         else:
             structOfArrays = makeTree_fromTree(self.tree, apply_unary)
-        return arrayOfStructs(structOfArrays)
+        return structured(structOfArrays)
 
 
 arrayOfStructs_id = 0
 
-class ArrayOfStructsClass(object):
+class VirtualArrayOfStructs(object):
     def __init__(self, structOfArrays):
         items = [item for item in treeItems(structOfArrays)]
         self.firstArray = items[0][1]
@@ -146,14 +146,32 @@ class ArrayOfStructsClass(object):
         assert all(type(a) == self.arraytype for name, a in items),\
             "all arrays in 'structOfArrays' must be of the same type"
         assert all(a.shape == self.firstArray.shape for name, a in items),\
-            "all arrays in 'structOfArrays' must have the same shape"
+            "all arrays in 'structOfArrays' must have the same shape: " +\
+            str({name : a.shape for name, a in items})
 
         self.shape = self.firstArray.shape
         self.dtype = makeTree_fromTree(structOfArrays, lambda a: a.dtype)
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
+        self.has_local_instance = False
 
-        if onTarget == 'False' and hasattr(self.firstArray, "target_ranks"):
+    def __del__(self):
+        if onTarget == 'False' and self.has_local_instance:
+            # delete remote structured object
+            self.view.execute('del %s' % self.name, targets=self.target_ranks)
+
+    def __getattr__(self, name):
+        if hasattr(self.firstArray, name):
+            return ForeachLeafCall(self.structOfArrays, name)
+
+        return self[name]
+
+    def __special_operation__(self, op, *args):
+        return ForeachLeafCall(self.structOfArrays, op)(*args)
+
+    def __repr__(self):
+        # if arrays are distributed create a local representation of this object on engine
+        if onTarget == 'False' and not self.has_local_instance and hasattr(self.firstArray, "target_ranks"):
             self.distaxes = self.firstArray.distaxes
             self.target_offsets = self.firstArray.target_offsets
             self.target_ranks = self.firstArray.target_ranks
@@ -165,31 +183,18 @@ class ArrayOfStructsClass(object):
             self.name = 'arrayOfStructsObj' + str(arrayOfStructs_id)
             arrayOfStructs_id += 1
 
-            # create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use
-            names_tree = makeTree_fromTree(structOfArrays, lambda a: repr(a))
+            # create a VirtualArrayOfStructs object containing the local arrays on the targets in use
+            names_tree = makeTree_fromTree(self.structOfArrays, lambda a: repr(a))
 
             view.push({'names_tree' : names_tree}, targets=self.target_ranks)
 
             view.execute('''\
-                structOfArrays = arrayOfStructs.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
-                %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
+                structOfArrays = structured.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
+                %s = structured.structured(structOfArrays)''' % self.name,\
                 targets=self.target_ranks)
 
-    def __del__(self):
-        if onTarget == 'False' and hasattr(self.firstArray, "target_ranks"):
-            # delete remote arrayOfStructs object
-            self.view.execute('del %s' % self.name, targets=self.target_ranks)
+            self.has_local_instance = True
 
-    def __getattr__(self, name):
-        if hasattr(self.firstArray, name):
-            return ForeachLeafDo(self.structOfArrays, name)
-
-        return self[name]
-
-    def __magicOperation__(self, op, *args):
-        return ForeachLeafDo(self.structOfArrays, op)(*args)
-
-    def __repr__(self):
         return self.name
 
     def __str__(self):
@@ -216,7 +221,7 @@ class ArrayOfStructsClass(object):
                 node = node[node_name]
             if type(node) is dict:
                 # node
-                return arrayOfStructs(node)
+                return structured(node)
             else:
                 # leaf
                 return node
@@ -226,10 +231,12 @@ class ArrayOfStructsClass(object):
         result = makeTree_fromTree(self.structOfArrays, lambda a: a[args])
 
         # if args is a list of indices then return a single data value tree
+        if type(args) not in (list, tuple):
+            args = (args,)
         if all(type(arg) is int for arg in args):
             return result
 
-        return arrayOfStructs(result)
+        return structured(result)
 
     def __setitem__(self, args, other):
         # component access
@@ -258,29 +265,36 @@ class ArrayOfStructsClass(object):
 
         visitTwoTrees(self.structOfArrays, other.structOfArrays, doArrayAssignmentWithSlice)
 
-def arrayOfStructs(structOfArrays):
+# Add special methods like "__add__", "__sub__", ... that call __special_operation__
+# forwarding them to the individual arrays.
+# All ordinary methods are forwarded by __getattr__
+
+binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow", "lshift", "rshift", "and", "xor", "or"]
+
+binary_iops = ["__i" + op + "__" for op in binary_ops]
+binary_rops = ["__r" + op + "__" for op in binary_ops]
+binary_ops = ["__" + op + "__" for op in binary_ops]
+unary_ops = ["__neg__", "__pos__", "__abs__", "__invert__", "__complex__", "__int__", "__long__", "__float__", "__oct__", "__hex__"]
+comp_ops = ["__lt__", "__le__", "__eq__", "__ne__", "__ge__", "__gt__"]
+
+make_special_op = lambda op: lambda self, *args: self.__special_operation__(op, *args)
+
+special_ops_dict = {op : make_special_op(op) for op in binary_ops + binary_rops + unary_ops + comp_ops}
+
+from types import MethodType
+
+for name, func in special_ops_dict.items():
+    setattr(VirtualArrayOfStructs, name, MethodType(func, None, VirtualArrayOfStructs))
+
+
+def structured(structOfArrays):
     """Convert a *structure-of-arrays* into a virtual *array-of-structures*.
 
-    :param structOfArrays: tree-like dictionary of arrays.
+    :param structOfArrays: tree-like (dict-of-dicts) dictionary of arrays.
     :raises AssertionError: if the *arrays-types* do not match. Datatypes may differ.
     :raises AssertionError: if the shapes do not match.
     :return: Custom object representing a virtual array whose elements have the same tree-like structure
         as *structOfArrays*.
     """
-
-    items = [item for item in treeItems(structOfArrays)]
-    firstArray = items[0][1]
-    arraytype = type(firstArray)
-
-    # build a class which contains all special methods, or magic operations, array-type has.
-    # In their implementation they call the __magicOperation__ method of the virtual array-of-structs
-    # with the name of the operation ("__add__", "__sub__", ...) which forwards it to the individual arrays.
-    # All ordinary methods that array-type has are forwarded by __getattr__
-    magic_ops = [name for name in arraytype.__dict__.keys() if name.endswith("__")\
-        and name not in ("__new__", "__str__", "__repr__")]
-    make_magicOperation = lambda op: lambda self, *args: self.__magicOperation__(op, *args)
-    MagicOperations = type("MagicOperations", (), {op : make_magicOperation(op) for op in magic_ops})
-
-    VirtualArrayOfStructs = type("VirtualArrayOfStructs", (MagicOperations,), dict(ArrayOfStructsClass.__dict__))
 
     return VirtualArrayOfStructs(structOfArrays)

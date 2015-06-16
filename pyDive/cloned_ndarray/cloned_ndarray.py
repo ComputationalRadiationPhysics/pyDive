@@ -52,7 +52,6 @@ class cloned_ndarray(object):
         self.nbytes = np.dtype(dtype).itemsize * np.prod(self.shape)
         self.target_ranks = target_ranks
         self.view = com.getView()
-        self.arraytype = self.__class__
 
         if self.target_ranks == 'all':
             self.target_ranks = list(self.view.targets)

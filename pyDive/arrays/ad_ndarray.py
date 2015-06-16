@@ -108,7 +108,7 @@ if onTarget == 'False':
     import pyDive.distribution.multiple_axes as multiple_axes
     import pyDive.IPParallelClient as com
     from itertools import islice
-    from .. import arrayOfStructs
+    from .. import structured
 
     ad_ndarray = multiple_axes.distribute(ad_ndarray_local, "ad_ndarray", "ad_ndarray", may_allocate=False)
 
@@ -186,4 +186,4 @@ if onTarget == 'False':
 
             update_tree(structOfArrays, variable_path, path_nodes_it, path_nodes[-1])
 
-        return arrayOfStructs.arrayOfStructs(structOfArrays)
+        return structured.structured(structOfArrays)
