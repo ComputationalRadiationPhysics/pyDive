@@ -69,6 +69,7 @@ onTarget = os.environ.get("onTarget", 'False')
 if onTarget == 'False':
     import IPParallelClient as com
     from IPython.parallel import interactive
+    import debug
 import numpy as np
 
 def makeTree_fromTree(tree, expression):
@@ -146,37 +147,17 @@ class ArrayOfStructsClass(object):
         assert all(type(a) == self.arraytype for name, a in items),\
             "all arrays in 'structOfArrays' must be of the same type"
         assert all(a.shape == self.firstArray.shape for name, a in items),\
-            "all arrays in 'structOfArrays' must have the same shape"
+            "all arrays in 'structOfArrays' must have the same shape: " +\
+            str({name : a.shape for name, a in items})
 
         self.shape = self.firstArray.shape
         self.dtype = makeTree_fromTree(structOfArrays, lambda a: a.dtype)
         self.nbytes = sum(a.nbytes for name, a in items)
         self.structOfArrays = structOfArrays
-
-        if onTarget == 'False' and hasattr(self.firstArray, "target_ranks"):
-            self.distaxes = self.firstArray.distaxes
-            self.target_offsets = self.firstArray.target_offsets
-            self.target_ranks = self.firstArray.target_ranks
-            view = com.getView()
-            self.view = view
-
-            # generate a unique variable name used on target representing this instance
-            global arrayOfStructs_id
-            self.name = 'arrayOfStructsObj' + str(arrayOfStructs_id)
-            arrayOfStructs_id += 1
-
-            # create an arrayOfStructsClass object consisting of the numpy arrays on the targets in use
-            names_tree = makeTree_fromTree(structOfArrays, lambda a: repr(a))
-
-            view.push({'names_tree' : names_tree}, targets=self.target_ranks)
-
-            view.execute('''\
-                structOfArrays = arrayOfStructs.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
-                %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
-                targets=self.target_ranks)
+        self.has_local_instance = False
 
     def __del__(self):
-        if onTarget == 'False' and hasattr(self.firstArray, "target_ranks"):
+        if onTarget == 'False' and self.has_local_instance:
             # delete remote arrayOfStructs object
             self.view.execute('del %s' % self.name, targets=self.target_ranks)
 
@@ -190,6 +171,33 @@ class ArrayOfStructsClass(object):
         return ForeachLeafDo(self.structOfArrays, op)(*args)
 
     def __repr__(self):
+        # if arrays are distributed create a local representation of this object on engine
+        if onTarget == 'False' and not self.has_local_instance and hasattr(self.firstArray, "target_ranks"):
+            self.distaxes = self.firstArray.distaxes
+            self.target_offsets = self.firstArray.target_offsets
+            self.target_ranks = self.firstArray.target_ranks
+            view = com.getView()
+            self.view = view
+
+            # generate a unique variable name used on target representing this instance
+            global arrayOfStructs_id
+            self.name = 'arrayOfStructsObj' + str(arrayOfStructs_id)
+            arrayOfStructs_id += 1
+
+            # create an arrayOfStructsClass object consisting of the local arrays on the targets in use
+            names_tree = makeTree_fromTree(structOfArrays, lambda a: repr(a))
+
+            view.push({'names_tree' : names_tree}, targets=self.target_ranks)
+
+            ar = view.execute('''\
+                structOfArrays = arrayOfStructs.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
+                %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
+                targets=self.target_ranks, block=False)
+
+            debug.wait_watching_stdout(ar)
+
+            self.has_local_instance = True
+
         return self.name
 
     def __str__(self):
