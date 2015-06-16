@@ -28,7 +28,7 @@ import os
 import os.path
 import re
 import arrays.h5_ndarray as h5
-import arrayOfStructs
+import structured
 
 def loadSteps(steps, folder_path, data_path, distaxis=0):
     """Python generator object looping all hdf5-data found in *folder_path*
@@ -44,7 +44,7 @@ def loadSteps(steps, folder_path, data_path, distaxis=0):
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
         :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
         :return: tuple of timestep and a :ref:`pyDive.h5_ndarray <pyDive.h5_ndarray.h5_ndarray.h5_ndarray>`
-            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.
+            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.structured`). Ordering is done by timestep.
 
         Notes:
             - If the dataset has a '**sim_unit**' attribute its value is stored in ``h5array.unit``.
@@ -76,8 +76,8 @@ def loadSteps(steps, folder_path, data_path, distaxis=0):
         if type(h5data) is h5.h5_ndarray:
             h5data = add_sim_unit(h5data)
         else:
-            h5data = arrayOfStructs.arrayOfStructs(\
-                arrayOfStructs.makeTree_fromTree(h5data.structOfArrays, add_sim_unit))
+            h5data = structured.structured(\
+                structured.makeTree_fromTree(h5data.structOfArrays, add_sim_unit))
 
         yield timestep, h5data
 
@@ -105,7 +105,7 @@ def loadAllSteps(folder_path, data_path, distaxis=0):
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
         :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
         :return: tuple of timestep and a :ref:`pyDive.h5_ndarray <pyDive.h5_ndarray.h5_ndarray.h5_ndarray>`
-            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.
+            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.structured`). Ordering is done by timestep.
 
         Notes:
             - If the dataset has a '**sim_unit**' attribute its value is stored in ``h5array.unit``.
@@ -125,7 +125,7 @@ def loadStep(step, folder_path, data_path, distaxis=0):
         :param str data_path: Relative path starting from "/data/<timestep>/" within hdf5-file to the dataset or group of datasets
         :param int distaxis: axis on which datasets are distributed over when once loaded into memory.
         :return: :ref:`pyDive.h5_ndarray <pyDive.h5_ndarray.h5_ndarray.h5_ndarray>`
-            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`).
+            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.structured`).
 
         Notes:
             - If the dataset has a '**sim_unit**' attribute its value is stored in ``h5array.unit``.

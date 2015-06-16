@@ -20,7 +20,7 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 
 __doc__ =\
-"""The *arrayOfStructs* module addresses the common problem when dealing with
+"""The *structured* module addresses the common problem when dealing with
 structured data: While the user likes an array-of-structures layout the machine prefers a structure-of-arrays.
 In pyDive the method of choice is a *virtual* *array-of-structures*-object. It holds array-like attributes
 such as shape and dtype and allows for slicing but is operating on a structure-of-arrays internally.
@@ -38,7 +38,7 @@ Example: ::
                          "z" : fieldb_z}
                     }
 
-    fields = pyDive.arrayOfStructs(treeOfArrays)
+    fields = pyDive.structured(treeOfArrays)
 
     half = fields[::2]["FieldE/x"]
     # equivalent to
@@ -134,7 +134,7 @@ class ForeachLeafDo(object):
             structOfArrays = makeTree_fromTwoTrees(self.tree, args[0].structOfArrays, apply_binary)
         else:
             structOfArrays = makeTree_fromTree(self.tree, apply_unary)
-        return arrayOfStructs(structOfArrays)
+        return structured(structOfArrays)
 
 
 arrayOfStructs_id = 0
@@ -158,7 +158,7 @@ class ArrayOfStructsClass(object):
 
     def __del__(self):
         if onTarget == 'False' and self.has_local_instance:
-            # delete remote arrayOfStructs object
+            # delete remote structured object
             self.view.execute('del %s' % self.name, targets=self.target_ranks)
 
     def __getattr__(self, name):
@@ -184,14 +184,14 @@ class ArrayOfStructsClass(object):
             self.name = 'arrayOfStructsObj' + str(arrayOfStructs_id)
             arrayOfStructs_id += 1
 
-            # create an arrayOfStructsClass object consisting of the local arrays on the targets in use
+            # create a VirtualArrayOfStructs object containing the local arrays on the targets in use
             names_tree = makeTree_fromTree(structOfArrays, lambda a: repr(a))
 
             view.push({'names_tree' : names_tree}, targets=self.target_ranks)
 
             ar = view.execute('''\
-                structOfArrays = arrayOfStructs.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
-                %s = arrayOfStructs.arrayOfStructs(structOfArrays)''' % self.name,\
+                structOfArrays = structured.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
+                %s = structured.structured(structOfArrays)''' % self.name,\
                 targets=self.target_ranks, block=False)
 
             debug.wait_watching_stdout(ar)
@@ -224,7 +224,7 @@ class ArrayOfStructsClass(object):
                 node = node[node_name]
             if type(node) is dict:
                 # node
-                return arrayOfStructs(node)
+                return structured(node)
             else:
                 # leaf
                 return node
@@ -237,7 +237,7 @@ class ArrayOfStructsClass(object):
         if all(type(arg) is int for arg in args):
             return result
 
-        return arrayOfStructs(result)
+        return structured(result)
 
     def __setitem__(self, args, other):
         # component access
@@ -266,10 +266,10 @@ class ArrayOfStructsClass(object):
 
         visitTwoTrees(self.structOfArrays, other.structOfArrays, doArrayAssignmentWithSlice)
 
-def arrayOfStructs(structOfArrays):
+def structured(structOfArrays):
     """Convert a *structure-of-arrays* into a virtual *array-of-structures*.
 
-    :param structOfArrays: tree-like dictionary of arrays.
+    :param structOfArrays: tree-like (dict-of-dicts) dictionary of arrays.
     :raises AssertionError: if the *arrays-types* do not match. Datatypes may differ.
     :raises AssertionError: if the shapes do not match.
     :return: Custom object representing a virtual array whose elements have the same tree-like structure
