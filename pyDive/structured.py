@@ -69,7 +69,6 @@ onTarget = os.environ.get("onTarget", 'False')
 if onTarget == 'False':
     import IPParallelClient as com
     from IPython.parallel import interactive
-    import debug
 import numpy as np
 
 def makeTree_fromTree(tree, expression):
@@ -139,7 +138,7 @@ class ForeachLeafDo(object):
 
 arrayOfStructs_id = 0
 
-class ArrayOfStructsClass(object):
+class VirtualArrayOfStructs(object):
     def __init__(self, structOfArrays):
         items = [item for item in treeItems(structOfArrays)]
         self.firstArray = items[0][1]
@@ -167,7 +166,7 @@ class ArrayOfStructsClass(object):
 
         return self[name]
 
-    def __magicOperation__(self, op, *args):
+    def __special_operation__(self, op, *args):
         return ForeachLeafDo(self.structOfArrays, op)(*args)
 
     def __repr__(self):
@@ -189,12 +188,10 @@ class ArrayOfStructsClass(object):
 
             view.push({'names_tree' : names_tree}, targets=self.target_ranks)
 
-            ar = view.execute('''\
+            view.execute('''\
                 structOfArrays = structured.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
                 %s = structured.structured(structOfArrays)''' % self.name,\
-                targets=self.target_ranks, block=False)
-
-            debug.wait_watching_stdout(ar)
+                targets=self.target_ranks)
 
             self.has_local_instance = True
 
@@ -266,6 +263,28 @@ class ArrayOfStructsClass(object):
 
         visitTwoTrees(self.structOfArrays, other.structOfArrays, doArrayAssignmentWithSlice)
 
+# Add special methods like "__add__", "__sub__", ... that call __special_operation__
+# forwarding them to the individual arrays.
+# All ordinary methods and attributes are forwarded by __getattr__
+
+binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow", "lshift", "rshift", "and", "xor", "or"]
+
+binary_iops = ["__i" + op + "__" for op in binary_ops]
+binary_rops = ["__r" + op + "__" for op in binary_ops]
+binary_ops = ["__" + op + "__" for op in binary_ops]
+unary_ops = ["__neg__", "__pos__", "__abs__", "__invert__", "__complex__", "__int__", "__long__", "__float__", "__oct__", "__hex__"]
+comp_ops = ["__lt__", "__le__", "__eq__", "__ne__", "__ge__", "__gt__"]
+
+make_special_op = lambda op: lambda self, *args: self.__special_operation__(op, *args)
+
+special_ops_dict = {op : make_special_op(op) for op in binary_ops + binary_rops + unary_ops + comp_ops}
+
+from types import MethodType
+
+for name, func in special_ops_dict.items():
+    setattr(VirtualArrayOfStructs, name, MethodType(func, None, VirtualArrayOfStructs))
+
+
 def structured(structOfArrays):
     """Convert a *structure-of-arrays* into a virtual *array-of-structures*.
 
@@ -275,20 +294,5 @@ def structured(structOfArrays):
     :return: Custom object representing a virtual array whose elements have the same tree-like structure
         as *structOfArrays*.
     """
-
-    items = [item for item in treeItems(structOfArrays)]
-    firstArray = items[0][1]
-    arraytype = type(firstArray)
-
-    # build a class which contains all special methods, or magic operations, array-type has.
-    # In their implementation they call the __magicOperation__ method of the virtual array-of-structs
-    # with the name of the operation ("__add__", "__sub__", ...) which forwards it to the individual arrays.
-    # All ordinary methods that array-type has are forwarded by __getattr__
-    magic_ops = [name for name in arraytype.__dict__.keys() if name.endswith("__")\
-        and name not in ("__new__", "__str__", "__repr__")]
-    make_magicOperation = lambda op: lambda self, *args: self.__magicOperation__(op, *args)
-    MagicOperations = type("MagicOperations", (), {op : make_magicOperation(op) for op in magic_ops})
-
-    VirtualArrayOfStructs = type("VirtualArrayOfStructs", (MagicOperations,), dict(ArrayOfStructsClass.__dict__))
 
     return VirtualArrayOfStructs(structOfArrays)
