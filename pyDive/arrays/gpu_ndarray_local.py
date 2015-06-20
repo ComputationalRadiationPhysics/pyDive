@@ -29,10 +29,9 @@ def copy_non_contiguous(dst, src):
     i.e. it may have substancial pitches/strides. However a cpu-array must have a contiguous block of memory.
     All four directions are allowed.
     """
-
     assert src.dtype == dst.dtype,\
         "src ({}) and dst ({}) must have the same datatype.".format(str(src.dtype), str(dst.dtype))
-    assert all(s1 == s2 for s1, s2 in zip(dst.shape, src.shape)),\
+    assert dst.shape == src.shape,\
         "Shapes do not match: " + str(dst.shape) + " <-> " + str(src.shape)
 
     itemsize = np.dtype(src.dtype).itemsize
@@ -111,6 +110,10 @@ class gpu_ndarray(pycuda.gpuarray.GPUArray):
 
     def __init__(self, shape, dtype, allocator=cuda.mem_alloc,\
                     base=None, gpudata=None, strides=None, order="C"):
+        if type(shape) not in (list, tuple):
+            shape = (shape,)
+        elif type(shape) is not tuple:
+            shape = tuple(shape)
         super(gpu_ndarray, self).__init__(shape, np.dtype(dtype), allocator, base, gpudata, strides, order)
 
     def __setitem__(self, key, other):
@@ -160,6 +163,7 @@ class gpu_ndarray(pycuda.gpuarray.GPUArray):
     def __elementwise_op__(self, op, *args):
         # if arrays are not contiguous make a contiguous copy
         my_array = self.copy() if not self.flags.forc else self
+
         args = [arg.copy() if isinstance(arg, pycuda.gpuarray.GPUArray) and not arg.flags.forc else arg for arg in args]
         pycuda_array = getattr(super(gpu_ndarray, my_array), op)(*args)
         return self.__cast_from_base(pycuda_array)

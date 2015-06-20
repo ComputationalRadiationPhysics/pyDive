@@ -144,7 +144,8 @@ class VirtualArrayOfStructs(object):
         self.firstArray = items[0][1]
         self.arraytype = type(self.firstArray)
         assert all(type(a) == self.arraytype for name, a in items),\
-            "all arrays in 'structOfArrays' must be of the same type"
+            "all arrays in 'structOfArrays' must be of the same type: " +\
+            str({name : type(a) for name, a in items})
         assert all(a.shape == self.firstArray.shape for name, a in items),\
             "all arrays in 'structOfArrays' must have the same shape: " +\
             str({name : a.shape for name, a in items})
@@ -261,7 +262,7 @@ class VirtualArrayOfStructs(object):
         # slicing
         # -------
         def doArrayAssignmentWithSlice(treeA, treeB, name, arrayA, arrayB):
-            treeA[name][args] = arrayB
+            arrayA[args] = arrayB
 
         visitTwoTrees(self.structOfArrays, other.structOfArrays, doArrayAssignmentWithSlice)
 

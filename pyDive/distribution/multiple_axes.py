@@ -211,7 +211,6 @@ class DistributedGenericArray(object):
         return sum(rank_idx_component * pitch_component for rank_idx_component, pitch_component in zip(rank_idx_vector, pitch))
 
     def __getitem__(self, args):
-
         # bitmask indexing
         if isinstance(args, self.__class__) and args.dtype == bool:
             bitmask = args
@@ -557,6 +556,17 @@ class DistributedGenericArray(object):
 
         return result
 
+    def info(self, name):
+        print name + " info:"
+        print "{}.name".format(name), self.name
+        print "{}.target_ranks".format(name), self.target_ranks
+        print "{}.target_offsets".format(name), self.target_offsets
+        print "{}.distaxes".format(name), self.distaxes
+        self.view.execute("dt = str({}.dtype)".format(repr(self)), targets=self.target_ranks)
+        print "{}.dtypes".format(name), self.view.pull("dt", targets=self.target_ranks)
+        self.view.execute("t = str(type({}))".format(repr(self)), targets=self.target_ranks)
+        print "{}.types".format(name), self.view.pull("t", targets=self.target_ranks)
+
     def __elementwise_op__(self, op, *args):
         args = [arg.dist_like(self) if hasattr(arg, "target_ranks") else arg for arg in args]
         arg_names = [repr(arg) for arg in args]
@@ -567,6 +577,7 @@ class DistributedGenericArray(object):
         self.view.execute("{0} = {1}.{2}({3}); dtype={0}.dtype".format(repr(result), repr(self), op, arg_string), targets=self.target_ranks)
         result.dtype = self.view.pull("dtype", targets=result.target_ranks[0])
         result.nbytes = np.dtype(result.dtype).itemsize * np.prod(result.shape)
+
         return result
 
     def __elementwise_iop__(self, op, *args):
