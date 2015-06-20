@@ -168,12 +168,6 @@ class gpu_ndarray(pycuda.gpuarray.GPUArray):
         pycuda_array = getattr(super(gpu_ndarray, my_array), op)(*args)
         return self.__cast_from_base(pycuda_array)
 
-    def __elementwise_iop__(self, op, *args):
-        # if arrays are not contiguous make a contiguous copy
-        args = [arg.copy() if isinstance(arg, pycuda.gpuarray.GPUArray) and not arg.flags.forc else arg for arg in args]
-        getattr(super(gpu_ndarray, self), op)(*args)
-        return self
-
 # add special operations like __add__, __mul__, etc. to `gpu_ndarray`
 
 binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow", "lshift", "rshift", "and", "xor", "or"]
@@ -187,15 +181,13 @@ comp_ops = ["__lt__", "__le__", "__eq__", "__ne__", "__ge__", "__gt__"]
 special_ops_avail = set(name for name in pycuda.gpuarray.GPUArray.__dict__.keys() if name.endswith("__"))
 
 make_special_op = lambda op: lambda self, *args: self.__elementwise_op__(op, *args)
-make_special_iop = lambda op: lambda self, *args: self.__elementwise_iop__(op, *args)
 
 special_ops_dict = {op : make_special_op(op) for op in \
-    set(binary_ops + binary_rops + unary_ops + comp_ops) & special_ops_avail}
-special_iops_dict = {op : make_special_iop(op) for op in set(binary_iops) & special_ops_avail}
+    set(binary_ops + binary_rops + binary_iops + unary_ops + comp_ops) & special_ops_avail}
 
 from types import MethodType
 
-for name, func in special_ops_dict.items() + special_iops_dict.items():
+for name, func in special_ops_dict.items():
     setattr(gpu_ndarray, name, MethodType(func, None, gpu_ndarray))
 
 # -------------------- factories -----------------------------------
