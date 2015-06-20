@@ -401,6 +401,7 @@ class DistributedGenericArray(object):
         # value assignment (key == list of indices)
         if all(type(k) is int for k in key):
             local_idx = list(key)
+            local_idx = [(i + s) % s for i, s in zip(local_idx, self.shape)]
             rank_idx_vector = []
             for distaxis, target_offsets in zip(self.distaxes, self.target_offsets):
                 dist_idx = key[distaxis]
