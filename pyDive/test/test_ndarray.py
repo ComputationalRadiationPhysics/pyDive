@@ -147,3 +147,32 @@ def test_interengine_multiple_axes(init_pyDive):
                         test_array_sum = test_arrayA[slicesA] + test_arrayB[slicesB]
 
                         assert np.array_equal(ref_sum, test_array_sum.gather())
+
+def test_misc(init_pyDive):
+    sizes = ((10,20,30), (30,20,10), (16,16,16), (16,32,48), (13,29,37))
+
+    def do_funny_stuff(a, b):
+        a[1:,1:,1:] = b[:-1,:-1,:-1]
+        b[1:,1:,1:] = a[1:,:-1,:-1]
+        a[1:,1:,1:] = b[1:,1:,:-1]
+        b[1:,1:,1:] = a[1:,:-1,1:]
+        a[:-1,:-3,:-4] = b[1:,3:,4:]
+        b[0,:,0] += a[-2,:,-2]
+        a[4:-3,2:-1,5:-2] = b[4:-3,2:-1,5:-2]
+        b[1:3,1:4,1:5] *= a[-3:-1,-4:-1,-5:-1]
+        a[1,2,3] -= b[3,2,1]
+        b[:,:,0] = a[:,:,1]
+
+    for size in sizes:
+        print "size", size
+        np_a = (np.random.rand(*size) * 100.0).astype(np.int)
+        np_b = (np.random.rand(*size) * 100.0).astype(np.int)
+
+        pd_a = pyDive.array(np_a, distaxes=(0,1,2))
+        pd_b = pyDive.array(np_b, distaxes=(0,1,2))
+
+        do_funny_stuff(np_a, np_b)
+        do_funny_stuff(pd_a, pd_b)
+
+        assert np.array_equal(pd_a.gather(), np_a)
+        assert np.array_equal(pd_b.gather(), np_b)

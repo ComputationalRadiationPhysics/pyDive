@@ -71,3 +71,42 @@ def test_interengine(init_pyDive):
                 ref[slicesA] = ref[slicesB]
 
                 assert np.array_equal(test_array.to_cpu().gather(), ref)
+
+@gpu_enabled
+def test_misc(init_pyDive):
+    sizes = ((10,20,30), (30,20,10), (16,16,16), (16,32,48), (13,29,37))
+
+    def do_funny_stuff(a, b):
+        a[1:,1:,1:] = b[:-1,:-1,:-1]
+        b[1:,1:,1:] = a[1:,:-1,:-1]
+        a[1:,1:,1:] = b[1:,1:,:-1]
+        b[1:,1:,1:] = a[1:,:-1,1:]
+        a[:-1,:-3,:-4] = b[1:,3:,4:]
+        b[0,:,0] += a[-2,:,-2]
+        a[4:-3,2:-1,5:-2] = b[4:-3,2:-1,5:-2]
+        b[1:3,1:4,1:5] *= a[-3:-1,-4:-1,-5:-1]
+        #a[1,2,3] -= b[3,2,1]
+        b[:,:,0] = a[:,:,1]
+
+    for size in sizes:
+        cpu_a = (np.random.rand(*size) * 100.0).astype(np.int)
+        cpu_b = (np.random.rand(*size) * 100.0).astype(np.int)
+
+        gpu_a = pyDive.gpu.array(cpu_a, distaxes=(0,1,2))
+        gpu_b = pyDive.gpu.array(cpu_b, distaxes=(0,1,2))
+
+        do_funny_stuff(cpu_a, cpu_b)
+        do_funny_stuff(gpu_a, gpu_b)
+
+        assert np.array_equal(gpu_a.to_cpu().gather(), cpu_a)
+        assert np.array_equal(gpu_b.to_cpu().gather(), cpu_b)
+
+
+
+
+
+
+
+
+
+
