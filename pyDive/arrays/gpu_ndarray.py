@@ -23,10 +23,10 @@ __doc__ = None
 import numpy as np
 import pyDive.distribution.multiple_axes as multiple_axes
 from pyDive.distribution.interengine import GPU_copier
-import pyDive.arrays.gpu_ndarray_local
+import pyDive.arrays.local.gpu_ndarray
 
-gpu_ndarray = multiple_axes.distribute(pyDive.arrays.gpu_ndarray_local.gpu_ndarray, "gpu_ndarray",\
-    "pyDive.arrays.gpu_ndarray_local", interengine_copier=GPU_copier)
+gpu_ndarray = multiple_axes.distribute(pyDive.arrays.local.gpu_ndarray.gpu_ndarray, "gpu_ndarray",\
+    "pyDive.arrays.local.gpu_ndarray", interengine_copier=GPU_copier)
 
 factories = multiple_axes.generate_factories(gpu_ndarray, ("empty", "zeros"), np.float)
 factories.update(multiple_axes.generate_factories_like(gpu_ndarray, ("empty_like", "zeros_like")))
@@ -82,7 +82,7 @@ def array(array_like, distaxes=0):
     result_cpu = pyDive.arrays.ndarray.array(array_like, distaxes)
     result = hollow_like(result_cpu)
     view = com.getView()
-    view.execute("{0} = pyDive.arrays.gpu_ndarray_local.gpu_ndarray_cast(pycuda.gpuarray.to_gpu({1}))"\
+    view.execute("{0} = pyDive.arrays.local.gpu_ndarray.gpu_ndarray_cast(pycuda.gpuarray.to_gpu({1}))"\
         .format(repr(result), repr(result_cpu)), targets=result.target_ranks)
 
     return result
