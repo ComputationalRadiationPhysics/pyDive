@@ -55,15 +55,15 @@ def init(profile='mpi'):
         from pyDive import algorithm
         from pyDive.distribution import interengine
         try:
-            import pyDive.arrays.h5_ndarray as h5_ndarray
+            import pyDive.arrays.local.h5_ndarray
         except ImportError:
             pass
         try:
-            import pyDive.arrays.ad_ndarray as ad_ndarray
+            import pyDive.arrays.local.ad_ndarray
         except ImportError:
             pass
         try:
-            import pyDive.arrays.gpu_ndarray_local
+            import pyDive.arrays.local.gpu_ndarray
             import pycuda.autoinit
         except ImportError:
             pass
