@@ -241,6 +241,9 @@ class DistributedGenericArray(object):
             "number of arguments (%d) does not correspond to the dimension (%d)"\
                  % (len(args), len(self.shape))
 
+        # wrap all integer indices
+        args = [(arg + s) % s if type(arg) is int else arg for arg, s in zip(args, self.shape)]
+
         # shape of the new sliced ndarray
         new_shape, clean_view = helper.view_of_shape(self.shape, args)
 
