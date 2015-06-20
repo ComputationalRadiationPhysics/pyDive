@@ -472,6 +472,14 @@ class DistributedGenericArray(object):
         self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.target_ranks)
         return result
 
+    def is_distributed_like(self, other):
+        if self.distaxes == other.distaxes:
+          if all(np.array_equal(my_target_offsets, other_target_offsets) \
+            for my_target_offsets, other_target_offsets in zip(self.target_offsets, other.target_offsets)):
+              if self.target_ranks == other.target_ranks:
+                  return True
+        return False
+
     def dist_like(self, other):
         """Redistributes a copy of this array (*self*) like *other* and returns the result.
         Checks whether redistribution is necessary and returns *self* if not.
@@ -488,11 +496,8 @@ class DistributedGenericArray(object):
             "Shapes do not match: " + str(self.shape) + " <-> " + str(other.shape)
 
         # if self is already distributed like *other* do nothing
-        if self.distaxes == other.distaxes:
-          if all(np.array_equal(my_target_offsets, other_target_offsets) \
-            for my_target_offsets, other_target_offsets in zip(self.target_offsets, other.target_offsets)):
-              if self.target_ranks == other.target_ranks:
-                  return self
+        if self.is_distributed_like(other):
+            return self
 
         assert self.__class__.may_allocate, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
 
