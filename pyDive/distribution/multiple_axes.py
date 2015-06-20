@@ -32,7 +32,7 @@ class DistributedGenericArray(object):
     """
     Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
     *cluster-wide* means that its elements are distributed across IPython.parallel-engines.
-    The distribution is done in one or multiply dimension along user-specified axes.
+    The distribution is done in one or multiply dimensions along user-specified axes.
     The user can optionally specify which engine maps to which index range or leave the default
     that persuits an uniform distribution across all engines.
 
@@ -49,7 +49,7 @@ class DistributedGenericArray(object):
     so an explicit call to dist_like() is rather unlikely in most use cases.
 
     If you try to access an attribute that is only available for the local array, the request
-    is forwarded to an internal local copy of the entire distributed array (see: :meth:`gather()`).
+    is forwarded to an internal local copy of the whole distributed array (see: :meth:`gather()`).
     This internal copy is only created when you want to access it and is held until ``__setitem__`` is called,
     i.e. the array's content is manipulated.
     """
@@ -58,13 +58,13 @@ class DistributedGenericArray(object):
     interengine_copier = None
     may_allocate = True
 
-    def __init__(self, shape, dtype=np.float, distaxes=0, target_offsets=None, target_ranks=None, no_allocation=False, **kwargs):
+    def __init__(self, shape, dtype=np.float, distaxes='all', target_offsets=None, target_ranks=None, no_allocation=False, **kwargs):
         """Creates an instance of {arraytype_name}. This is a low-level method of instantiating an array, it should rather be
         constructed using factory functions ("empty", "zeros", "open", ...)
 
         :param ints shape: shape of array
         :param dtype: datatype of a single element
-        :param ints distaxes: distributed axes. Accepts a single integer too.
+        :param ints distaxes: distributed axes. Accepts a single integer too. Defaults to 'all' meaning each axis is distributed.
         :param target_offsets: For each distributed axis there is a (inner) list in the outer list.
             The inner list contains the offsets of the local array.
         :type target_offsets: list of lists
@@ -82,7 +82,9 @@ class DistributedGenericArray(object):
         self.shape = shape
         ##: datatype of a single data value
         self.dtype = dtype
-        if type(distaxes) not in (list, tuple):
+        if distaxes == 'all':
+            distaxes = tuple(range(len(shape)))
+        elif type(distaxes) not in (list, tuple):
             distaxes = (distaxes,)
         elif type(distaxes) is not tuple:
             distaxes = tuple(distaxes)

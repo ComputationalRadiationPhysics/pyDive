@@ -42,12 +42,12 @@ def load(self):
 h5_ndarray.load = load
 del load
 
-def open_dset(filename, dataset_path, distaxes=0):
+def open_dset(filename, dataset_path, distaxes='all'):
     """Create a pyDive.h5.h5_ndarray instance from file.
 
     :param filename: name of hdf5 file.
     :param dataset_path: path within hdf5 file to a single dataset.
-    :param distaxes ints: distributed axes
+    :param distaxes ints: distributed axes. Defaults to 'all' meaning each axis is distributed.
     :return: pyDive.h5.h5_ndarray instance
     """
     fileHandle = h5.File(filename, "r")
@@ -69,13 +69,13 @@ def open_dset(filename, dataset_path, distaxes=0):
 
     return result
 
-def open(filename, datapath, distaxes=0):
+def open(filename, datapath, distaxes='all'):
     """Create an pyDive.h5.h5_ndarray instance respectively a structure of
     pyDive.h5.h5_ndarray instances from file.
 
     :param filename: name of hdf5 file.
     :param dataset_path: path within hdf5 file to a single dataset or hdf5 group.
-    :param distaxes ints: distributed axes
+    :param distaxes ints: distributed axes. Defaults to 'all' meaning each axis is distributed.
     :return: pyDive.h5.h5_ndarray instance / structure of pyDive.h5.h5_ndarray instances
     """
     hFile = h5.File(filename, 'r')

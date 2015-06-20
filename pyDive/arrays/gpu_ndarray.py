@@ -32,7 +32,7 @@ factories = multiple_axes.generate_factories(gpu_ndarray, ("empty", "zeros"), np
 factories.update(multiple_axes.generate_factories_like(gpu_ndarray, ("empty_like", "zeros_like")))
 globals().update(factories)
 
-def ones(shape, dtype=np.float, distaxes=0, **kwargs):
+def ones(shape, dtype=np.float, distaxes='all', **kwargs):
     result = zeros(shape, dtype, distaxes, **kwargs)
     result += 1
     return result
@@ -57,13 +57,13 @@ def to_cpu(self):
 gpu_ndarray.to_cpu = to_cpu
 del to_cpu
 
-def hollow(shape, dtype=np.float, distaxes=0):
+def hollow(shape, dtype=np.float, distaxes='all'):
     """Create a pyDive.gpu_ndarray instance distributed across all engines without allocating a local
     gpu-array.
 
     :param ints shape: shape of array
     :param dtype: datatype of a single element
-    :param ints distaxes: distributed axes
+    :param ints distaxes: distributed axes. Defaults to 'all' meaning each axis is distributed.
     """
     return gpu_ndarray(shape, dtype, distaxes, None, None, True)
 
@@ -73,11 +73,11 @@ def hollow_like(other):
     """
     return gpu_ndarray(other.shape, other.dtype, other.distaxes, other.target_offsets, other.target_ranks, True)
 
-def array(array_like, distaxes=0):
+def array(array_like, distaxes='all'):
     """Create a pyDive.gpu_ndarray instance from an array-like object.
 
     :param array_like: Any object exposing the array interface, e.g. numpy-array, python sequence, ...
-    :param ints distaxis: distributed axes
+    :param ints distaxis: distributed axes. Defaults to 'all' meaning each axis is distributed.
     """
     result_cpu = pyDive.arrays.ndarray.array(array_like, distaxes)
     result = hollow_like(result_cpu)

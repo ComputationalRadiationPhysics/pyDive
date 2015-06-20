@@ -68,7 +68,7 @@ def generate_factories(arraytype, factory_names, dtype_default):
             targets=result.target_ranks)
         return result
 
-    make_factory = lambda factory_name: lambda shape, dtype=dtype_default, distaxes=0, **kwargs:\
+    make_factory = lambda factory_name: lambda shape, dtype=dtype_default, distaxes='all', **kwargs:\
         factory_wrapper(arraytype.target_modulename + "." + factory_name, shape, dtype, distaxes, kwargs)
 
     factories_dict = {factory_name : make_factory(factory_name) for factory_name in factory_names}

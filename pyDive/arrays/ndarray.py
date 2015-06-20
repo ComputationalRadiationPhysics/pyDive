@@ -31,24 +31,24 @@ factories.update(multiple_axes.generate_factories_like(ndarray, ("empty_like", "
 
 globals().update(factories)
 
-def array(array_like, distaxes=0):
+def array(array_like, distaxes='all'):
     """Create a pyDive.ndarray instance from an array-like object.
 
     :param array_like: Any object exposing the array interface, e.g. numpy-array, python sequence, ...
-    :param ints distaxis: distributed axes
+    :param ints distaxes: distributed axes. Defaults to 'all' meaning each axis is distributed.
     """
     np_array = np.array(array_like)
     result = empty(np_array.shape, np_array.dtype, distaxes)
     result[:] = np_array
     return result
 
-def hollow(shape, dtype=np.float, distaxes=0):
+def hollow(shape, dtype=np.float, distaxes='all'):
     """Create a pyDive.ndarray instance distributed across all engines without allocating a local
     numpy-array.
 
     :param ints shape: shape of array
     :param dtype: datatype of a single element
-    :param ints distaxes: distributed axes
+    :param ints distaxes: distributed axes. Defaults to 'all' meaning each axis is distributed.
     """
     return ndarray(shape, dtype, distaxes, None, None, True)
 

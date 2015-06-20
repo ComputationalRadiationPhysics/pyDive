@@ -92,14 +92,14 @@ def test_misc(init_pyDive):
         cpu_a = (np.random.rand(*size) * 100.0).astype(np.int)
         cpu_b = (np.random.rand(*size) * 100.0).astype(np.int)
 
-        gpu_a = pyDive.gpu.array(cpu_a, distaxes=(0,1,2))
-        gpu_b = pyDive.gpu.array(cpu_b, distaxes=(0,1,2))
+        gpu_a = pyDive.gpu.array(cpu_a)
+        gpu_b = pyDive.gpu.array(cpu_b)
 
         do_funny_stuff(cpu_a, cpu_b)
         do_funny_stuff(gpu_a, gpu_b)
 
-        assert np.array_equal(gpu_a.to_cpu().gather(), cpu_a)
-        assert np.array_equal(gpu_b.to_cpu().gather(), cpu_b)
+        assert np.array_equal(gpu_a.to_cpu(), cpu_a)
+        assert np.array_equal(gpu_b.to_cpu(), cpu_b)
 
 
 

@@ -174,5 +174,5 @@ def test_misc(init_pyDive):
         do_funny_stuff(np_a, np_b)
         do_funny_stuff(pd_a, pd_b)
 
-        assert np.array_equal(pd_a.gather(), np_a)
-        assert np.array_equal(pd_b.gather(), np_b)
+        assert np.array_equal(pd_a, np_a)
+        assert np.array_equal(pd_b, np_b)
