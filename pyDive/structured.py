@@ -163,6 +163,8 @@ class VirtualArrayOfStructs(object):
 
     def __getattr__(self, name):
         if hasattr(self.firstArray, name):
+            assert hasattr(getattr(self.firstArray, name), "__call__"),\
+                "Unlike method access, attribute access of individual arrays is not supported."
             return ForeachLeafCall(self.structOfArrays, name)
 
         return self[name]
@@ -173,6 +175,10 @@ class VirtualArrayOfStructs(object):
     def __repr__(self):
         # if arrays are distributed create a local representation of this object on engine
         if onTarget == 'False' and not self.has_local_instance and hasattr(self.firstArray, "target_ranks"):
+            items = [item for item in treeItems(self.structOfArrays)]
+            assert all(self.firstArray.is_distributed_like(a) for name, a in items),\
+                "Cannot create a local virtual array-of-structs because not all arrays are distributed equally."
+
             self.distaxes = self.firstArray.distaxes
             self.target_offsets = self.firstArray.target_offsets
             self.target_ranks = self.firstArray.target_ranks
