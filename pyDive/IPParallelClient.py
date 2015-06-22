@@ -51,15 +51,20 @@ def init(profile='mpi'):
         import psutil
         import math
         os.environ["onTarget"] = 'True'
-        from pyDive import arrayOfStructs
+        from pyDive import structured
         from pyDive import algorithm
         from pyDive.distribution import interengine
         try:
-            import pyDive.arrays.h5_ndarray as h5_ndarray
+            import pyDive.arrays.local.h5_ndarray
         except ImportError:
             pass
         try:
-            import pyDive.arrays.ad_ndarray as ad_ndarray
+            import pyDive.arrays.local.ad_ndarray
+        except ImportError:
+            pass
+        try:
+            import pyDive.arrays.local.gpu_ndarray
+            import pycuda.autoinit
         except ImportError:
             pass
          ''')

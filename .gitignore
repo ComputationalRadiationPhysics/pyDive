@@ -55,4 +55,5 @@ docs/_build/
 *.nja*
 *.rst~*
 *.md~*
-test.py
+pyDive/debug.py
+autorsync*

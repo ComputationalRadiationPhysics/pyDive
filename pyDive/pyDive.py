@@ -40,6 +40,12 @@ try:
 except ImportError:
     pass
 
+# gpu
+try:
+    import arrays.gpu_ndarray as gpu
+except ImportError:
+    pass
+
 # cloned_ndarray
 import cloned_ndarray.factories
 cloned = cloned_ndarray.factories
@@ -58,9 +64,9 @@ import mappings
 mesh2particles = mappings.mesh2particles
 particles2mesh = mappings.particles2mesh
 
-# arrayOfStructs
-import arrayOfStructs
-arrayOfStructs = arrayOfStructs.arrayOfStructs
+# structured
+import structured
+structured = structured.structured
 
 # picongpu
 import picongpu

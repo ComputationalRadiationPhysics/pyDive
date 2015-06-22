@@ -30,13 +30,14 @@ if onTarget == 'False':
     import IPParallelClient as com
     from IPython.parallel import interactive
     from fragment import fragment, hdd_arraytypes
+    from structured import VirtualArrayOfStructs
 import numpy as np
 
 def map(f, *arrays, **kwargs):
     """Applies *f* on :term:`engine` on local arrays related to *arrays*.
     Example: ::
 
-        cluster_array = pyDive.ones(shape=[100], distaxis=0)
+        cluster_array = pyDive.ones(shape=[100], distaxes=0)
 
         cluster_array *= 2.0
         # equivalent to
@@ -54,7 +55,7 @@ def map(f, *arrays, **kwargs):
     :param arrays: list of arrays including *pyDive.ndarrays*, *pyDive.h5_ndarrays* or *pyDive.cloned_ndarrays*
     :param kwargs: user-specified keyword arguments passed to *f*
     :raises AssertionError: if the *shapes* of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
-    :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
+    :raises AssertionError: if the *distaxes* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
 
     Notes:
         - If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\
@@ -77,7 +78,10 @@ def map(f, *arrays, **kwargs):
     view = com.getView()
 
     tmp_targets = view.targets # save current target list
-    view.targets = arrays[0].target_ranks
+    if type(arrays[0]) == VirtualArrayOfStructs:
+        view.targets = arrays[0].firstArray.target_ranks
+    else:
+        view.targets = arrays[0].target_ranks
 
     hdd_arrays = [a for a in arrays if (hasattr(a, "arraytype") and a.arraytype in hdd_arraytypes) or type(a) in hdd_arraytypes]
     if hdd_arrays:
@@ -124,7 +128,10 @@ def reduce(array, op):
     view = com.getView()
 
     tmp_targets = view.targets # save current target list
-    view.targets = array.target_ranks
+    if type(array) == VirtualArrayOfStructs:
+        view.targets = array.firstArray.target_ranks
+    else:
+        view.targets = array.target_ranks
 
     result = None
 
@@ -153,7 +160,7 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     and reduces its result in a tree-like fashion over all axes.
     Example: ::
 
-        cluster_array = pyDive.ones(shape=[100], distaxis=0)
+        cluster_array = pyDive.ones(shape=[100], distaxes=0)
 
         s = pyDive.mapReduce(lambda a: a**2, np.add, cluster_array) # a is the local numpy-array of *cluster_array*
         assert s == 100
@@ -163,7 +170,7 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     :param arrays: list of arrays including *pyDive.ndarrays*, *pyDive.h5_ndarrays* or *pyDive.cloned_ndarrays*
     :param kwargs: user-specified keyword arguments passed to *f*
     :raises AssertionError: if the *shapes* of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
-    :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
+    :raises AssertionError: if the *distaxes* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match
 
     Notes:
         - If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\
@@ -180,7 +187,10 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
 
     view = com.getView()
     tmp_targets = view.targets # save current target list
-    view.targets = arrays[0].target_ranks
+    if type(arrays[0]) == VirtualArrayOfStructs:
+        view.targets = arrays[0].firstArray.target_ranks
+    else:
+        view.targets = arrays[0].target_ranks
 
     result = None
 

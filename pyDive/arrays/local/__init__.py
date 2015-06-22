@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-Copyright 2014 Heiko Burau
+Copyright 2015 Heiko Burau
 
 This file is part of pyDive.
 
@@ -19,13 +20,3 @@ and the GNU Lesser General Public License along with pyDive.
 If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
-
-# -*- coding: utf-8 -*-
-__version__ = "1.2"
-
-import os
-onTarget = os.environ.get("onTarget", 'False')
-
-# import only if this code is not executed on engine
-if onTarget == 'False':
-    from pyDive import *
