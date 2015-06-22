@@ -16,11 +16,10 @@ at [HZDR](http://www.hzdr.de/).
 
 **Features:**
  - Since all cluster management is given to [IPython.parallel](http://ipython.org/ipython-doc/dev/parallel/) you can take your
-   existing profiles for pyDive. No further cluster configuration needed!
+   existing profiles for pyDive. No further cluster configuration needed.
  - Save bandwidth by slicing an array in parallel on disk before loading it into main memory!
- - GPU-cluster array available thanks to [pycuda](http://mathema.tician.de/software/pycuda/) with additional support for non-contiguous memory!
- - All of pyDive's distributed array types are auto-generated from local arrays like numpy, hdf5, pycuda, etc... so push your own
-   local array class onto the cluster level too!
+ - GPU-cluster array available thanks to [pycuda](http://mathema.tician.de/software/pycuda/) with additional support for non-contiguous memory.
+ - Like all of pyDive's distributed array types are auto-generated from local arrays like numpy, hdf5, pycuda, etc... you can make your own local array classes distributed too.
 
 ## Dive in!
 
