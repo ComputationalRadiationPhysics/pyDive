@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="pyDive 1.1 beta documentation" href="index.html" />
     <link rel="up" title="Reference" href="reference.html" />
-    <link rel="next" title="pyDive.cloned_ndarray package" href="pyDive.cloned_ndarray.html" />
+    <link rel="next" title="pyDive.arrays.gpu_ndarray module" href="pyDive.gpu.html" />
     <link rel="prev" title="pyDive.arrays.h5_ndarray module" href="pyDive.h5.html" /> 
   </head>
   <body role="document">
@@ -39,7 +39,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pyDive.cloned_ndarray.html" title="pyDive.cloned_ndarray package"
+          <a href="pyDive.gpu.html" title="pyDive.arrays.gpu_ndarray module"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="pyDive.h5.html" title="pyDive.arrays.h5_ndarray module"
@@ -54,8 +54,8 @@
   <p class="topless"><a href="pyDive.h5.html"
                         title="previous chapter">pyDive.arrays.h5_ndarray module</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="pyDive.cloned_ndarray.html"
-                        title="next chapter">pyDive.cloned_ndarray package</a></p>
+  <p class="topless"><a href="pyDive.gpu.html"
+                        title="next chapter">pyDive.arrays.gpu_ndarray module</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -90,108 +90,6 @@
 <p class="first admonition-title">Note</p>
 <p class="last">This module has a shortcut: <code class="docutils literal"><span class="pre">pyDive.adios</span></code>.</p>
 </div>
-<dl class="class">
-<dt id="pyDive.arrays.ad_ndarray.ad_ndarray">
-<em class="property">class </em><code class="descclassname">pyDive.arrays.ad_ndarray.</code><code class="descname">ad_ndarray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ad_ndarray.ad_ndarray" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
-<em>cluster-wide</em> means that its elements are distributed across IPython.parallel-engines.
-The distribution is done in one dimension along a single, user-specified axis.
-The user can optionally specify which engine maps to which index range or leave the default that persuits an uniform distribution across all engines.</p>
-<p>This <strong>ad_ndarray</strong> - class is auto-generated out of its local counterpart: <strong>pyDive.arrays.ad_ndarray.ad_ndarray_local</strong>.</p>
-<p>The implementation is based on IPython.parallel and local pyDive.arrays.ad_ndarray.ad_ndarray_local - arrays.
-Every special operation pyDive.arrays.ad_ndarray.ad_ndarray_local implements (&#8220;__add__&#8221;, &#8220;__le__&#8221;, ...) is also
-available for ad_ndarray.</p>
-<p>Note that array slicing is a cheap operation since no memory is copied.
-However this can easily lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
-Therefore call dist_like() first before doing any manual stuff on their local arrays.
-However every cluster-wide array operation first equalizes the distribution of all involved arrays,
-so an explicit call to dist_like() is rather unlikely in most use cases.</p>
-<dl class="method">
-<dt id="pyDive.arrays.ad_ndarray.ad_ndarray.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ad_ndarray.ad_ndarray.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates an instance of ad_ndarray. This is a low-level method of instantiating an array, it should rather be
-constructed using factory functions (&#8220;empty&#8221;, &#8220;zeros&#8221;, &#8220;open&#8221;, ...)</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
-<li><strong>dtype</strong> &#8211; datatype of a single element</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
-<li><strong>target_offsets</strong> (<em>ints</em>) &#8211; list of indices marking the offset along the distributed axis of each local array.</li>
-<li><strong>target_ranks</strong> (<em>ints</em>) &#8211; list of <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> ranks holding the local arrays.</li>
-<li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <code class="docutils literal"><span class="pre">True</span></code> no instance of pyDive.arrays.ad_ndarray.ad_ndarray_local will be created on engine. Useful for
-manual instantiation of the local array.</li>
-<li><strong>kwargs</strong> &#8211; additional keyword arguments are forwarded to the constructor of the local array.</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="pyDive.arrays.ad_ndarray.ad_ndarray.load">
-<code class="descname">load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ad_ndarray.ad_ndarray.load" title="Permalink to this definition">¶</a></dt>
-<dd><p>Load array from file into main memory of all engines in parallel.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">pyDive.ndarray instance</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-<span class="target" id="module-pyDive.arrays.ad_ndarray"></span><dl class="function">
-<dt id="pyDive.arrays.ad_ndarray.open">
-<code class="descclassname">pyDive.arrays.ad_ndarray.</code><code class="descname">open</code><span class="sig-paren">(</span><em>filename</em>, <em>datapath</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/ad_ndarray.html#open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.ad_ndarray.open" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a pyDive.adios.ad_ndarray instance respectively a structure of
-pyDive.adios.ad_ndarray instances from file.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>filename</strong> &#8211; name of adios file.</li>
-<li><strong>datapath</strong> &#8211; path within adios file to a single variable or a group of variables.</li>
-<li><strong>int</strong> (<em>distaxis</em>) &#8211; distributed axis</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">pyDive.adios.ad_ndarray instance</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="pyDive.arrays.ad_ndarray.open_variable">
-<code class="descclassname">pyDive.arrays.ad_ndarray.</code><code class="descname">open_variable</code><span class="sig-paren">(</span><em>filename</em>, <em>variable_path</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/ad_ndarray.html#open_variable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.ad_ndarray.open_variable" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a pyDive.adios.ad_ndarray instance from file.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>filename</strong> &#8211; name of adios file.</li>
-<li><strong>variable_path</strong> &#8211; path within adios file to a single variable.</li>
-<li><strong>int</strong> (<em>distaxis</em>) &#8211; distributed axis</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">pyDive.adios.ad_ndarray instance</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </div>
 
 
@@ -210,7 +108,7 @@ pyDive.adios.ad_ndarray instances from file.</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="pyDive.cloned_ndarray.html" title="pyDive.cloned_ndarray package"
+          <a href="pyDive.gpu.html" title="pyDive.arrays.gpu_ndarray module"
              >next</a> |</li>
         <li class="right" >
           <a href="pyDive.h5.html" title="pyDive.arrays.h5_ndarray module"

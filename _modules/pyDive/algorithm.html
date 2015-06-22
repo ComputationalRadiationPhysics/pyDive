@@ -96,13 +96,14 @@
     <span class="kn">import</span> <span class="nn">IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
     <span class="kn">from</span> <span class="nn">IPython.parallel</span> <span class="kn">import</span> <span class="n">interactive</span>
     <span class="kn">from</span> <span class="nn">fragment</span> <span class="kn">import</span> <span class="n">fragment</span><span class="p">,</span> <span class="n">hdd_arraytypes</span>
+    <span class="kn">from</span> <span class="nn">structured</span> <span class="kn">import</span> <span class="n">VirtualArrayOfStructs</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <div class="viewcode-block" id="map"><a class="viewcode-back" href="../../modules.html#pyDive.algorithm.map">[docs]</a><span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Applies *f* on :term:`engine` on local arrays related to *arrays*.</span>
 <span class="sd">    Example: ::</span>
 
-<span class="sd">        cluster_array = pyDive.ones(shape=[100], distaxis=0)</span>
+<span class="sd">        cluster_array = pyDive.ones(shape=[100], distaxes=0)</span>
 
 <span class="sd">        cluster_array *= 2.0</span>
 <span class="sd">        # equivalent to</span>
@@ -120,7 +121,7 @@
 <span class="sd">    :param arrays: list of arrays including *pyDive.ndarrays*, *pyDive.h5_ndarrays* or *pyDive.cloned_ndarrays*</span>
 <span class="sd">    :param kwargs: user-specified keyword arguments passed to *f*</span>
 <span class="sd">    :raises AssertionError: if the *shapes* of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
-<span class="sd">    :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
+<span class="sd">    :raises AssertionError: if the *distaxes* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
 
 <span class="sd">    Notes:</span>
 <span class="sd">        - If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\</span>
@@ -143,7 +144,10 @@
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
 
     <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="c"># save current target list</span>
-    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">target_ranks</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">VirtualArrayOfStructs</span><span class="p">:</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">target_ranks</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">target_ranks</span>
 
     <span class="n">hdd_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span> <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">hdd_arrays</span><span class="p">:</span>
@@ -190,7 +194,10 @@
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
 
     <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="c"># save current target list</span>
-    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">target_ranks</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">==</span> <span class="n">VirtualArrayOfStructs</span><span class="p">:</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">target_ranks</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">target_ranks</span>
 
     <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
 
@@ -219,7 +226,7 @@
 <span class="sd">    and reduces its result in a tree-like fashion over all axes.</span>
 <span class="sd">    Example: ::</span>
 
-<span class="sd">        cluster_array = pyDive.ones(shape=[100], distaxis=0)</span>
+<span class="sd">        cluster_array = pyDive.ones(shape=[100], distaxes=0)</span>
 
 <span class="sd">        s = pyDive.mapReduce(lambda a: a**2, np.add, cluster_array) # a is the local numpy-array of *cluster_array*</span>
 <span class="sd">        assert s == 100</span>
@@ -229,7 +236,7 @@
 <span class="sd">    :param arrays: list of arrays including *pyDive.ndarrays*, *pyDive.h5_ndarrays* or *pyDive.cloned_ndarrays*</span>
 <span class="sd">    :param kwargs: user-specified keyword arguments passed to *f*</span>
 <span class="sd">    :raises AssertionError: if the *shapes* of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
-<span class="sd">    :raises AssertionError: if the *distaxis* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
+<span class="sd">    :raises AssertionError: if the *distaxes* attributes of *pyDive.ndarrays* and *pyDive.h5_ndarrays* do not match</span>
 
 <span class="sd">    Notes:</span>
 <span class="sd">        - If the hdf5 data exceeds the memory limit (currently 25% of the combined main memory of all cluster nodes)\</span>
@@ -246,7 +253,10 @@
 
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
     <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="c"># save current target list</span>
-    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">target_ranks</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="n">VirtualArrayOfStructs</span><span class="p">:</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">target_ranks</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">target_ranks</span>
 
     <span class="n">result</span> <span class="o">=</span> <span class="bp">None</span>
 

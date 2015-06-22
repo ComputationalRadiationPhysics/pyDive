@@ -92,23 +92,28 @@
 </div>
 <dl class="class">
 <dt id="pyDive.arrays.h5_ndarray.h5_ndarray">
-<em class="property">class </em><code class="descclassname">pyDive.arrays.h5_ndarray.</code><code class="descname">h5_ndarray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.h5_ndarray.h5_ndarray" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyDive.arrays.h5_ndarray.</code><code class="descname">h5_ndarray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.h5_ndarray.h5_ndarray" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
 <em>cluster-wide</em> means that its elements are distributed across IPython.parallel-engines.
-The distribution is done in one dimension along a single, user-specified axis.
-The user can optionally specify which engine maps to which index range or leave the default that persuits an uniform distribution across all engines.</p>
-<p>This <strong>h5_ndarray</strong> - class is auto-generated out of its local counterpart: <strong>pyDive.arrays.h5_ndarray.h5_ndarray_local</strong>.</p>
-<p>The implementation is based on IPython.parallel and local pyDive.arrays.h5_ndarray.h5_ndarray_local - arrays.
-Every special operation pyDive.arrays.h5_ndarray.h5_ndarray_local implements (&#8220;__add__&#8221;, &#8220;__le__&#8221;, ...) is also
+The distribution is done in one or multiply dimensions along user-specified axes.
+The user can optionally specify which engine maps to which index range or leave the default
+that persuits an uniform distribution across all engines.</p>
+<p>This <strong>h5_ndarray</strong> - class is auto-generated out of its local counterpart: <strong>pyDive.arrays.local.h5_ndarray.h5_ndarray</strong>.</p>
+<p>The implementation is based on IPython.parallel and local pyDive.arrays.local.h5_ndarray.h5_ndarray - arrays.
+Every special operation pyDive.arrays.local.h5_ndarray.h5_ndarray implements (&#8220;__add__&#8221;, &#8220;__le__&#8221;, ...) is also
 available for h5_ndarray.</p>
 <p>Note that array slicing is a cheap operation since no memory is copied.
 However this can easily lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
 Therefore call dist_like() first before doing any manual stuff on their local arrays.
 However every cluster-wide array operation first equalizes the distribution of all involved arrays,
 so an explicit call to dist_like() is rather unlikely in most use cases.</p>
+<p>If you try to access an attribute that is only available for the local array, the request
+is forwarded to an internal local copy of the whole distributed array (see: <code class="xref py py-meth docutils literal"><span class="pre">gather()</span></code>).
+This internal copy is only created when you want to access it and is held until <code class="docutils literal"><span class="pre">__setitem__</span></code> is called,
+i.e. the array&#8217;s content is manipulated.</p>
 <dl class="method">
 <dt id="pyDive.arrays.h5_ndarray.h5_ndarray.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.h5_ndarray.h5_ndarray.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.h5_ndarray.h5_ndarray.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an instance of h5_ndarray. This is a low-level method of instantiating an array, it should rather be
 constructed using factory functions (&#8220;empty&#8221;, &#8220;zeros&#8221;, &#8220;open&#8221;, ...)</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -118,10 +123,12 @@ constructed using factory functions (&#8220;empty&#8221;, &#8220;zeros&#8221;, &
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
 <li><strong>dtype</strong> &#8211; datatype of a single element</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
-<li><strong>target_offsets</strong> (<em>ints</em>) &#8211; list of indices marking the offset along the distributed axis of each local array.</li>
-<li><strong>target_ranks</strong> (<em>ints</em>) &#8211; list of <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> ranks holding the local arrays.</li>
-<li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <code class="docutils literal"><span class="pre">True</span></code> no instance of pyDive.arrays.h5_ndarray.h5_ndarray_local will be created on engine. Useful for
+<li><strong>distaxes</strong> (<em>ints</em>) &#8211; distributed axes. Accepts a single integer too. Defaults to &#8216;all&#8217; meaning each axis is distributed.</li>
+<li><strong>target_offsets</strong> (<em>list of lists</em>) &#8211; For each distributed axis there is a (inner) list in the outer list.
+The inner list contains the offsets of the local array.</li>
+<li><strong>target_ranks</strong> (<em>ints</em>) &#8211; linear list of <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> ranks holding the local arrays.
+The last distributed axis is iterated over first.</li>
+<li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <code class="docutils literal"><span class="pre">True</span></code> no instance of pyDive.arrays.local.h5_ndarray.h5_ndarray will be created on engine. Useful for
 manual instantiation of the local array.</li>
 <li><strong>kwargs</strong> &#8211; additional keyword arguments are forwarded to the constructor of the local array.</li>
 </ul>
@@ -149,7 +156,7 @@ manual instantiation of the local array.</li>
 
 <span class="target" id="module-pyDive.arrays.h5_ndarray"></span><dl class="function">
 <dt id="pyDive.arrays.h5_ndarray.open">
-<code class="descclassname">pyDive.arrays.h5_ndarray.</code><code class="descname">open</code><span class="sig-paren">(</span><em>filename</em>, <em>datapath</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/h5_ndarray.html#open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.h5_ndarray.open" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyDive.arrays.h5_ndarray.</code><code class="descname">open</code><span class="sig-paren">(</span><em>filename</em>, <em>datapath</em>, <em>distaxes='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/h5_ndarray.html#open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.h5_ndarray.open" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an pyDive.h5.h5_ndarray instance respectively a structure of
 pyDive.h5.h5_ndarray instances from file.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -159,7 +166,7 @@ pyDive.h5.h5_ndarray instances from file.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>filename</strong> &#8211; name of hdf5 file.</li>
 <li><strong>dataset_path</strong> &#8211; path within hdf5 file to a single dataset or hdf5 group.</li>
-<li><strong>int</strong> (<em>distaxis</em>) &#8211; distributed axis</li>
+<li><strong>ints</strong> (<em>distaxes</em>) &#8211; distributed axes. Defaults to &#8216;all&#8217; meaning each axis is distributed.</li>
 </ul>
 </td>
 </tr>
@@ -172,7 +179,7 @@ pyDive.h5.h5_ndarray instances from file.</p>
 
 <dl class="function">
 <dt id="pyDive.arrays.h5_ndarray.open_dset">
-<code class="descclassname">pyDive.arrays.h5_ndarray.</code><code class="descname">open_dset</code><span class="sig-paren">(</span><em>filename</em>, <em>dataset_path</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/h5_ndarray.html#open_dset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.h5_ndarray.open_dset" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyDive.arrays.h5_ndarray.</code><code class="descname">open_dset</code><span class="sig-paren">(</span><em>filename</em>, <em>dataset_path</em>, <em>distaxes='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/h5_ndarray.html#open_dset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.h5_ndarray.open_dset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a pyDive.h5.h5_ndarray instance from file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -181,7 +188,7 @@ pyDive.h5.h5_ndarray instances from file.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>filename</strong> &#8211; name of hdf5 file.</li>
 <li><strong>dataset_path</strong> &#8211; path within hdf5 file to a single dataset.</li>
-<li><strong>int</strong> (<em>distaxis</em>) &#8211; distributed axis</li>
+<li><strong>ints</strong> (<em>distaxes</em>) &#8211; distributed axes. Defaults to &#8216;all&#8217; meaning each axis is distributed.</li>
 </ul>
 </td>
 </tr>

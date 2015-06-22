@@ -124,7 +124,7 @@ It has the following dataset structure:</p>
 </pre></div>
 </div>
 <p>Load a single dataset:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">h5fieldB_z</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="s">&quot;sample.h5&quot;</span><span class="p">,</span> <span class="s">&quot;/fields/fieldB/z&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">h5fieldB_z</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;sample.h5&quot;</span><span class="p">,</span> <span class="s">&quot;/fields/fieldB/z&quot;</span><span class="p">,</span> <span class="n">distaxes</span><span class="o">=</span><span class="s">&#39;all&#39;</span><span class="p">)</span>
 
 <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">h5fieldB_z</span><span class="p">)</span> <span class="ow">is</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">h5_ndarray</span>
 </pre></div>
@@ -136,20 +136,20 @@ It has the following dataset structure:</p>
 </pre></div>
 </div>
 <p>This loads the entire dataset into the main memory of all <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engines</span></a>. The array elements are distributed
-along <code class="docutils literal"><span class="pre">distaxis=0</span></code>.</p>
+along all axes.</p>
 <p>We can also load a hdf5-group:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">h5fieldE</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;sample.h5&quot;</span><span class="p">,</span> <span class="s">&quot;/fields/fieldE&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">h5fieldE</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s">&quot;sample.h5&quot;</span><span class="p">,</span> <span class="s">&quot;/fields/fieldE&quot;</span><span class="p">,</span> <span class="n">distaxes</span><span class="o">=</span><span class="s">&#39;all&#39;</span><span class="p">)</span>
 <span class="n">fieldE</span> <span class="o">=</span> <span class="n">h5fieldE</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 </pre></div>
 </div>
-<p><em>h5fieldE</em> and <em>fieldE</em> are some so called &#8220;virtual array-of-structures&#8221;, see: <a class="reference internal" href="modules.html#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><code class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></code></a>.</p>
+<p><em>h5fieldE</em> and <em>fieldE</em> are some so called &#8220;virtual array-of-structures&#8221;, see: <code class="xref py py-mod docutils literal"><span class="pre">pyDive.structered</span></code>.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">h5fieldE</span>
-<span class="go">VirtualArrayOfStructs&lt;array-type: &lt;class &#39;pyDive.distribution.single_axis.h5_ndarray&#39;&gt;, shape: [256, 256]&gt;:</span>
+<span class="go">VirtualArrayOfStructs&lt;array-type: &lt;class &#39;pyDive.distribution.multiple_axes.h5_ndarray&#39;&gt;, shape: [256, 256]&gt;:</span>
 <span class="go">  y -&gt; float32</span>
 <span class="go">  x -&gt; float32</span>
 
 <span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">fieldE</span>
-<span class="go">VirtualArrayOfStructs&lt;array-type: &lt;class &#39;pyDive.distribution.single_axis.ndarray&#39;&gt;, shape: [256, 256]&gt;:</span>
+<span class="go">VirtualArrayOfStructs&lt;array-type: &lt;class &#39;pyDive.distribution.multiple_axes.ndarray&#39;&gt;, shape: [256, 256]&gt;:</span>
 <span class="go">  y -&gt; float32</span>
 <span class="go">  x -&gt; float32</span>
 </pre></div>
@@ -164,7 +164,7 @@ along <code class="docutils literal"><span class="pre">distaxis=0</span></code>.
 
 <span class="n">h5input</span> <span class="o">=</span> <span class="s">&quot;sample.h5&quot;</span>
 
-<span class="n">h5fields</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">h5input</span><span class="p">,</span> <span class="s">&quot;/fields&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">h5fields</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">h5input</span><span class="p">,</span> <span class="s">&quot;/fields&quot;</span><span class="p">)</span> <span class="c"># defaults to distaxes=&#39;all&#39;</span>
 <span class="n">fields</span> <span class="o">=</span> <span class="n">h5fields</span><span class="o">.</span><span class="n">load</span><span class="p">()</span> <span class="c"># read out all fields into cluster&#39;s main memory in parallel</span>
 
 <span class="n">energy_field</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">fieldE</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">fields</span><span class="o">.</span><span class="n">fieldE</span><span class="o">.</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">fields</span><span class="o">.</span><span class="n">fieldB</span><span class="o">.</span><span class="n">z</span><span class="o">**</span><span class="mi">2</span>
@@ -187,7 +187,7 @@ In this case we want to load the hdf5 data piece by piece. The function <a class
 
 <span class="n">h5input</span> <span class="o">=</span> <span class="s">&quot;sample.h5&quot;</span>
 
-<span class="n">big_h5fields</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">h5input</span><span class="p">,</span> <span class="s">&quot;/fields&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">big_h5fields</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">h5input</span><span class="p">,</span> <span class="s">&quot;/fields&quot;</span><span class="p">)</span>
 <span class="c"># big_h5fields.load() # would cause a crash</span>
 
 <span class="n">total_energy</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -231,7 +231,7 @@ here is an example of how to get the total field energy for each timestep (see <
     <span class="n">field</span> <span class="o">=</span> <span class="n">h5field</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">field</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">field</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">field</span><span class="o">.</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span>
 
-<span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">h5field</span> <span class="ow">in</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">picongpu</span><span class="o">.</span><span class="n">loadAllSteps</span><span class="p">(</span><span class="s">&quot;/.../simOutput&quot;</span><span class="p">,</span> <span class="s">&quot;fields/FieldE&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">h5field</span> <span class="ow">in</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">picongpu</span><span class="o">.</span><span class="n">loadAllSteps</span><span class="p">(</span><span class="s">&quot;/.../simOutput&quot;</span><span class="p">,</span> <span class="s">&quot;fields/FieldE&quot;</span><span class="p">):</span>
     <span class="n">total_energy</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mapReduce</span><span class="p">(</span><span class="n">square_field</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">h5field</span><span class="p">)</span>
 
     <span class="k">print</span> <span class="n">step</span><span class="p">,</span> <span class="n">total_energy</span>
@@ -243,7 +243,7 @@ here is an example of how to get the total field energy for each timestep (see <
 <p>Given the list of particles in our <code class="docutils literal"><span class="pre">sample.h5</span></code> we want to create a 2D density field out of it. For this particle-to-mesh
 mapping we need to apply a certain particle shape like cloud-in-cell (CIC), triangular-shaped-cloud (TSC), and so on. A list of
 these together with the actual mapping functions can be found in the <a class="reference internal" href="modules.html#module-pyDive.mappings" title="pyDive.mappings"><code class="xref py py-mod docutils literal"><span class="pre">pyDive.mappings</span></code></a> module. If you miss a shape you can
-easily create one by your own by basically defining a particle shape function. Note that if you have <a class="reference external" href="http://numba.pydata.org/">numba</a>
+easily create one by your own by defining a particle shape function. Note that if you have <a class="reference external" href="http://numba.pydata.org/">numba</a>
 installed the shape function will be compiled resulting in a significant speed-up.</p>
 <p>We assume that the particle positions are distributed randomly. This means although each engine is loading a separate part of all particles it needs to
 write to the entire density field. Therefore the density field must have a whole representation on each participating engine.
@@ -257,7 +257,7 @@ This is the job of <a class="reference internal" href="pyDive.cloned_ndarray.htm
 
 <span class="n">h5input</span> <span class="o">=</span> <span class="s">&quot;sample.h5&quot;</span>
 
-<span class="n">particles</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="n">h5input</span><span class="p">,</span> <span class="s">&quot;/particles&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">particles</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">h5input</span><span class="p">,</span> <span class="s">&quot;/particles&quot;</span><span class="p">)</span>
 
 <span class="k">def</span> <span class="nf">particles2density</span><span class="p">(</span><span class="n">particles</span><span class="p">,</span> <span class="n">density</span><span class="p">):</span>
     <span class="n">particles</span> <span class="o">=</span> <span class="n">particles</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
@@ -304,7 +304,7 @@ All of its arguments are numpy-arrays or structures (<a class="reference interna
 
 <span class="n">h5input</span> <span class="o">=</span> <span class="s">&quot;sample.h5&quot;</span>
 
-<span class="n">velocities</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">fromPath</span><span class="p">(</span><span class="n">h5input</span><span class="p">,</span> <span class="s">&quot;/particles/vel&quot;</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">velocities</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">h5input</span><span class="p">,</span> <span class="s">&quot;/particles/vel&quot;</span><span class="p">)</span>
 
 <span class="nd">@pyDive.map</span>
 <span class="k">def</span> <span class="nf">vel2spectrum</span><span class="p">(</span><span class="n">velocities</span><span class="p">,</span> <span class="n">spectrum</span><span class="p">,</span> <span class="n">bins</span><span class="p">):</span>

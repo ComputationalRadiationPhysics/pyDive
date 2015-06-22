@@ -104,11 +104,12 @@
 <h2>pyDive.ndarray class<a class="headerlink" href="#pydive-ndarray-class" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="pyDive.ndarray">
-<em class="property">class </em><code class="descclassname">pyDive.</code><code class="descname">ndarray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">pyDive.</code><code class="descname">ndarray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
 <em>cluster-wide</em> means that its elements are distributed across IPython.parallel-engines.
-The distribution is done in one dimension along a single, user-specified axis.
-The user can optionally specify which engine maps to which index range or leave the default that persuits an uniform distribution across all engines.</p>
+The distribution is done in one or multiply dimensions along user-specified axes.
+The user can optionally specify which engine maps to which index range or leave the default
+that persuits an uniform distribution across all engines.</p>
 <p>This <strong>ndarray</strong> - class is auto-generated out of its local counterpart: <strong>numpy.ndarray</strong>.</p>
 <p>The implementation is based on IPython.parallel and local numpy.ndarray - arrays.
 Every special operation numpy.ndarray implements (&#8220;__add__&#8221;, &#8220;__le__&#8221;, ...) is also
@@ -118,9 +119,13 @@ However this can easily lead to the situation where you end up with two arrays o
 Therefore call dist_like() first before doing any manual stuff on their local arrays.
 However every cluster-wide array operation first equalizes the distribution of all involved arrays,
 so an explicit call to dist_like() is rather unlikely in most use cases.</p>
+<p>If you try to access an attribute that is only available for the local array, the request
+is forwarded to an internal local copy of the whole distributed array (see: <code class="xref py py-meth docutils literal"><span class="pre">gather()</span></code>).
+This internal copy is only created when you want to access it and is held until <code class="docutils literal"><span class="pre">__setitem__</span></code> is called,
+i.e. the array&#8217;s content is manipulated.</p>
 <dl class="method">
 <dt id="pyDive.ndarray.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates an instance of ndarray. This is a low-level method of instantiating an array, it should rather be
 constructed using factory functions (&#8220;empty&#8221;, &#8220;zeros&#8221;, &#8220;open&#8221;, ...)</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -130,9 +135,11 @@ constructed using factory functions (&#8220;empty&#8221;, &#8220;zeros&#8221;, &
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
 <li><strong>dtype</strong> &#8211; datatype of a single element</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
-<li><strong>target_offsets</strong> (<em>ints</em>) &#8211; list of indices marking the offset along the distributed axis of each local array.</li>
-<li><strong>target_ranks</strong> (<em>ints</em>) &#8211; list of <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> ranks holding the local arrays.</li>
+<li><strong>distaxes</strong> (<em>ints</em>) &#8211; distributed axes. Accepts a single integer too. Defaults to &#8216;all&#8217; meaning each axis is distributed.</li>
+<li><strong>target_offsets</strong> (<em>list of lists</em>) &#8211; For each distributed axis there is a (inner) list in the outer list.
+The inner list contains the offsets of the local array.</li>
+<li><strong>target_ranks</strong> (<em>ints</em>) &#8211; linear list of <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> ranks holding the local arrays.
+The last distributed axis is iterated over first.</li>
 <li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <code class="docutils literal"><span class="pre">True</span></code> no instance of numpy.ndarray will be created on engine. Useful for
 manual instantiation of the local array.</li>
 <li><strong>kwargs</strong> &#8211; additional keyword arguments are forwarded to the constructor of the local array.</li>
@@ -159,18 +166,13 @@ Checks whether redistribution is necessary and returns <em>self</em> if not.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>other</strong> (<em>distributed array</em>) &#8211; target array</p>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>other</strong> (<em>distributed array</em>) &#8211; target array</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first simple">
-<li><strong>AssertionError</strong> &#8211; if the shapes of <em>self</em> and <em>other</em> don&#8217;t match.</li>
-<li><strong>AssertionError</strong> &#8211; if <em>self</em> and <em>other</em> are distributed along distinct axes.</li>
-</ul>
-</td>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises AssertionError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">if the shapes of <em>self</em> and <em>other</em> don&#8217;t match.</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">new array with the same content as <em>self</em> but distributed like <em>other</em>.
-If <em>self</em> is already distributed like <em>other</em> nothing is done and <em>self</em> is returned.</p>
-</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">new array with the same content as <em>self</em> but distributed like <em>other</em>.
+If <em>self</em> is already distributed like <em>other</em> nothing is done and <em>self</em> is returned.</td>
 </tr>
 </tbody>
 </table>
@@ -181,6 +183,19 @@ If <em>self</em> is already distributed like <em>other</em> nothing is done and 
 <code class="descname">gather</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.ndarray.gather" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gathers local instances of numpy.ndarray from <em>engines</em>, concatenates them and returns
 the result.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You may not call this method explicitly because if you try to access an attribute
+of the local array (numpy.ndarray), <code class="docutils literal"><span class="pre">gather()</span></code> is called implicitly before the request is forwarded
+to that internal gathered array. Just access attributes like you do for the local array.
+The internal copy is held until <code class="docutils literal"><span class="pre">__setitem__</span></code> is called, e.g. <code class="docutils literal"><span class="pre">a[1]</span> <span class="pre">=</span> <span class="pre">3.0</span></code>, setting
+a dirty flag to the local copy.</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">If another array overlapping this array is manipulating its data there is no chance to set
+the dirty flag so you have to keep in mind to call <code class="docutils literal"><span class="pre">gather()</span></code> explicitly in this case!</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -199,7 +214,7 @@ the result.</p>
 <p>These are convenient functions to create a <em>pyDive.ndarray</em> instance.</p>
 <span class="target" id="module-pyDive.arrays.ndarray"></span><dl class="function">
 <dt id="pyDive.arrays.ndarray.array">
-<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">array</code><span class="sig-paren">(</span><em>array_like</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/ndarray.html#array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.ndarray.array" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">array</code><span class="sig-paren">(</span><em>array_like</em>, <em>distaxes='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/ndarray.html#array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.ndarray.array" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a pyDive.ndarray instance from an array-like object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -207,7 +222,7 @@ the result.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>array_like</strong> &#8211; Any object exposing the array interface, e.g. numpy-array, python sequence, ...</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>distaxes</strong> (<em>ints</em>) &#8211; distributed axes. Defaults to &#8216;all&#8217; meaning each axis is distributed.</li>
 </ul>
 </td>
 </tr>
@@ -217,7 +232,7 @@ the result.</p>
 
 <dl class="function">
 <dt id="pyDive.arrays.ndarray.empty">
-<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">empty</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.empty" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">empty</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.empty" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a <em>ndarray</em> instance. This function calls its local counterpart <em>numpy.empty</em> on each <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -226,7 +241,7 @@ the result.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
 <li><strong>dtype</strong> &#8211; datatype of a single element</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>distaxes</strong> (<em>ints</em>) &#8211; distributed axes</li>
 <li><strong>kwargs</strong> &#8211; keyword arguments are passed to the local function <em>numpy.empty</em></li>
 </ul>
 </td>
@@ -256,7 +271,7 @@ This function calls its local counterpart <em>numpy.empty_like</em> on each <a c
 
 <dl class="function">
 <dt id="pyDive.arrays.ndarray.hollow">
-<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">hollow</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/ndarray.html#hollow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.ndarray.hollow" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">hollow</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/ndarray.html#hollow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.ndarray.hollow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a pyDive.ndarray instance distributed across all engines without allocating a local
 numpy-array.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -266,7 +281,7 @@ numpy-array.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
 <li><strong>dtype</strong> &#8211; datatype of a single element</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>distaxes</strong> (<em>ints</em>) &#8211; distributed axes. Defaults to &#8216;all&#8217; meaning each axis is distributed.</li>
 </ul>
 </td>
 </tr>
@@ -283,7 +298,7 @@ shape, distribution and type as <code class="docutils literal"><span class="pre"
 
 <dl class="function">
 <dt id="pyDive.arrays.ndarray.zeros">
-<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">zeros</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.zeros" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">zeros</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.zeros" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a <em>ndarray</em> instance. This function calls its local counterpart <em>numpy.zeros</em> on each <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -292,7 +307,7 @@ shape, distribution and type as <code class="docutils literal"><span class="pre"
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
 <li><strong>dtype</strong> &#8211; datatype of a single element</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>distaxes</strong> (<em>ints</em>) &#8211; distributed axes</li>
 <li><strong>kwargs</strong> &#8211; keyword arguments are passed to the local function <em>numpy.zeros</em></li>
 </ul>
 </td>
@@ -322,7 +337,7 @@ This function calls its local counterpart <em>numpy.zeros_like</em> on each <a c
 
 <dl class="function">
 <dt id="pyDive.arrays.ndarray.ones">
-<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">ones</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxis=0</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.ones" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyDive.arrays.ndarray.</code><code class="descname">ones</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.ndarray.ones" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a <em>ndarray</em> instance. This function calls its local counterpart <em>numpy.ones</em> on each <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -331,7 +346,7 @@ This function calls its local counterpart <em>numpy.zeros_like</em> on each <a c
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
 <li><strong>dtype</strong> &#8211; datatype of a single element</li>
-<li><strong>distaxis</strong> (<em>int</em>) &#8211; distributed axis</li>
+<li><strong>distaxes</strong> (<em>ints</em>) &#8211; distributed axes</li>
 <li><strong>kwargs</strong> &#8211; keyword arguments are passed to the local function <em>numpy.ones</em></li>
 </ul>
 </td>

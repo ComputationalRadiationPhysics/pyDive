@@ -94,7 +94,7 @@
 <span class="kn">import</span> <span class="nn">os.path</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">arrays.h5_ndarray</span> <span class="kn">as</span> <span class="nn">h5</span>
-<span class="kn">import</span> <span class="nn">arrayOfStructs</span>
+<span class="kn">import</span> <span class="nn">structured</span>
 
 <div class="viewcode-block" id="loadSteps"><a class="viewcode-back" href="../../modules.html#pyDive.picongpu.loadSteps">[docs]</a><span class="k">def</span> <span class="nf">loadSteps</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">folder_path</span><span class="p">,</span> <span class="n">data_path</span><span class="p">,</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Python generator object looping all hdf5-data found in *folder_path*</span>
@@ -110,7 +110,7 @@
 <span class="sd">        :param str data_path: Relative path starting from &quot;/data/&lt;timestep&gt;/&quot; within hdf5-file to the dataset or group of datasets</span>
 <span class="sd">        :param int distaxis: axis on which datasets are distributed over when once loaded into memory.</span>
 <span class="sd">        :return: tuple of timestep and a :ref:`pyDive.h5_ndarray &lt;pyDive.h5_ndarray.h5_ndarray.h5_ndarray&gt;`</span>
-<span class="sd">            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.</span>
+<span class="sd">            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.structured`). Ordering is done by timestep.</span>
 
 <span class="sd">        Notes:</span>
 <span class="sd">            - If the dataset has a &#39;**sim_unit**&#39; attribute its value is stored in ``h5array.unit``.</span>
@@ -136,14 +136,14 @@
 
         <span class="c"># add &#39;sim_unit&#39; as &#39;unit&#39; attribute</span>
         <span class="k">def</span> <span class="nf">add_sim_unit</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
-            <span class="k">if</span> <span class="s">&#39;sim_unit&#39;</span> <span class="ow">in</span> <span class="n">array</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="s">&quot;attrs&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;sim_unit&#39;</span> <span class="ow">in</span> <span class="n">array</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
                 <span class="nb">setattr</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="s">&quot;unit&quot;</span><span class="p">,</span> <span class="n">array</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s">&quot;sim_unit&quot;</span><span class="p">])</span>
             <span class="k">return</span> <span class="n">array</span>
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">h5data</span><span class="p">)</span> <span class="ow">is</span> <span class="n">h5</span><span class="o">.</span><span class="n">h5_ndarray</span><span class="p">:</span>
             <span class="n">h5data</span> <span class="o">=</span> <span class="n">add_sim_unit</span><span class="p">(</span><span class="n">h5data</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">h5data</span> <span class="o">=</span> <span class="n">arrayOfStructs</span><span class="o">.</span><span class="n">arrayOfStructs</span><span class="p">(</span>\
-                <span class="n">arrayOfStructs</span><span class="o">.</span><span class="n">makeTree_fromTree</span><span class="p">(</span><span class="n">h5data</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">add_sim_unit</span><span class="p">))</span>
+            <span class="n">h5data</span> <span class="o">=</span> <span class="n">structured</span><span class="o">.</span><span class="n">structured</span><span class="p">(</span>\
+                <span class="n">structured</span><span class="o">.</span><span class="n">makeTree_fromTree</span><span class="p">(</span><span class="n">h5data</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">add_sim_unit</span><span class="p">))</span>
 
         <span class="k">yield</span> <span class="n">timestep</span><span class="p">,</span> <span class="n">h5data</span>
 </div>
@@ -171,7 +171,7 @@
 <span class="sd">        :param str data_path: Relative path starting from &quot;/data/&lt;timestep&gt;/&quot; within hdf5-file to the dataset or group of datasets</span>
 <span class="sd">        :param int distaxis: axis on which datasets are distributed over when once loaded into memory.</span>
 <span class="sd">        :return: tuple of timestep and a :ref:`pyDive.h5_ndarray &lt;pyDive.h5_ndarray.h5_ndarray.h5_ndarray&gt;`</span>
-<span class="sd">            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`). Ordering is done by timestep.</span>
+<span class="sd">            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.structured`). Ordering is done by timestep.</span>
 
 <span class="sd">        Notes:</span>
 <span class="sd">            - If the dataset has a &#39;**sim_unit**&#39; attribute its value is stored in ``h5array.unit``.</span>
@@ -191,7 +191,7 @@
 <span class="sd">        :param str data_path: Relative path starting from &quot;/data/&lt;timestep&gt;/&quot; within hdf5-file to the dataset or group of datasets</span>
 <span class="sd">        :param int distaxis: axis on which datasets are distributed over when once loaded into memory.</span>
 <span class="sd">        :return: :ref:`pyDive.h5_ndarray &lt;pyDive.h5_ndarray.h5_ndarray.h5_ndarray&gt;`</span>
-<span class="sd">            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.arrayOfStructs`).</span>
+<span class="sd">            or a structure of pyDive.h5_ndarrays (:mod:`pyDive.structured`).</span>
 
 <span class="sd">        Notes:</span>
 <span class="sd">            - If the dataset has a &#39;**sim_unit**&#39; attribute its value is stored in ``h5array.unit``.</span>

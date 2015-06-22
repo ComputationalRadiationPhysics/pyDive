@@ -171,12 +171,12 @@
 <span class="c"># execute this code only if it is not executed on engine</span>
 <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">pyDive.arrays.ndarray</span> <span class="kn">import</span> <span class="n">hollow_like</span>
-    <span class="kn">import</span> <span class="nn">pyDive.distribution.single_axis</span> <span class="kn">as</span> <span class="nn">single_axis</span>
+    <span class="kn">import</span> <span class="nn">pyDive.distribution.multiple_axes</span> <span class="kn">as</span> <span class="nn">multiple_axes</span>
     <span class="kn">import</span> <span class="nn">pyDive.IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
     <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span>
     <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">arrayOfStructs</span>
 
-    <span class="n">ad_ndarray</span> <span class="o">=</span> <span class="n">single_axis</span><span class="o">.</span><span class="n">distribute</span><span class="p">(</span><span class="n">ad_ndarray_local</span><span class="p">,</span> <span class="s">&quot;ad_ndarray&quot;</span><span class="p">,</span> <span class="s">&quot;ad_ndarray&quot;</span><span class="p">,</span> <span class="n">may_allocate</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">ad_ndarray</span> <span class="o">=</span> <span class="n">multiple_axes</span><span class="o">.</span><span class="n">distribute</span><span class="p">(</span><span class="n">ad_ndarray_local</span><span class="p">,</span> <span class="s">&quot;ad_ndarray&quot;</span><span class="p">,</span> <span class="s">&quot;ad_ndarray&quot;</span><span class="p">,</span> <span class="n">may_allocate</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Load array from file into main memory of all engines in parallel.</span>

@@ -219,8 +219,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">nbytes</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">items</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span> <span class="o">=</span> <span class="n">structOfArrays</span>
 
-        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">,</span> <span class="s">&quot;distaxis&quot;</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">distaxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">distaxis</span>
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">,</span> <span class="s">&quot;target_ranks&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">distaxes</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">target_offsets</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="o">.</span><span class="n">target_ranks</span>
             <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
@@ -242,12 +242,12 @@
                 <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">,</span> <span class="s">&quot;distaxis&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">onTarget</span> <span class="o">==</span> <span class="s">&#39;False&#39;</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">,</span> <span class="s">&quot;target_ranks&quot;</span><span class="p">):</span>
             <span class="c"># delete remote arrayOfStructs object</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;del </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arraytype</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">firstArray</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">ForeachLeafDo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
@@ -289,16 +289,6 @@
 
         <span class="c"># slicing</span>
         <span class="c"># -------</span>
-        <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">),)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="p">,)</span>
-
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>\
-            <span class="s">&quot;number of arguments (</span><span class="si">%d</span><span class="s">) does not correspond to the dimension (</span><span class="si">%d</span><span class="s">)&quot;</span>\
-                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
-
         <span class="n">result</span> <span class="o">=</span> <span class="n">makeTree_fromTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">structOfArrays</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="p">[</span><span class="n">args</span><span class="p">])</span>
 
         <span class="c"># if args is a list of indices then return a single data value tree</span>
@@ -329,16 +319,6 @@
 
         <span class="c"># slicing</span>
         <span class="c"># -------</span>
-        <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">),)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="p">,)</span>
-
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>\
-            <span class="s">&quot;number of arguments (</span><span class="si">%d</span><span class="s">) does not correspond to the dimension (</span><span class="si">%d</span><span class="s">)&quot;</span>\
-                <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
-
         <span class="k">def</span> <span class="nf">doArrayAssignmentWithSlice</span><span class="p">(</span><span class="n">treeA</span><span class="p">,</span> <span class="n">treeB</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">arrayA</span><span class="p">,</span> <span class="n">arrayB</span><span class="p">):</span>
             <span class="n">treeA</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">args</span><span class="p">]</span> <span class="o">=</span> <span class="n">arrayB</span>
 

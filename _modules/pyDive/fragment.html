@@ -101,16 +101,19 @@
 <span class="c">#: list of array types that store their elements on hard disk</span>
 <span class="n">hdd_arraytypes</span> <span class="o">=</span> <span class="p">(</span><span class="n">h5_ndarray</span><span class="p">,</span> <span class="n">ad_ndarray</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">__bestStepSize</span><span class="p">(</span><span class="n">arrays</span><span class="p">,</span> <span class="n">memory_limit</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">__bestStepSize</span><span class="p">(</span><span class="n">arrays</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">memory_limit</span><span class="p">):</span>
     <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
 
     <span class="c"># minimum amount of memory available and memory needed, both per engine</span>
     <span class="n">get_mem_av_node</span> <span class="o">=</span> <span class="n">interactive</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">available</span><span class="p">)</span>
+    <span class="n">tmp_targets</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">targets</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="s">&#39;all&#39;</span>
     <span class="n">mem_av</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">get_mem_av_node</span><span class="p">))</span> <span class="o">/</span> <span class="n">com</span><span class="o">.</span><span class="n">getPPN</span><span class="p">()</span>
-    <span class="n">mem_needed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">nbytes</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+    <span class="n">mem_needed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">nbytes</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">tmp_targets</span>
 
     <span class="c"># edge length of the whole array</span>
-    <span class="n">edge_length</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">distaxis</span><span class="p">]</span>
+    <span class="n">edge_length</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span>
     <span class="c"># maximum edge length on one engine according to the available memory</span>
     <span class="n">step_size</span> <span class="o">=</span> <span class="n">memory_limit</span> <span class="o">*</span> <span class="n">edge_length</span> <span class="o">*</span> <span class="n">mem_av</span> <span class="o">/</span> <span class="n">mem_needed</span>
 
@@ -122,7 +125,8 @@
 
 <div class="viewcode-block" id="fragment"><a class="viewcode-back" href="../../modules.html#pyDive.fragment.fragment">[docs]</a><span class="k">def</span> <span class="nf">fragment</span><span class="p">(</span><span class="o">*</span><span class="n">arrays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Create fragments of *arrays* so that each fragment will fit into the combined</span>
-<span class="sd">    main memory of all engines when calling ``load()``. The fragmentation is done by array slicing along the distributed axis.</span>
+<span class="sd">    main memory of all engines when calling ``load()``. The fragmentation is done by array slicing</span>
+<span class="sd">    along the longest axis of ``arrays[0]``.</span>
 <span class="sd">    The edge size of the fragments is a power of two except for the last fragment.</span>
 
 <span class="sd">    :param array: distributed arrays (e.g. pyDive.ndarray, pyDive.h5_ndarray, ...)</span>
@@ -159,30 +163,27 @@
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">arrays</span><span class="p">:</span> <span class="k">return</span>
 
-    <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">distaxis</span> <span class="o">==</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">distaxis</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">),</span> \
-        <span class="s">&quot;all arrays must be distributed along the same axis&quot;</span>
-
     <span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">),</span> \
         <span class="s">&quot;all arrays must have the same shape&quot;</span>
 
     <span class="c"># calculate the best suitable step size (-&gt; fragment&#39;s edge size) according to the amount</span>
     <span class="c"># of available memory on the engines</span>
     <span class="n">hdd_arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span> <span class="k">if</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s">&quot;arraytype&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">arraytype</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">type</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hdd_arraytypes</span><span class="p">]</span>
-    <span class="n">step</span> <span class="o">=</span> <span class="n">__bestStepSize</span><span class="p">(</span><span class="n">hdd_arrays</span><span class="p">,</span> <span class="n">memory_limit</span><span class="p">)</span>
+    <span class="n">longest_axis</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">axis</span> <span class="p">:</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">])</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">__bestStepSize</span><span class="p">(</span><span class="n">hdd_arrays</span><span class="p">,</span> <span class="n">longest_axis</span><span class="p">,</span> <span class="n">memory_limit</span><span class="p">)</span>
 
     <span class="n">shape</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
-    <span class="n">distaxis</span> <span class="o">=</span> <span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">distaxis</span>
     <span class="c"># list of slices representing the fragment&#39;s shape</span>
     <span class="n">fragment_window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">begin</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">],</span> <span class="n">step</span><span class="p">):</span>
-        <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">begin</span> <span class="o">+</span> <span class="n">step</span><span class="p">,</span> <span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">])</span>
-        <span class="n">fragment_window</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">begin</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">shape</span><span class="p">[</span><span class="n">longest_axis</span><span class="p">],</span> <span class="n">step</span><span class="p">):</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">begin</span> <span class="o">+</span> <span class="n">step</span><span class="p">,</span> <span class="n">shape</span><span class="p">[</span><span class="n">longest_axis</span><span class="p">])</span>
+        <span class="n">fragment_window</span><span class="p">[</span><span class="n">longest_axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="p">[</span><span class="n">fragment_window</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">offset</span><span class="p">:</span>
             <span class="n">offset_vector</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-            <span class="n">offset_vector</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">begin</span>
+            <span class="n">offset_vector</span><span class="p">[</span><span class="n">longest_axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">begin</span>
             <span class="n">result</span> <span class="o">+=</span> <span class="p">[</span><span class="n">offset_vector</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>

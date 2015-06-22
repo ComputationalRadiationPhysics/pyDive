@@ -133,7 +133,7 @@ every method call or operation is forwarded to the individual arrays.:</p>
 <p>Here the forwarded method calls are <code class="docutils literal"><span class="pre">astype</span></code> and <code class="docutils literal"><span class="pre">__add__</span></code>.</p>
 <dl class="function">
 <dt id="pyDive.arrayOfStructs.arrayOfStructs">
-<code class="descclassname">pyDive.arrayOfStructs.</code><code class="descname">arrayOfStructs</code><span class="sig-paren">(</span><em>structOfArrays</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrayOfStructs.html#arrayOfStructs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrayOfStructs.arrayOfStructs" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyDive.arrayOfStructs.</code><code class="descname">arrayOfStructs</code><span class="sig-paren">(</span><em>structOfArrays</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrayOfStructs.arrayOfStructs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a <em>structure-of-arrays</em> into a virtual <em>array-of-structures</em>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -164,7 +164,7 @@ as <em>structOfArrays</em>.</p>
 <code class="descclassname">pyDive.algorithm.</code><code class="descname">map</code><span class="sig-paren">(</span><em>f</em>, <em>*arrays</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/algorithm.html#map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.algorithm.map" title="Permalink to this definition">¶</a></dt>
 <dd><p>Applies <em>f</em> on <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> on local arrays related to <em>arrays</em>.
 Example:</p>
-<div class="highlight-python"><div class="highlight"><pre>cluster_array = pyDive.ones(shape=[100], distaxis=0)
+<div class="highlight-python"><div class="highlight"><pre>cluster_array = pyDive.ones(shape=[100], distaxes=0)
 
 cluster_array *= 2.0
 # equivalent to
@@ -192,7 +192,7 @@ pyDive.map(lambda a: a *= 2.0, cluster_array) # a is the local numpy-array of *c
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
 <li><strong>AssertionError</strong> &#8211; if the <em>shapes</em> of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
-<li><strong>AssertionError</strong> &#8211; if the <em>distaxis</em> attributes of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
+<li><strong>AssertionError</strong> &#8211; if the <em>distaxes</em> attributes of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
 </ul>
 </td>
 </tr>
@@ -216,7 +216,7 @@ pyDive.map(lambda a: a *= 2.0, cluster_array) # a is the local numpy-array of *c
 <dd><p>Applies <em>map_func</em> on <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> on local arrays related to <em>arrays</em>
 and reduces its result in a tree-like fashion over all axes.
 Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster_array</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">],</span> <span class="n">distaxis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">cluster_array</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">],</span> <span class="n">distaxes</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="n">s</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">mapReduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">cluster_array</span><span class="p">)</span> <span class="c"># a is the local numpy-array of *cluster_array*</span>
 <span class="k">assert</span> <span class="n">s</span> <span class="o">==</span> <span class="mi">100</span>
@@ -236,7 +236,7 @@ Example:</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first last simple">
 <li><strong>AssertionError</strong> &#8211; if the <em>shapes</em> of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
-<li><strong>AssertionError</strong> &#8211; if the <em>distaxis</em> attributes of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
+<li><strong>AssertionError</strong> &#8211; if the <em>distaxes</em> attributes of <em>pyDive.ndarrays</em> and <em>pyDive.h5_ndarrays</em> do not match</li>
 </ul>
 </td>
 </tr>
@@ -280,7 +280,8 @@ Example:</p>
 <dt id="pyDive.fragment.fragment">
 <code class="descclassname">pyDive.fragment.</code><code class="descname">fragment</code><span class="sig-paren">(</span><em>*arrays</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/fragment.html#fragment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.fragment.fragment" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create fragments of <em>arrays</em> so that each fragment will fit into the combined
-main memory of all engines when calling <code class="docutils literal"><span class="pre">load()</span></code>. The fragmentation is done by array slicing along the distributed axis.
+main memory of all engines when calling <code class="docutils literal"><span class="pre">load()</span></code>. The fragmentation is done by array slicing
+along the longest axis of <code class="docutils literal"><span class="pre">arrays[0]</span></code>.
 The edge size of the fragments is a power of two except for the last fragment.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -324,7 +325,7 @@ the fragmentation itself is applied on all arrays in the same way.</p>
 
 <dl class="data">
 <dt id="pyDive.fragment.hdd_arraytypes">
-<code class="descclassname">pyDive.fragment.</code><code class="descname">hdd_arraytypes</code><em class="property"> = (&lt;class 'pyDive.distribution.single_axis.h5_ndarray'&gt;, &lt;class 'pyDive.distribution.single_axis.ad_ndarray'&gt;)</em><a class="headerlink" href="#pyDive.fragment.hdd_arraytypes" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pyDive.fragment.</code><code class="descname">hdd_arraytypes</code><em class="property"> = (&lt;class 'pyDive.distribution.multiple_axes.h5_ndarray'&gt;, None)</em><a class="headerlink" href="#pyDive.fragment.hdd_arraytypes" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of array types that store their elements on hard disk</p>
 </dd></dl>
 
@@ -443,7 +444,7 @@ covered by <em>pyDive.h5_ndarray</em> objects.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">tuple of timestep and a <span class="xref std std-ref">pyDive.h5_ndarray</span>
-or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><code class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></code></a>). Ordering is done by timestep.</p>
+or a structure of pyDive.h5_ndarrays (<code class="xref py py-mod docutils literal"><span class="pre">pyDive.structured</span></code>). Ordering is done by timestep.</p>
 </td>
 </tr>
 </tbody>
@@ -475,7 +476,7 @@ or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#modul
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><span class="xref std std-ref">pyDive.h5_ndarray</span>
-or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><code class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></code></a>).</p>
+or a structure of pyDive.h5_ndarrays (<code class="xref py py-mod docutils literal"><span class="pre">pyDive.structured</span></code>).</p>
 </td>
 </tr>
 </tbody>
@@ -510,7 +511,7 @@ covered by <em>pyDive.h5_ndarray</em> objects.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">tuple of timestep and a <span class="xref std std-ref">pyDive.h5_ndarray</span>
-or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#module-pyDive.arrayOfStructs" title="pyDive.arrayOfStructs"><code class="xref py py-mod docutils literal"><span class="pre">pyDive.arrayOfStructs</span></code></a>). Ordering is done by timestep.</p>
+or a structure of pyDive.h5_ndarrays (<code class="xref py py-mod docutils literal"><span class="pre">pyDive.structured</span></code>). Ordering is done by timestep.</p>
 </td>
 </tr>
 </tbody>
@@ -540,7 +541,6 @@ or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#modul
 <p><code class="xref py py-obj docutils literal"><span class="pre">arctan2</span></code></p>
 <p><code class="xref py py-obj docutils literal"><span class="pre">arctanh</span></code></p>
 <p><a class="reference internal" href="pyDive.ndarray.html#pyDive.arrays.ndarray.array" title="pyDive.arrays.ndarray.array"><code class="xref py py-obj docutils literal"><span class="pre">array</span></code></a></p>
-<p><a class="reference internal" href="#pyDive.arrayOfStructs.arrayOfStructs" title="pyDive.arrayOfStructs.arrayOfStructs"><code class="xref py py-obj docutils literal"><span class="pre">arrayOfStructs</span></code></a></p>
 <p><code class="xref py py-obj docutils literal"><span class="pre">bitwise_and</span></code></p>
 <p><code class="xref py py-obj docutils literal"><span class="pre">bitwise_not</span></code></p>
 <p><code class="xref py py-obj docutils literal"><span class="pre">bitwise_or</span></code></p>
@@ -622,6 +622,7 @@ or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#modul
 <p><code class="xref py py-obj docutils literal"><span class="pre">spacing</span></code></p>
 <p><code class="xref py py-obj docutils literal"><span class="pre">sqrt</span></code></p>
 <p><code class="xref py py-obj docutils literal"><span class="pre">square</span></code></p>
+<p><code class="xref py py-obj docutils literal"><span class="pre">structured</span></code></p>
 <p><code class="xref py py-obj docutils literal"><span class="pre">subtract</span></code></p>
 <p><code class="xref py py-obj docutils literal"><span class="pre">tan</span></code></p>
 <p><code class="xref py py-obj docutils literal"><span class="pre">tanh</span></code></p>
@@ -631,7 +632,6 @@ or a structure of pyDive.h5_ndarrays (<a class="reference internal" href="#modul
 <p><code class="xref py py-obj docutils literal"><span class="pre">zeros_like</span></code></p>
 <p><strong>Modules</strong>:</p>
 <p><code class="xref py py-mod docutils literal"><span class="pre">IPParallelClient</span></code></p>
-<p><a class="reference internal" href="pyDive.adios.html#module-pyDive.arrays.ad_ndarray" title="pyDive.arrays.ad_ndarray"><code class="xref py py-mod docutils literal"><span class="pre">adios</span></code></a></p>
 <p><a class="reference internal" href="#module-pyDive.algorithm" title="pyDive.algorithm"><code class="xref py py-mod docutils literal"><span class="pre">algorithm</span></code></a></p>
 <p><code class="xref py py-mod docutils literal"><span class="pre">arrays</span></code></p>
 <p><a class="reference internal" href="pyDive.cloned_ndarray.html#module-pyDive.cloned_ndarray.factories" title="pyDive.cloned_ndarray.factories"><code class="xref py py-mod docutils literal"><span class="pre">cloned</span></code></a></p>
