@@ -19,7 +19,8 @@ at [HZDR](http://www.hzdr.de/).
    existing profiles for pyDive. No further cluster configuration needed.
  - Save bandwidth by slicing an array in parallel on disk first before loading it into main memory!
  - GPU-cluster array available thanks to [pycuda](http://mathema.tician.de/software/pycuda/) with additional support for non-contiguous memory.
- - Like all of pyDive's distributed array types are auto-generated from local arrays like numpy, hdf5, pycuda, etc... you can make your own local array classes distributed too.
+ - As all of pyDive's distributed array types are auto-generated from local arrays like numpy, hdf5, pycuda, etc... 
+   you can easily make your own local array classes distributed too.
 
 ## Dive in!
 
