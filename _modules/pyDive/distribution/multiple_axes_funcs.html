@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.distribution.multiple_axes_funcs &mdash; pyDive 1.1 beta documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.1 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive 1.1 beta documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyDive.distribution.multiple_axes_funcs</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">multiple_axes</span> <span class="kn">import</span> <span class="n">DistributedGenericArray</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pyDive.IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
+
+<span class="k">def</span> <span class="nf">distribute</span><span class="p">(</span><span class="n">local_arraytype</span><span class="p">,</span> <span class="n">newclassname</span><span class="p">,</span> <span class="n">target_modulename</span><span class="p">,</span> <span class="n">interengine_copier</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">may_allocate</span> <span class="o">=</span> <span class="bp">True</span><span class="p">):</span>
+    <span class="n">binary_ops</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;add&quot;</span><span class="p">,</span> <span class="s">&quot;sub&quot;</span><span class="p">,</span> <span class="s">&quot;mul&quot;</span><span class="p">,</span> <span class="s">&quot;floordiv&quot;</span><span class="p">,</span> <span class="s">&quot;div&quot;</span><span class="p">,</span> <span class="s">&quot;mod&quot;</span><span class="p">,</span> <span class="s">&quot;pow&quot;</span><span class="p">,</span> <span class="s">&quot;lshift&quot;</span><span class="p">,</span> <span class="s">&quot;rshift&quot;</span><span class="p">,</span> <span class="s">&quot;and&quot;</span><span class="p">,</span> <span class="s">&quot;xor&quot;</span><span class="p">,</span> <span class="s">&quot;or&quot;</span><span class="p">]</span>
+
+    <span class="n">binary_iops</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;__i&quot;</span> <span class="o">+</span> <span class="n">op</span> <span class="o">+</span> <span class="s">&quot;__&quot;</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">binary_ops</span><span class="p">]</span>
+    <span class="n">binary_rops</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;__r&quot;</span> <span class="o">+</span> <span class="n">op</span> <span class="o">+</span> <span class="s">&quot;__&quot;</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">binary_ops</span><span class="p">]</span>
+    <span class="n">binary_ops</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;__&quot;</span> <span class="o">+</span> <span class="n">op</span> <span class="o">+</span> <span class="s">&quot;__&quot;</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">binary_ops</span><span class="p">]</span>
+    <span class="n">unary_ops</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;__neg__&quot;</span><span class="p">,</span> <span class="s">&quot;__pos__&quot;</span><span class="p">,</span> <span class="s">&quot;__abs__&quot;</span><span class="p">,</span> <span class="s">&quot;__invert__&quot;</span><span class="p">,</span> <span class="s">&quot;__complex__&quot;</span><span class="p">,</span> <span class="s">&quot;__int__&quot;</span><span class="p">,</span> <span class="s">&quot;__long__&quot;</span><span class="p">,</span> <span class="s">&quot;__float__&quot;</span><span class="p">,</span> <span class="s">&quot;__oct__&quot;</span><span class="p">,</span> <span class="s">&quot;__hex__&quot;</span><span class="p">]</span>
+    <span class="n">comp_ops</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;__lt__&quot;</span><span class="p">,</span> <span class="s">&quot;__le__&quot;</span><span class="p">,</span> <span class="s">&quot;__eq__&quot;</span><span class="p">,</span> <span class="s">&quot;__ne__&quot;</span><span class="p">,</span> <span class="s">&quot;__ge__&quot;</span><span class="p">,</span> <span class="s">&quot;__gt__&quot;</span><span class="p">]</span>
+
+    <span class="n">special_ops_avail</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">local_arraytype</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&quot;__&quot;</span><span class="p">))</span>
+
+    <span class="n">make_special_op</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__elementwise_op__</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">make_special_iop</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">op</span><span class="p">:</span> <span class="k">lambda</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">__elementwise_iop__</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="n">special_ops_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">op</span> <span class="p">:</span> <span class="n">make_special_op</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> \
+        <span class="nb">set</span><span class="p">(</span><span class="n">binary_ops</span> <span class="o">+</span> <span class="n">binary_rops</span> <span class="o">+</span> <span class="n">unary_ops</span> <span class="o">+</span> <span class="n">comp_ops</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">special_ops_avail</span><span class="p">}</span>
+    <span class="n">special_iops_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">op</span> <span class="p">:</span> <span class="n">make_special_iop</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">binary_iops</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">special_ops_avail</span><span class="p">}</span>
+
+    <span class="n">formated_doc_funs</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;__init__&quot;</span><span class="p">,</span> <span class="s">&quot;gather&quot;</span><span class="p">)</span>
+
+    <span class="n">result_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DistributedGenericArray</span><span class="o">.</span><span class="n">__dict__</span><span class="p">)</span>
+
+    <span class="c"># docs</span>
+    <span class="n">result_dict</span><span class="p">[</span><span class="s">&quot;__doc__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_dict</span><span class="p">[</span><span class="s">&quot;__doc__&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>\
+        <span class="n">local_arraytype_name</span><span class="o">=</span><span class="n">local_arraytype</span><span class="o">.</span><span class="n">__module__</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span>  <span class="n">local_arraytype</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+        <span class="n">arraytype_name</span><span class="o">=</span><span class="n">newclassname</span><span class="p">)</span>
+    <span class="c"># copy methods which have formated docstrings because their docstrings are going to be modified</span>
+    <span class="n">copied_methods</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span> <span class="p">:</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">func_code</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">func_globals</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">v</span><span class="o">.</span><span class="n">func_name</span><span class="p">,</span> <span class="n">argdefs</span><span class="o">=</span><span class="n">v</span><span class="o">.</span><span class="n">func_defaults</span><span class="p">)</span>\
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">result_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">formated_doc_funs</span><span class="p">}</span>
+    <span class="n">result_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">copied_methods</span><span class="p">)</span>
+
+    <span class="n">result_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">special_ops_dict</span><span class="p">)</span>
+    <span class="n">result_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">special_iops_dict</span><span class="p">)</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">newclassname</span><span class="p">,</span> <span class="p">(),</span> <span class="n">result_dict</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">local_arraytype</span> <span class="o">=</span> <span class="n">local_arraytype</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">target_modulename</span> <span class="o">=</span> <span class="n">target_modulename</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">interengine_copier</span> <span class="o">=</span> <span class="n">interengine_copier</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">may_allocate</span> <span class="o">=</span> <span class="n">may_allocate</span>
+
+    <span class="c"># docs</span>
+    <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">formated_doc_funs</span><span class="p">):</span>
+        <span class="n">method</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">__doc__</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>\
+            <span class="n">local_arraytype_name</span><span class="o">=</span><span class="n">local_arraytype</span><span class="o">.</span><span class="n">__module__</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span>  <span class="n">local_arraytype</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+            <span class="n">arraytype_name</span><span class="o">=</span><span class="n">newclassname</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+<span class="k">def</span> <span class="nf">generate_factories</span><span class="p">(</span><span class="n">arraytype</span><span class="p">,</span> <span class="n">factory_names</span><span class="p">,</span> <span class="n">dtype_default</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">factory_wrapper</span><span class="p">(</span><span class="n">factory_name</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">distaxes</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">arraytype</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">distaxes</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">target_shapes</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">target_shapes</span><span class="p">()</span>
+
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&#39;target_shape&#39;</span><span class="p">,</span> <span class="n">target_shapes</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="s">&#39;kwargs&#39;</span> <span class="p">:</span> <span class="n">kwargs</span><span class="p">,</span> <span class="s">&#39;dtype&#39;</span> <span class="p">:</span> <span class="n">dtype</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = {1}(shape=target_shape[0], dtype=dtype, **kwargs)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">factory_name</span><span class="p">),</span>\
+            <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="n">make_factory</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">factory_name</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype_default</span><span class="p">,</span> <span class="n">distaxes</span><span class="o">=</span><span class="s">&#39;all&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span>\
+        <span class="n">factory_wrapper</span><span class="p">(</span><span class="n">arraytype</span><span class="o">.</span><span class="n">target_modulename</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">factory_name</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">distaxes</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">factories_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">factory_name</span> <span class="p">:</span> <span class="n">make_factory</span><span class="p">(</span><span class="n">factory_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">factory_name</span> <span class="ow">in</span> <span class="n">factory_names</span><span class="p">}</span>
+
+    <span class="c"># add docstrings</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">factory</span> <span class="ow">in</span> <span class="n">factories_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">factory</span><span class="o">.</span><span class="n">__name__</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">factory</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> \
+        <span class="sd">&quot;&quot;&quot;Create a *{0}* instance. This function calls its local counterpart *{1}* on each :term:`engine`.</span>
+
+<span class="sd">        :param ints shape: shape of array</span>
+<span class="sd">        :param dtype: datatype of a single element</span>
+<span class="sd">        :param ints distaxes: distributed axes</span>
+<span class="sd">        :param kwargs: keyword arguments are passed to the local function *{1}*</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">arraytype</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">arraytype</span><span class="o">.</span><span class="n">local_arraytype</span><span class="o">.</span><span class="n">__module__</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">factories_dict</span>
+
+<span class="k">def</span> <span class="nf">generate_factories_like</span><span class="p">(</span><span class="n">arraytype</span><span class="p">,</span> <span class="n">factory_names</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">factory_like_wrapper</span><span class="p">(</span><span class="n">factory_name</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">arraytype</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="s">&#39;kwargs&#39;</span> <span class="p">:</span> <span class="n">kwargs</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = {1}({2}, **kwargs)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">factory_name</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="n">make_factory</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">factory_name</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">other</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> \
+        <span class="n">factory_like_wrapper</span><span class="p">(</span><span class="n">arraytype</span><span class="o">.</span><span class="n">target_modulename</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">factory_name</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">factories_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">factory_name</span> <span class="p">:</span> <span class="n">make_factory</span><span class="p">(</span><span class="n">factory_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">factory_name</span> <span class="ow">in</span> <span class="n">factory_names</span><span class="p">}</span>
+
+    <span class="c"># add docstrings</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">factory</span> <span class="ow">in</span> <span class="n">factories_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">factory</span><span class="o">.</span><span class="n">__name__</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">factory</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> \
+        <span class="sd">&quot;&quot;&quot;Create a *{0}* instance with the same shape, dtype and distribution as ``other``.</span>
+<span class="sd">        This function calls its local counterpart *{1}* on each :term:`engine`.</span>
+
+<span class="sd">        :param other: other array</span>
+<span class="sd">        :param kwargs: keyword arguments are passed to the local function *{1}*</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">arraytype</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">arraytype</span><span class="o">.</span><span class="n">local_arraytype</span><span class="o">.</span><span class="n">__module__</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">factories_dict</span>
+
+<span class="k">def</span> <span class="nf">generate_ufuncs</span><span class="p">(</span><span class="n">ufunc_names</span><span class="p">,</span> <span class="n">target_modulename</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">ufunc_wrapper</span><span class="p">(</span><span class="n">ufunc_name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">arg0</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="o">.</span><span class="n">dist_like</span><span class="p">(</span><span class="n">arg0</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s">&quot;target_ranks&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">arg</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+        <span class="n">arg_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+        <span class="n">arg_string</span> <span class="o">=</span> <span class="s">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">arg_names</span><span class="p">)</span>
+
+        <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">arg0</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">arg0</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">arg0</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">arg0</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="n">arg0</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">arg0</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">arg0</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = {1}({2}); dtype={0}.dtype&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="n">ufunc_name</span><span class="p">,</span> <span class="n">arg_string</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">arg0</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&quot;dtype&quot;</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="n">make_ufunc</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">ufunc_name</span><span class="p">:</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">ufunc_wrapper</span><span class="p">(</span><span class="n">target_modulename</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="n">ufunc_name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="n">ufunc_name</span><span class="p">:</span> <span class="n">make_ufunc</span><span class="p">(</span><span class="n">ufunc_name</span><span class="p">)</span> <span class="k">for</span> <span class="n">ufunc_name</span> <span class="ow">in</span> <span class="n">ufunc_names</span><span class="p">}</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

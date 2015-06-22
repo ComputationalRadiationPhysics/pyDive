@@ -1,0 +1,695 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.distribution.multiple_axes &mdash; pyDive 1.1 beta documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.1 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive 1.1 beta documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyDive.distribution.multiple_axes</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Copyright 2015 Heiko Burau</span>
+
+<span class="sd">This file is part of pyDive.</span>
+
+<span class="sd">pyDive is free software: you can redistribute it and/or modify</span>
+<span class="sd">it under the terms of of either the GNU General Public License or</span>
+<span class="sd">the GNU Lesser General Public License as published by</span>
+<span class="sd">the Free Software Foundation, either version 3 of the License, or</span>
+<span class="sd">(at your option) any later version.</span>
+<span class="sd">pyDive is distributed in the hope that it will be useful,</span>
+<span class="sd">but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="sd">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="sd">GNU General Public License and the GNU Lesser General Public License</span>
+<span class="sd">for more details.</span>
+
+<span class="sd">You should have received a copy of the GNU General Public License</span>
+<span class="sd">and the GNU Lesser General Public License along with pyDive.</span>
+<span class="sd">If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">__doc__</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pyDive.IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
+<span class="kn">import</span> <span class="nn">helper</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="n">array_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">class</span> <span class="nc">DistributedGenericArray</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.</span>
+<span class="sd">    *cluster-wide* means that its elements are distributed across IPython.parallel-engines.</span>
+<span class="sd">    The distribution is done in one or multiply dimensions along user-specified axes.</span>
+<span class="sd">    The user can optionally specify which engine maps to which index range or leave the default</span>
+<span class="sd">    that persuits an uniform distribution across all engines.</span>
+
+<span class="sd">    This **{arraytype_name}** - class is auto-generated out of its local counterpart: **{local_arraytype_name}**.</span>
+
+<span class="sd">    The implementation is based on IPython.parallel and local {local_arraytype_name} - arrays.</span>
+<span class="sd">    Every special operation {local_arraytype_name} implements (&quot;__add__&quot;, &quot;__le__&quot;, ...) is also</span>
+<span class="sd">    available for {arraytype_name}.</span>
+
+<span class="sd">    Note that array slicing is a cheap operation since no memory is copied.</span>
+<span class="sd">    However this can easily lead to the situation where you end up with two arrays of the same size but of distinct element distribution.</span>
+<span class="sd">    Therefore call dist_like() first before doing any manual stuff on their local arrays.</span>
+<span class="sd">    However every cluster-wide array operation first equalizes the distribution of all involved arrays,</span>
+<span class="sd">    so an explicit call to dist_like() is rather unlikely in most use cases.</span>
+
+<span class="sd">    If you try to access an attribute that is only available for the local array, the request</span>
+<span class="sd">    is forwarded to an internal local copy of the whole distributed array (see: :meth:`gather()`).</span>
+<span class="sd">    This internal copy is only created when you want to access it and is held until ``__setitem__`` is called,</span>
+<span class="sd">    i.e. the array&#39;s content is manipulated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">local_arraytype</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">target_modulename</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">interengine_copier</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">may_allocate</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">distaxes</span><span class="o">=</span><span class="s">&#39;all&#39;</span><span class="p">,</span> <span class="n">target_offsets</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">target_ranks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates an instance of {arraytype_name}. This is a low-level method of instantiating an array, it should rather be</span>
+<span class="sd">        constructed using factory functions (&quot;empty&quot;, &quot;zeros&quot;, &quot;open&quot;, ...)</span>
+
+<span class="sd">        :param ints shape: shape of array</span>
+<span class="sd">        :param dtype: datatype of a single element</span>
+<span class="sd">        :param ints distaxes: distributed axes. Accepts a single integer too. Defaults to &#39;all&#39; meaning each axis is distributed.</span>
+<span class="sd">        :param target_offsets: For each distributed axis there is a (inner) list in the outer list.</span>
+<span class="sd">            The inner list contains the offsets of the local array.</span>
+<span class="sd">        :type target_offsets: list of lists</span>
+<span class="sd">        :param ints target_ranks: linear list of :term:`engine` ranks holding the local arrays.</span>
+<span class="sd">            The last distributed axis is iterated over first.</span>
+<span class="sd">        :param bool no_allocation: if ``True`` no instance of {local_arraytype_name} will be created on engine. Useful for</span>
+<span class="sd">            manual instantiation of the local array.</span>
+<span class="sd">        :param kwargs: additional keyword arguments are forwarded to the constructor of the local array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c">#: size of the array on each axis</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape</span><span class="p">,)</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">tuple</span><span class="p">:</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="n">shape</span>
+        <span class="c">##: datatype of a single data value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>
+        <span class="k">if</span> <span class="n">distaxes</span> <span class="o">==</span> <span class="s">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">distaxes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">distaxes</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">distaxes</span> <span class="o">=</span> <span class="p">(</span><span class="n">distaxes</span><span class="p">,)</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">distaxes</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">tuple</span><span class="p">:</span>
+            <span class="n">distaxes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">distaxes</span><span class="p">)</span>
+        <span class="c">#: axes on which memory is distributed across :term:`engines &lt;engine&gt;`</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span> <span class="o">=</span> <span class="n">distaxes</span>
+        <span class="c">#: total bytes consumed by elements of this array.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_copy_is_dirty</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">distaxes</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">),</span>\
+            <span class="s">&quot;more distributed axes ({}) than dimensions ({})&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">distaxes</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">distaxis</span> <span class="ow">in</span> <span class="n">distaxes</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">distaxis</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">distaxis</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>\
+                <span class="s">&quot;distributed axis ({}) has to be within [0,{}]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">distaxis</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">target_offsets</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">target_ranks</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="c"># create hypothetical patch with best surface-to-volume ratio</span>
+            <span class="n">patch_volume</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="k">for</span> <span class="n">distaxis</span> <span class="ow">in</span> <span class="n">distaxes</span><span class="p">])</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">targets</span><span class="p">))</span>
+            <span class="n">patch_edge_length</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="n">patch_volume</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">distaxes</span><span class="p">))</span>
+
+            <span class="k">def</span> <span class="nf">factorize</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">yield</span> <span class="mi">1</span><span class="p">;</span> <span class="k">return</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="n">n</span><span class="o">//</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">n</span><span class="p">]:</span>
+                    <span class="k">while</span> <span class="n">n</span><span class="o">%</span><span class="n">f</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">n</span> <span class="o">//=</span> <span class="n">f</span>
+                        <span class="k">yield</span> <span class="n">f</span>
+            <span class="n">prime_factors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">factorize</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">targets</span><span class="p">)))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c"># get prime factors of number of engines in descending order</span>
+            <span class="n">sorted_distaxes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">distaxes</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">axis</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">])</span> <span class="c"># sort distributed axes in ascending order</span>
+            <span class="c"># calculate number of available targets (engines) per distributed axis</span>
+            <span class="c"># This value should be close to array_edge_length / patch_edge_length</span>
+            <span class="n">num_targets_av</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">distaxis</span> <span class="ow">in</span> <span class="n">sorted_distaxes</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">num_patches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">/</span> <span class="n">patch_edge_length</span>
+                <span class="k">while</span> <span class="nb">float</span><span class="p">(</span><span class="n">num_targets_av</span><span class="p">[</span><span class="n">distaxis</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">num_patches</span> <span class="ow">and</span> <span class="n">prime_factors</span><span class="p">:</span>
+                    <span class="n">num_targets_av</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">*=</span> <span class="n">prime_factors</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="c"># the largest axis gets the remaining (largest) prime_factors</span>
+            <span class="k">if</span> <span class="n">prime_factors</span><span class="p">:</span>
+                <span class="n">num_targets_av</span><span class="p">[</span><span class="n">sorted_distaxes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">prime_factors</span><span class="p">)</span>
+
+            <span class="c"># calculate target_offsets</span>
+            <span class="n">localshape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">distaxis</span> <span class="ow">in</span> <span class="n">distaxes</span><span class="p">:</span>
+                <span class="n">localshape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_targets_av</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="c"># number of occupied targets for each distributed axis by this ndarray instance</span>
+            <span class="n">num_targets</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">localshape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">distaxis</span> <span class="ow">in</span> <span class="n">distaxes</span><span class="p">]</span>
+
+            <span class="c"># calculate target_offsets</span>
+            <span class="n">target_offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_targets</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">localshape</span><span class="p">[</span><span class="n">distaxes</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">distaxes</span><span class="p">))]</span>
+
+            <span class="c"># generate target_ranks list</span>
+            <span class="n">target_ranks</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">num_targets</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">target_offsets</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">localshape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">distaxis</span> <span class="ow">in</span> <span class="n">distaxes</span><span class="p">:</span>
+                <span class="n">localshape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_ranks</span><span class="p">[</span><span class="n">distaxis</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">target_offsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_targets</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">localshape</span><span class="p">[</span><span class="n">distaxes</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">distaxes</span><span class="p">))]</span>
+
+        <span class="k">if</span> <span class="n">target_ranks</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">num_targets</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">target_offsets_axis</span><span class="p">)</span> <span class="k">for</span> <span class="n">target_offsets_axis</span> <span class="ow">in</span> <span class="n">target_offsets</span><span class="p">]</span>
+            <span class="n">target_ranks</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">num_targets</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">target_ranks</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">tuple</span><span class="p">:</span>
+            <span class="n">target_ranks</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">target_ranks</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span> <span class="o">=</span> <span class="n">target_offsets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span> <span class="o">=</span> <span class="n">target_ranks</span>
+
+        <span class="c"># generate a unique variable name used on target representing this instance</span>
+        <span class="k">global</span> <span class="n">array_id</span>
+        <span class="c">#: Unique variable name of the local *array* on *engine*.</span>
+        <span class="c">#: Unless you are doing manual stuff on the *engines* there is no need for dealing with this attribute.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&#39;dist_array&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">array_id</span><span class="p">)</span>
+        <span class="n">array_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">no_allocation</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="p">:</span> <span class="bp">None</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">target_shapes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_shapes</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&#39;target_shape&#39;</span><span class="p">,</span> <span class="n">target_shapes</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="s">&#39;kwargs&#39;</span> <span class="p">:</span> <span class="n">kwargs</span><span class="p">,</span> <span class="s">&#39;dtype&#39;</span> <span class="p">:</span> <span class="n">dtype</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> = </span><span class="si">%s</span><span class="s">(shape=target_shape[0], dtype=dtype, **kwargs)&#39;</span> <span class="o">%</span> \
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">target_modulename</span> <span class="o">+</span> <span class="s">&quot;.&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">local_arraytype</span><span class="o">.</span><span class="n">__name__</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;del </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">target_shapes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;generate a list of the local shape on each target in use&quot;&quot;&quot;</span>
+        <span class="n">targetshapes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">num_targets</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">target_offsets_axis</span><span class="p">)</span> <span class="k">for</span> <span class="n">target_offsets_axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">rank_idx_vector</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="o">*</span><span class="n">num_targets</span><span class="p">):</span> <span class="c"># last dimension is iterated over first</span>
+            <span class="n">targetshape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">distaxis_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">)):</span>
+                <span class="n">distaxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">[</span><span class="n">distaxis_idx</span><span class="p">]</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">rank_idx_vector</span><span class="p">[</span><span class="n">distaxis_idx</span><span class="p">]</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">[</span><span class="n">distaxis_idx</span><span class="p">][</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">num_targets</span><span class="p">[</span><span class="n">distaxis_idx</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span>
+                <span class="n">targetshape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">[</span><span class="n">distaxis_idx</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">targetshapes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">targetshape</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">targetshapes</span>
+
+    <span class="k">def</span> <span class="nf">target_offset_vectors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;generate a list of the local offset vectors on each target in use&quot;&quot;&quot;</span>
+        <span class="n">target_offset_vectors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">num_targets</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">target_offsets_axis</span><span class="p">)</span> <span class="k">for</span> <span class="n">target_offsets_axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">rank_idx_vector</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="o">*</span><span class="n">num_targets</span><span class="p">):</span> <span class="c"># last dimension is iterated over first</span>
+            <span class="n">target_offset_vector</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">distaxis_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">)):</span>
+                <span class="n">distaxis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">[</span><span class="n">distaxis_idx</span><span class="p">]</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">rank_idx_vector</span><span class="p">[</span><span class="n">distaxis_idx</span><span class="p">]</span>
+                <span class="n">target_offset_vector</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">[</span><span class="n">distaxis_idx</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">target_offset_vectors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target_offset_vector</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">target_offset_vectors</span>
+
+    <span class="k">def</span> <span class="nf">__get_linear_rank_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rank_idx_vector</span><span class="p">):</span>
+        <span class="c"># convert rank_idx_vector to linear rank index</span>
+        <span class="c"># last dimension is iterated over first</span>
+        <span class="n">num_targets</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">target_offsets_axis</span><span class="p">)</span> <span class="k">for</span> <span class="n">target_offsets_axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">]</span>
+        <span class="n">pitch</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">num_targets</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">:]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">))]</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">rank_idx_component</span> <span class="o">*</span> <span class="n">pitch_component</span> <span class="k">for</span> <span class="n">rank_idx_component</span><span class="p">,</span> <span class="n">pitch_component</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">rank_idx_vector</span><span class="p">,</span> <span class="n">pitch</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c"># bitmask indexing</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">)</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="n">bitmask</span> <span class="o">=</span> <span class="n">args</span>
+            <span class="k">assert</span> <span class="n">bitmask</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>\
+                <span class="s">&quot;shape of bitmask (</span><span class="si">%s</span><span class="s">) does not correspond to shape of array (</span><span class="si">%s</span><span class="s">)&quot;</span>\
+                    <span class="o">%</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">bitmask</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+            <span class="n">bitmask</span> <span class="o">=</span> <span class="n">bitmask</span><span class="o">.</span><span class="n">dist_like</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="c"># equalize distribution if necessary</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;tmp = {0}[{1}]; tmp_size = tmp.shape[0]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">bitmask</span><span class="p">)),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+            <span class="n">sizes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&quot;tmp_size&quot;</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+            <span class="n">new_target_ranks</span> <span class="o">=</span> <span class="p">[</span><span class="n">rank</span> <span class="k">for</span> <span class="n">rank</span><span class="p">,</span> <span class="n">size</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">,</span> <span class="n">sizes</span><span class="p">)</span> <span class="k">if</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">new_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="n">size</span> <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">sizes</span> <span class="k">if</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">partial_sum</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="p">[</span><span class="n">a</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">]</span>
+            <span class="n">new_target_offsets</span> <span class="o">=</span> <span class="p">[</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">partial_sum</span><span class="p">,</span> <span class="n">new_sizes</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">new_sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">])</span> <span class="p">]</span>
+            <span class="n">new_shape</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">new_sizes</span><span class="p">)]</span>
+            <span class="c"># create resulting ndarray</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">new_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">new_target_offsets</span><span class="p">,</span> <span class="n">new_target_ranks</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = tmp; del tmp&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">if</span> <span class="n">args</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">),)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">args</span><span class="p">,)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>\
+            <span class="s">&quot;number of arguments (</span><span class="si">%d</span><span class="s">) does not correspond to the dimension (</span><span class="si">%d</span><span class="s">)&quot;</span>\
+                 <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+        <span class="c"># wrap all integer indices</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[(</span><span class="n">arg</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span> <span class="o">%</span> <span class="n">s</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">else</span> <span class="n">arg</span> <span class="k">for</span> <span class="n">arg</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)]</span>
+
+        <span class="c"># shape of the new sliced ndarray</span>
+        <span class="n">new_shape</span><span class="p">,</span> <span class="n">clean_view</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">view_of_shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="c"># if args is a list of indices then return a single data value</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">new_shape</span><span class="p">:</span>
+            <span class="n">local_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">rank_idx_vector</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">target_offsets</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">):</span>
+                <span class="n">dist_idx</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span>
+                <span class="n">rank_idx_component</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">dist_idx</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s">&quot;right&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">local_idx</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist_idx</span> <span class="o">-</span> <span class="n">target_offsets</span><span class="p">[</span><span class="n">rank_idx_component</span><span class="p">]</span>
+                <span class="n">rank_idx_vector</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rank_idx_component</span><span class="p">)</span>
+
+            <span class="n">rank_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_linear_rank_idx</span><span class="p">(</span><span class="n">rank_idx_vector</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">local_idx</span><span class="p">)),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="n">rank_idx</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">clean_view</span><span class="p">[</span><span class="n">distaxis</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">for</span> <span class="n">distaxis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">):</span>
+            <span class="c"># return local array because all distributed axes have vanished</span>
+            <span class="n">rank_idx_vector</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">target_offsets</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">):</span>
+                <span class="n">dist_idx</span> <span class="o">=</span> <span class="n">clean_view</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span>
+                <span class="n">rank_idx_component</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">dist_idx</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s">&quot;right&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">clean_view</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist_idx</span> <span class="o">-</span> <span class="n">target_offsets</span><span class="p">[</span><span class="n">rank_idx_component</span><span class="p">]</span>
+                <span class="n">rank_idx_vector</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rank_idx_component</span><span class="p">)</span>
+
+            <span class="n">rank_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_linear_rank_idx</span><span class="p">(</span><span class="n">rank_idx_vector</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;sliced = </span><span class="si">%s%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">clean_view</span><span class="p">)),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="n">rank_idx</span><span class="p">])</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&quot;sliced&quot;</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="n">rank_idx</span><span class="p">])</span>
+
+        <span class="c"># determine properties of the new, sliced ndarray</span>
+        <span class="c"># keep these in mind when reading the following for loop</span>
+        <span class="n">local_slices_aa</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># aa = all (distributed) axes</span>
+        <span class="n">new_target_offsets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">new_rank_ids_aa</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">new_distaxes</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">distaxis_idx</span><span class="p">,</span> <span class="n">target_offsets</span> \
+            <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">):</span>
+
+            <span class="c"># slice object in the direction of the distributed axis</span>
+            <span class="n">distaxis_slice</span> <span class="o">=</span> <span class="n">clean_view</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span>
+
+            <span class="c"># if it turns out that distaxis_slice is actually an int, this axis has to vanish.</span>
+            <span class="c"># That means the local slice object has to be an int too.</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">distaxis_slice</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>
+                <span class="n">dist_idx</span> <span class="o">=</span> <span class="n">distaxis_slice</span>
+                <span class="n">rank_idx_component</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">dist_idx</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s">&quot;right&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">local_idx</span> <span class="o">=</span> <span class="n">dist_idx</span> <span class="o">-</span> <span class="n">target_offsets</span><span class="p">[</span><span class="n">rank_idx_component</span><span class="p">]</span>
+                <span class="n">local_slices_aa</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">local_idx</span><span class="p">,))</span>
+                <span class="n">new_rank_ids_aa</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rank_idx_component</span><span class="p">,))</span>
+                <span class="k">continue</span>
+
+            <span class="c"># determine properties of the new, sliced ndarray</span>
+            <span class="n">local_slices_sa</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># sa = single axis</span>
+            <span class="n">new_target_offsets_sa</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">new_rank_ids_sa</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">total_ids</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">first_rank_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s">&quot;right&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">last_rank_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s">&quot;right&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">first_rank_idx</span><span class="p">,</span> <span class="n">last_rank_idx</span><span class="p">):</span>
+
+                <span class="c"># index range of current target</span>
+                <span class="n">begin</span> <span class="o">=</span> <span class="n">target_offsets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">target_offsets</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_offsets</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span>
+                <span class="c"># first slice index within [begin, end)</span>
+                <span class="n">firstSliceIdx</span> <span class="o">=</span> <span class="n">helper</span><span class="o">.</span><span class="n">getFirstSliceIdx</span><span class="p">(</span><span class="n">distaxis_slice</span><span class="p">,</span> <span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">firstSliceIdx</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">continue</span>
+                <span class="c"># calculate last slice index of distaxis_slice</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="p">(</span><span class="n">distaxis_slice</span><span class="o">.</span><span class="n">stop</span><span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">start</span><span class="p">)</span> <span class="o">/</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">step</span>
+                <span class="n">lastIdx</span> <span class="o">=</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">tmp</span> <span class="o">*</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">step</span>
+                <span class="c"># calculate last sub index within [begin,end)</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="p">(</span><span class="n">end</span><span class="o">-</span><span class="mi">1</span> <span class="o">-</span> <span class="n">firstSliceIdx</span><span class="p">)</span> <span class="o">/</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">step</span>
+                <span class="n">lastSliceIdx</span> <span class="o">=</span> <span class="n">firstSliceIdx</span> <span class="o">+</span> <span class="n">tmp</span> <span class="o">*</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">step</span>
+                <span class="n">lastSliceIdx</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lastSliceIdx</span><span class="p">,</span> <span class="n">lastIdx</span><span class="p">)</span>
+                <span class="c"># slice object for current target</span>
+                <span class="n">local_slices_sa</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="n">firstSliceIdx</span> <span class="o">-</span> <span class="n">begin</span><span class="p">,</span> <span class="n">lastSliceIdx</span><span class="o">+</span><span class="mi">1</span> <span class="o">-</span> <span class="n">begin</span><span class="p">,</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">step</span><span class="p">))</span>
+                <span class="c"># number of indices remaining on the current target after slicing</span>
+                <span class="n">num_ids</span> <span class="o">=</span> <span class="p">(</span><span class="n">lastSliceIdx</span> <span class="o">-</span> <span class="n">firstSliceIdx</span><span class="p">)</span> <span class="o">/</span> <span class="n">distaxis_slice</span><span class="o">.</span><span class="n">step</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="c"># new offset for current target</span>
+                <span class="n">new_target_offsets_sa</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_ids</span><span class="p">)</span>
+                <span class="n">total_ids</span> <span class="o">+=</span> <span class="n">num_ids</span>
+                <span class="c"># target rank index</span>
+                <span class="n">new_rank_ids_sa</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+            <span class="n">new_rank_ids_sa</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_rank_ids_sa</span><span class="p">)</span>
+
+            <span class="n">local_slices_aa</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">local_slices_sa</span><span class="p">)</span>
+            <span class="n">new_target_offsets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_target_offsets_sa</span><span class="p">)</span>
+            <span class="n">new_rank_ids_aa</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_rank_ids_sa</span><span class="p">)</span>
+
+            <span class="c"># shift distaxis by the number of vanished axes in the left of it</span>
+            <span class="n">new_distaxis</span> <span class="o">=</span> <span class="n">distaxis</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">[:</span><span class="n">distaxis</span><span class="p">]</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="n">new_distaxes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_distaxis</span><span class="p">)</span>
+
+        <span class="c"># create list of targets which participate slicing, new_target_ranks</span>
+        <span class="n">num_ranks_aa</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">new_rank_ids_sa</span><span class="p">)</span> <span class="k">for</span> <span class="n">new_rank_ids_sa</span> <span class="ow">in</span> <span class="n">new_rank_ids_aa</span><span class="p">]</span>
+        <span class="n">new_target_ranks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="o">*</span><span class="n">num_ranks_aa</span><span class="p">):</span>
+            <span class="n">rank_idx_vector</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_rank_ids_aa</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">))]</span>
+            <span class="n">rank_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_linear_rank_idx</span><span class="p">(</span><span class="n">rank_idx_vector</span><span class="p">)</span>
+            <span class="n">new_target_ranks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="n">rank_idx</span><span class="p">])</span>
+
+        <span class="c"># create resulting ndarray</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">new_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">new_distaxes</span><span class="p">,</span> <span class="n">new_target_offsets</span><span class="p">,</span> <span class="n">new_target_ranks</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c"># remote slicing</span>
+        <span class="n">local_args_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="o">*</span><span class="n">num_ranks_aa</span><span class="p">):</span>
+            <span class="n">local_slices</span> <span class="o">=</span> <span class="p">[</span><span class="n">local_slices_aa</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">))]</span>
+            <span class="n">local_args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">distaxis_idx</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">))):</span>
+                <span class="n">local_args</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">local_slices</span><span class="p">[</span><span class="n">distaxis_idx</span><span class="p">]</span>
+            <span class="n">local_args_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">local_args</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&#39;local_args&#39;</span><span class="p">,</span> <span class="n">local_args_list</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> = </span><span class="si">%s</span><span class="s">[local_args[0]]&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_copy_is_dirty</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="c"># bitmask indexing</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="n">bitmask</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">dist_like</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">[</span><span class="si">%s</span><span class="s">] = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">bitmask</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">)),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c"># if args is [:] then assign value to the entire ndarray</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">):</span>
+            <span class="c"># assign local array to self</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">local_arraytype</span><span class="p">):</span>
+                <span class="n">subarrays</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">target_offset_vector</span><span class="p">,</span> <span class="n">target_shape</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_offset_vectors</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_shapes</span><span class="p">()):</span>
+                    <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">start</span><span class="o">+</span><span class="n">length</span><span class="p">)</span> <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">target_offset_vector</span><span class="p">,</span> <span class="n">target_shape</span><span class="p">)]</span>
+                    <span class="n">subarrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">window</span><span class="p">])</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&quot;subarray&quot;</span><span class="p">,</span> <span class="n">subarrays</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">[:] = subarray[0]&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+                <span class="k">return</span>
+
+            <span class="c"># assign other array or value to self</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">dist_like</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s">&quot;dist_like&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">[:] = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">other</span><span class="p">)),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,)</span>
+
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>\
+            <span class="s">&quot;number of arguments (</span><span class="si">%d</span><span class="s">) does not correspond to the dimension (</span><span class="si">%d</span><span class="s">)&quot;</span>\
+                 <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+        <span class="c"># value assignment (key == list of indices)</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">key</span><span class="p">):</span>
+            <span class="n">local_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">local_idx</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span> <span class="o">%</span> <span class="n">s</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">local_idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)]</span>
+            <span class="n">rank_idx_vector</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">distaxis</span><span class="p">,</span> <span class="n">target_offsets</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">):</span>
+                <span class="n">dist_idx</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span>
+                <span class="n">rank_idx_component</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">dist_idx</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s">&quot;right&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">local_idx</span><span class="p">[</span><span class="n">distaxis</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist_idx</span> <span class="o">-</span> <span class="n">target_offsets</span><span class="p">[</span><span class="n">rank_idx_component</span><span class="p">]</span>
+                <span class="n">rank_idx_vector</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rank_idx_component</span><span class="p">)</span>
+
+            <span class="n">rank_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_linear_rank_idx</span><span class="p">(</span><span class="n">rank_idx_vector</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">push</span><span class="p">({</span><span class="s">&#39;value&#39;</span> <span class="p">:</span> <span class="n">value</span><span class="p">},</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="n">rank_idx</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s%s</span><span class="s"> = value&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">local_idx</span><span class="p">)),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="n">rank_idx</span><span class="p">])</span>
+            <span class="k">return</span>
+
+        <span class="c"># assign value to sub-array of self</span>
+        <span class="n">sub_array</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">sub_array</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather</span><span class="p">()</span><span class="o">.</span><span class="n">__str__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">local_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&quot;_local_copy&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_copy_is_dirty</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_local_copy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">local_copy_is_dirty</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_local_copy</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If the requested attribute is an attribute of the local array and not of this array then</span>
+<span class="sd">        gather() is called and the request is forwarded to the gathered array. This makes this</span>
+<span class="sd">        distributed array more behaving like a local array.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">local_arraytype</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_copy</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">gather</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Gathers local instances of {local_arraytype_name} from *engines*, concatenates them and returns</span>
+<span class="sd">        the result.</span>
+
+<span class="sd">        .. note:: You may not call this method explicitly because if you try to access an attribute</span>
+<span class="sd">            of the local array ({local_arraytype_name}), ``gather()`` is called implicitly before the request is forwarded</span>
+<span class="sd">            to that internal gathered array. Just access attributes like you do for the local array.</span>
+<span class="sd">            The internal copy is held until ``__setitem__`` is called, e.g. ``a[1] = 3.0``, setting</span>
+<span class="sd">            a dirty flag to the local copy.</span>
+
+<span class="sd">        .. warning:: If another array overlapping this array is manipulating its data there is no chance to set</span>
+<span class="sd">            the dirty flag so you have to keep in mind to call ``gather()`` explicitly in this case!</span>
+
+<span class="sd">        :return: instance of {local_arraytype_name}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">local_arrays</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">local_arraytype</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">target_offset_vector</span><span class="p">,</span> <span class="n">target_shape</span><span class="p">,</span> <span class="n">local_array</span> \
+            <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_offset_vectors</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_shapes</span><span class="p">(),</span> <span class="n">local_arrays</span><span class="p">):</span>
+
+            <span class="n">window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">start</span><span class="o">+</span><span class="n">length</span><span class="p">)</span> <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">length</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">target_offset_vector</span><span class="p">,</span> <span class="n">target_shape</span><span class="p">)]</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">window</span><span class="p">]</span> <span class="o">=</span> <span class="n">local_array</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a hard copy of this array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">may_allocate</span> <span class="o">==</span> <span class="bp">True</span><span class="p">,</span> <span class="s">&quot;{0} is not allowed to allocate new memory.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> = </span><span class="si">%s</span><span class="s">.copy()&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">is_distributed_like</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="p">:</span>
+          <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">my_target_offsets</span><span class="p">,</span> <span class="n">other_target_offsets</span><span class="p">)</span> \
+            <span class="k">for</span> <span class="n">my_target_offsets</span><span class="p">,</span> <span class="n">other_target_offsets</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">)):</span>
+              <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">:</span>
+                  <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">dist_like</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Redistributes a copy of this array (*self*) like *other* and returns the result.</span>
+<span class="sd">        Checks whether redistribution is necessary and returns *self* if not.</span>
+
+<span class="sd">        Redistribution involves inter-engine communication.</span>
+
+<span class="sd">        :param other: target array</span>
+<span class="sd">        :type other: distributed array</span>
+<span class="sd">        :raises AssertionError: if the shapes of *self* and *other* don&#39;t match.</span>
+<span class="sd">        :return: new array with the same content as *self* but distributed like *other*.</span>
+<span class="sd">            If *self* is already distributed like *other* nothing is done and *self* is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>\
+            <span class="s">&quot;Shapes do not match: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">+</span> <span class="s">&quot; &lt;-&gt; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="c"># if self is already distributed like *other* do nothing</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_distributed_like</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">may_allocate</span><span class="p">,</span> <span class="s">&quot;{0} is not allowed to allocate new memory.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+
+        <span class="c"># todo: optimization -&gt; helper.common_decomposition should be a generator</span>
+        <span class="n">common_axes</span><span class="p">,</span> <span class="n">common_offsets</span><span class="p">,</span> <span class="n">common_idx_pairs</span> <span class="o">=</span> \
+            <span class="n">helper</span><span class="o">.</span><span class="n">common_decomposition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">my_commData</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">other_commData</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+
+        <span class="n">tag</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">num_offsets</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">common_offsets_sa</span><span class="p">)</span> <span class="k">for</span> <span class="n">common_offsets_sa</span> <span class="ow">in</span> <span class="n">common_offsets</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="o">*</span><span class="n">num_offsets</span><span class="p">):</span>
+            <span class="n">my_rank_idx_vector</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">)</span>
+            <span class="n">other_rank_idx_vector</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="p">)</span>
+            <span class="n">my_window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="n">other_window</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)):</span>
+                <span class="n">common_axis</span> <span class="o">=</span> <span class="n">common_axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">begin</span> <span class="o">=</span> <span class="n">common_offsets</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">common_offsets</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_offsets</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">common_axes</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+
+                <span class="k">if</span> <span class="n">common_axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span> <span class="ow">and</span> <span class="n">common_axis</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="p">:</span>
+                    <span class="n">my_rank_idx_comp</span> <span class="o">=</span> <span class="n">common_idx_pairs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">other_rank_idx_comp</span> <span class="o">=</span> <span class="n">common_idx_pairs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">my_rank_idx_vector</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">common_axis</span><span class="p">)]</span> <span class="o">=</span> <span class="n">my_rank_idx_comp</span>
+                    <span class="n">other_rank_idx_vector</span><span class="p">[</span><span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">common_axis</span><span class="p">)]</span> <span class="o">=</span> <span class="n">other_rank_idx_comp</span>
+
+                    <span class="n">my_offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">common_axis</span><span class="p">)][</span><span class="n">my_rank_idx_comp</span><span class="p">]</span>
+                    <span class="n">my_window</span><span class="p">[</span><span class="n">common_axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">begin</span> <span class="o">-</span> <span class="n">my_offset</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">my_offset</span><span class="p">)</span>
+                    <span class="n">other_offset</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">[</span><span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">common_axis</span><span class="p">)][</span><span class="n">other_rank_idx_comp</span><span class="p">]</span>
+                    <span class="n">other_window</span><span class="p">[</span><span class="n">common_axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">begin</span> <span class="o">-</span> <span class="n">other_offset</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">other_offset</span><span class="p">)</span>
+
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="n">common_axis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">:</span>
+                    <span class="n">my_rank_idx_vector</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">common_axis</span><span class="p">)]</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">other_window</span><span class="p">[</span><span class="n">common_axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">common_axis</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="p">:</span>
+                    <span class="n">other_rank_idx_vector</span><span class="p">[</span><span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">common_axis</span><span class="p">)]</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">my_window</span><span class="p">[</span><span class="n">common_axis</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span>
+
+            <span class="n">my_rank</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__get_linear_rank_idx</span><span class="p">(</span><span class="n">my_rank_idx_vector</span><span class="p">)]</span>
+            <span class="n">other_rank</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="n">other</span><span class="o">.</span><span class="n">__get_linear_rank_idx</span><span class="p">(</span><span class="n">other_rank_idx_vector</span><span class="p">)]</span>
+
+            <span class="n">my_commData</span><span class="p">[</span><span class="n">my_rank</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">other_rank</span><span class="p">,</span> <span class="n">my_window</span><span class="p">,</span> <span class="n">tag</span><span class="p">))</span>
+            <span class="n">other_commData</span><span class="p">[</span><span class="n">other_rank</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">my_rank</span><span class="p">,</span> <span class="n">other_window</span><span class="p">,</span> <span class="n">tag</span><span class="p">))</span>
+
+            <span class="n">tag</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c"># push communication meta-data to engines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&#39;src_commData&#39;</span><span class="p">,</span> <span class="n">my_commData</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">targets</span><span class="o">=</span><span class="n">my_commData</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="s">&#39;dest_commData&#39;</span><span class="p">,</span> <span class="n">other_commData</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">targets</span><span class="o">=</span><span class="n">other_commData</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="c"># result ndarray</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">,</span> <span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">interengine_copier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">name</span> <span class="o">+</span> <span class="s">&quot; info:&quot;</span>
+        <span class="k">print</span> <span class="s">&quot;{}.name&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">print</span> <span class="s">&quot;{}.target_ranks&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span>
+        <span class="k">print</span> <span class="s">&quot;{}.target_offsets&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span>
+        <span class="k">print</span> <span class="s">&quot;{}.distaxes&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;dt = str({}.dtype)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="k">print</span> <span class="s">&quot;{}.dtypes&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&quot;dt&quot;</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;t = str(type({}))&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="k">print</span> <span class="s">&quot;{}.types&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&quot;t&quot;</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__elementwise_op__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="o">.</span><span class="n">dist_like</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s">&quot;target_ranks&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">arg</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+        <span class="n">arg_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+        <span class="n">arg_string</span> <span class="o">=</span> <span class="s">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">arg_names</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">,</span> <span class="n">no_allocation</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = {1}.{2}({3}); dtype={0}.dtype&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg_string</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="s">&quot;dtype&quot;</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">nbytes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">__elementwise_iop__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="o">.</span><span class="n">dist_like</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s">&quot;target_ranks&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">arg</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+        <span class="n">arg_names</span> <span class="o">=</span> <span class="p">[</span><span class="nb">repr</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+        <span class="n">arg_string</span> <span class="o">=</span> <span class="s">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">arg_names</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> = </span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">op</span><span class="p">,</span> <span class="n">arg_string</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+<span class="c">#----------------------------------------------------------------</span>
+
+<span class="kn">from</span> <span class="nn">multiple_axes_funcs</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

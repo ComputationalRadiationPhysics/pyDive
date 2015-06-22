@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.arrays.gpu_ndarray module &mdash; pyDive 1.1 beta documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.1 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="pyDive 1.1 beta documentation" href="index.html" />
+    <link rel="up" title="Reference" href="reference.html" />
+    <link rel="next" title="pyDive.cloned_ndarray package" href="pyDive.cloned_ndarray.html" />
+    <link rel="prev" title="pyDive.arrays.ad_ndarray module" href="pyDive.adios.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyDive.cloned_ndarray.html" title="pyDive.cloned_ndarray package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pyDive.adios.html" title="pyDive.arrays.ad_ndarray module"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="reference.html" accesskey="U">Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pyDive.adios.html"
+                        title="previous chapter">pyDive.arrays.ad_ndarray module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pyDive.cloned_ndarray.html"
+                        title="next chapter">pyDive.cloned_ndarray package</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/pyDive.gpu.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pydive-arrays-gpu-ndarray-module">
+<span id="pydive-h5-ndarray"></span><h1>pyDive.arrays.gpu_ndarray module<a class="headerlink" href="#pydive-arrays-gpu-ndarray-module" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This module has a shortcut: <code class="docutils literal"><span class="pre">pyDive.gpu</span></code>.</p>
+</div>
+<dl class="class">
+<dt id="pyDive.arrays.gpu_ndarray.gpu_ndarray">
+<em class="property">class </em><code class="descclassname">pyDive.arrays.gpu_ndarray.</code><code class="descname">gpu_ndarray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.gpu_ndarray.gpu_ndarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
+<em>cluster-wide</em> means that its elements are distributed across IPython.parallel-engines.
+The distribution is done in one or multiply dimensions along user-specified axes.
+The user can optionally specify which engine maps to which index range or leave the default
+that persuits an uniform distribution across all engines.</p>
+<p>This <strong>gpu_ndarray</strong> - class is auto-generated out of its local counterpart: <strong>pyDive.arrays.local.gpu_ndarray.gpu_ndarray</strong>.</p>
+<p>The implementation is based on IPython.parallel and local pyDive.arrays.local.gpu_ndarray.gpu_ndarray - arrays.
+Every special operation pyDive.arrays.local.gpu_ndarray.gpu_ndarray implements (&#8220;__add__&#8221;, &#8220;__le__&#8221;, ...) is also
+available for gpu_ndarray.</p>
+<p>Note that array slicing is a cheap operation since no memory is copied.
+However this can easily lead to the situation where you end up with two arrays of the same size but of distinct element distribution.
+Therefore call dist_like() first before doing any manual stuff on their local arrays.
+However every cluster-wide array operation first equalizes the distribution of all involved arrays,
+so an explicit call to dist_like() is rather unlikely in most use cases.</p>
+<p>If you try to access an attribute that is only available for the local array, the request
+is forwarded to an internal local copy of the whole distributed array (see: <code class="xref py py-meth docutils literal"><span class="pre">gather()</span></code>).
+This internal copy is only created when you want to access it and is held until <code class="docutils literal"><span class="pre">__setitem__</span></code> is called,
+i.e. the array&#8217;s content is manipulated.</p>
+<dl class="method">
+<dt id="pyDive.arrays.gpu_ndarray.gpu_ndarray.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em>, <em>target_offsets=None</em>, <em>target_ranks=None</em>, <em>no_allocation=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.gpu_ndarray.gpu_ndarray.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an instance of gpu_ndarray. This is a low-level method of instantiating an array, it should rather be
+constructed using factory functions (&#8220;empty&#8221;, &#8220;zeros&#8221;, &#8220;open&#8221;, ...)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
+<li><strong>dtype</strong> &#8211; datatype of a single element</li>
+<li><strong>distaxes</strong> (<em>ints</em>) &#8211; distributed axes. Accepts a single integer too. Defaults to &#8216;all&#8217; meaning each axis is distributed.</li>
+<li><strong>target_offsets</strong> (<em>list of lists</em>) &#8211; For each distributed axis there is a (inner) list in the outer list.
+The inner list contains the offsets of the local array.</li>
+<li><strong>target_ranks</strong> (<em>ints</em>) &#8211; linear list of <a class="reference internal" href="index.html#term-engine"><span class="xref std std-term">engine</span></a> ranks holding the local arrays.
+The last distributed axis is iterated over first.</li>
+<li><strong>no_allocation</strong> (<em>bool</em>) &#8211; if <code class="docutils literal"><span class="pre">True</span></code> no instance of pyDive.arrays.local.gpu_ndarray.gpu_ndarray will be created on engine. Useful for
+manual instantiation of the local array.</li>
+<li><strong>kwargs</strong> &#8211; additional keyword arguments are forwarded to the constructor of the local array.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pyDive.arrays.gpu_ndarray.gpu_ndarray.to_cpu">
+<code class="descname">to_cpu</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pyDive.arrays.gpu_ndarray.gpu_ndarray.to_cpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy array data to cpu main memory.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Result pyDive.ndarray:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">distributed cpu array.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-pyDive.arrays.gpu_ndarray"></span><dl class="function">
+<dt id="pyDive.arrays.gpu_ndarray.array">
+<code class="descclassname">pyDive.arrays.gpu_ndarray.</code><code class="descname">array</code><span class="sig-paren">(</span><em>array_like</em>, <em>distaxes='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/gpu_ndarray.html#array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.gpu_ndarray.array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a pyDive.gpu_ndarray instance from an array-like object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>array_like</strong> &#8211; Any object exposing the array interface, e.g. numpy-array, python sequence, ...</li>
+<li><strong>distaxis</strong> (<em>ints</em>) &#8211; distributed axes. Defaults to &#8216;all&#8217; meaning each axis is distributed.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.arrays.gpu_ndarray.hollow">
+<code class="descclassname">pyDive.arrays.gpu_ndarray.</code><code class="descname">hollow</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype=&lt;type 'float'&gt;</em>, <em>distaxes='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/gpu_ndarray.html#hollow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.gpu_ndarray.hollow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a pyDive.gpu_ndarray instance distributed across all engines without allocating a local
+gpu-array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shape</strong> (<em>ints</em>) &#8211; shape of array</li>
+<li><strong>dtype</strong> &#8211; datatype of a single element</li>
+<li><strong>distaxes</strong> (<em>ints</em>) &#8211; distributed axes. Defaults to &#8216;all&#8217; meaning each axis is distributed.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pyDive.arrays.gpu_ndarray.hollow_like">
+<code class="descclassname">pyDive.arrays.gpu_ndarray.</code><code class="descname">hollow_like</code><span class="sig-paren">(</span><em>other</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pyDive/arrays/gpu_ndarray.html#hollow_like"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pyDive.arrays.gpu_ndarray.hollow_like" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a pyDive.gpu_ndarray instance with the same
+shape, distribution and type as <code class="docutils literal"><span class="pre">other</span></code> without allocating a local gpu-array.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pyDive.cloned_ndarray.html" title="pyDive.cloned_ndarray package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pyDive.adios.html" title="pyDive.arrays.ad_ndarray module"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="reference.html" >Reference</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>

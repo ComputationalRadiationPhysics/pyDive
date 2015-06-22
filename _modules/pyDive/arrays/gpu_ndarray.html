@@ -1,0 +1,185 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyDive.arrays.gpu_ndarray &mdash; pyDive 1.1 beta documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.1 beta',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="pyDive 1.1 beta documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pyDive.arrays.gpu_ndarray</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Copyright 2015 Heiko Burau</span>
+
+<span class="sd">This file is part of pyDive.</span>
+
+<span class="sd">pyDive is free software: you can redistribute it and/or modify</span>
+<span class="sd">it under the terms of of either the GNU General Public License or</span>
+<span class="sd">the GNU Lesser General Public License as published by</span>
+<span class="sd">the Free Software Foundation, either version 3 of the License, or</span>
+<span class="sd">(at your option) any later version.</span>
+<span class="sd">pyDive is distributed in the hope that it will be useful,</span>
+<span class="sd">but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="sd">MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</span>
+<span class="sd">GNU General Public License and the GNU Lesser General Public License</span>
+<span class="sd">for more details.</span>
+
+<span class="sd">You should have received a copy of the GNU General Public License</span>
+<span class="sd">and the GNU Lesser General Public License along with pyDive.</span>
+<span class="sd">If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">__doc__</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">..distribution</span> <span class="kn">import</span> <span class="n">multiple_axes</span> <span class="k">as</span> <span class="n">multiple_axes</span>
+<span class="kn">from</span> <span class="nn">pyDive.distribution.interengine</span> <span class="kn">import</span> <span class="n">GPU_copier</span>
+<span class="kn">import</span> <span class="nn">pyDive.arrays.local.gpu_ndarray</span>
+
+<span class="n">gpu_ndarray</span> <span class="o">=</span> <span class="n">multiple_axes</span><span class="o">.</span><span class="n">distribute</span><span class="p">(</span><span class="n">pyDive</span><span class="o">.</span><span class="n">arrays</span><span class="o">.</span><span class="n">local</span><span class="o">.</span><span class="n">gpu_ndarray</span><span class="o">.</span><span class="n">gpu_ndarray</span><span class="p">,</span> <span class="s">&quot;gpu_ndarray&quot;</span><span class="p">,</span>\
+    <span class="s">&quot;pyDive.arrays.local.gpu_ndarray&quot;</span><span class="p">,</span> <span class="n">interengine_copier</span><span class="o">=</span><span class="n">GPU_copier</span><span class="p">)</span>
+
+<span class="n">factories</span> <span class="o">=</span> <span class="n">multiple_axes</span><span class="o">.</span><span class="n">generate_factories</span><span class="p">(</span><span class="n">gpu_ndarray</span><span class="p">,</span> <span class="p">(</span><span class="s">&quot;empty&quot;</span><span class="p">,</span> <span class="s">&quot;zeros&quot;</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+<span class="n">factories</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">multiple_axes</span><span class="o">.</span><span class="n">generate_factories_like</span><span class="p">(</span><span class="n">gpu_ndarray</span><span class="p">,</span> <span class="p">(</span><span class="s">&quot;empty_like&quot;</span><span class="p">,</span> <span class="s">&quot;zeros_like&quot;</span><span class="p">)))</span>
+<span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">factories</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">ones</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">distaxes</span><span class="o">=</span><span class="s">&#39;all&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">distaxes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+<span class="k">def</span> <span class="nf">ones_like</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">zeros_like</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+<span class="kn">import</span> <span class="nn">pyDive.IPParallelClient</span> <span class="kn">as</span> <span class="nn">com</span>
+<span class="kn">import</span> <span class="nn">pyDive.arrays.ndarray</span>
+
+<span class="k">def</span> <span class="nf">to_cpu</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Copy array data to cpu main memory.</span>
+
+<span class="sd">    :result pyDive.ndarray: distributed cpu array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">arrays</span><span class="o">.</span><span class="n">ndarray</span><span class="o">.</span><span class="n">hollow_like</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = {1}.to_cpu()&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+<span class="n">gpu_ndarray</span><span class="o">.</span><span class="n">to_cpu</span> <span class="o">=</span> <span class="n">to_cpu</span>
+<span class="k">del</span> <span class="n">to_cpu</span>
+
+<div class="viewcode-block" id="hollow"><a class="viewcode-back" href="../../../pyDive.gpu.html#pyDive.arrays.gpu_ndarray.hollow">[docs]</a><span class="k">def</span> <span class="nf">hollow</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">distaxes</span><span class="o">=</span><span class="s">&#39;all&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a pyDive.gpu_ndarray instance distributed across all engines without allocating a local</span>
+<span class="sd">    gpu-array.</span>
+
+<span class="sd">    :param ints shape: shape of array</span>
+<span class="sd">    :param dtype: datatype of a single element</span>
+<span class="sd">    :param ints distaxes: distributed axes. Defaults to &#39;all&#39; meaning each axis is distributed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">gpu_ndarray</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">distaxes</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="hollow_like"><a class="viewcode-back" href="../../../pyDive.gpu.html#pyDive.arrays.gpu_ndarray.hollow_like">[docs]</a><span class="k">def</span> <span class="nf">hollow_like</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a pyDive.gpu_ndarray instance with the same</span>
+<span class="sd">    shape, distribution and type as ``other`` without allocating a local gpu-array.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">gpu_ndarray</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">distaxes</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">target_offsets</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="array"><a class="viewcode-back" href="../../../pyDive.gpu.html#pyDive.arrays.gpu_ndarray.array">[docs]</a><span class="k">def</span> <span class="nf">array</span><span class="p">(</span><span class="n">array_like</span><span class="p">,</span> <span class="n">distaxes</span><span class="o">=</span><span class="s">&#39;all&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a pyDive.gpu_ndarray instance from an array-like object.</span>
+
+<span class="sd">    :param array_like: Any object exposing the array interface, e.g. numpy-array, python sequence, ...</span>
+<span class="sd">    :param ints distaxis: distributed axes. Defaults to &#39;all&#39; meaning each axis is distributed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result_cpu</span> <span class="o">=</span> <span class="n">pyDive</span><span class="o">.</span><span class="n">arrays</span><span class="o">.</span><span class="n">ndarray</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">array_like</span><span class="p">,</span> <span class="n">distaxes</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">hollow_like</span><span class="p">(</span><span class="n">result_cpu</span><span class="p">)</span>
+    <span class="n">view</span> <span class="o">=</span> <span class="n">com</span><span class="o">.</span><span class="n">getView</span><span class="p">()</span>
+    <span class="n">view</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;{0} = pyDive.arrays.local.gpu_ndarray.gpu_ndarray_cast(pycuda.gpuarray.to_gpu({1}))&quot;</span>\
+        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">result</span><span class="p">),</span> <span class="nb">repr</span><span class="p">(</span><span class="n">result_cpu</span><span class="p">)),</span> <span class="n">targets</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">target_ranks</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+<span class="c">#ufunc_names = [key for key, value in np.__dict__.items() if isinstance(value, np.ufunc)]</span>
+<span class="c">#ufuncs = multiple_axes.generate_ufuncs(ufunc_names, &quot;np&quot;)</span>
+
+<span class="c">#globals().update(ufuncs)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pyDive 1.1 beta documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2014, Heiko Burau.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>
