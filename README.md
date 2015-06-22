@@ -6,16 +6,21 @@ Distributed Interactive Visualization and Exploration of large datasets.
 ## What is pyDive?
 
 Use pyDive to work with homogeneous, n-dimensional arrays that are too big to fit into your local machine's memory.
-pyDive provides array-interfaces representing virtual containers whose elements are distributed across an MPI-cluster or stored in
-a large hdf5-file if the cluster is still too small. All computation and data-access is then done in parallel by the cluster nodes in the background. 
+pyDive provides containers whose elements are distributed across a cluster or stored in
+a large hdf5/adios-file if the cluster is still too small. All computation and data-access is then done in parallel by the cluster nodes in the background. 
 If you feel like working with [numpy](http://www.numpy.org) arrays pyDive has reached the goal!
 
 pyDive is developed and maintained by the **[Junior Group Computational Radiation Physics](http://www.hzdr.de/db/Cms?pNid=132&pOid=30354)**
 at the [Institute for Radiation Physics](http://www.hzdr.de/db/Cms?pNid=132)
 at [HZDR](http://www.hzdr.de/).
 
-Designed to ease the analysis of simulation data coming from the [picongpu project](https://github.com/ComputationalRadiationPhysics/picongpu) 
-pyDive also holds functions for particle-mesh mapping and supports structured datatypes.
+**Features:**
+ - Since all cluster management is given to [IPython.parallel](http://ipython.org/ipython-doc/dev/parallel/) you can take your
+   existing profiles for pyDive. No further cluster configuration needed!
+ - Save bandwidth by slicing an array in parallel on disk before loading it into main memory!
+ - GPU-cluster array available thanks to [pycuda](http://mathema.tician.de/software/pycuda/) with additional support for non-contiguous memory!
+ - All of pyDive's distributed array types are auto-generated from local arrays like numpy, hdf5, pycuda, etc... so push your own
+   local array class onto the cluster level too!
 
 ## Dive in!
 
@@ -23,11 +28,11 @@ pyDive also holds functions for particle-mesh mapping and supports structured da
 import pyDive
 pyDive.init(profile='mpi')
 
-h5field = pyDive.h5.fromPath("myData.h5", "myDataset", distaxis=0)
+h5field = pyDive.h5.open("myData.h5", "myDataset", distaxes=(0,1))
 ones = pyDive.ones_like(h5field)
 
 # Distribute file i/o and computation across the cluster
-h5field[1:] = h5field[1:] - h5field[:-1] + 5.0 * ones[1:]
+h5field[::10,:] = h5field[::10,:].load() + 5.0 * ones[::10,:]
 ```
 
 ## Documentation

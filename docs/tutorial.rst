@@ -32,7 +32,7 @@ After launching the cluster (:ref:`cluster-config`) the first step is to initial
 
 Load a single dataset: ::
 
-    h5fieldB_z = pyDive.h5.fromPath("sample.h5", "/fields/fieldB/z", distaxis=0)
+    h5fieldB_z = pyDive.h5.open("sample.h5", "/fields/fieldB/z", distaxes='all')
 
     assert type(h5fieldB_z) is pyDive.h5.h5_ndarray
 
@@ -43,22 +43,22 @@ Load a single dataset: ::
     assert type(fieldB_z) is pyDive.ndarray
 
 This loads the entire dataset into the main memory of all :term:`engines<engine>`. The array elements are distributed
-along ``distaxis=0``.
+along all axes.
 
 We can also load a hdf5-group: ::
 
-    h5fieldE = pyDive.h5.open("sample.h5", "/fields/fieldE", distaxis=0)
+    h5fieldE = pyDive.h5.open("sample.h5", "/fields/fieldE", distaxes='all')
     fieldE = h5fieldE.load()
 
-*h5fieldE* and *fieldE* are some so called "virtual array-of-structures", see: :mod:`pyDive.arrayOfStructs`. ::
+*h5fieldE* and *fieldE* are some so called "virtual array-of-structures", see: :mod:`pyDive.structered`. ::
 
     >>> print h5fieldE
-    VirtualArrayOfStructs<array-type: <class 'pyDive.distribution.single_axis.h5_ndarray'>, shape: [256, 256]>:
+    VirtualArrayOfStructs<array-type: <class 'pyDive.distribution.multiple_axes.h5_ndarray'>, shape: [256, 256]>:
       y -> float32
       x -> float32
 
     >>> print fieldE
-    VirtualArrayOfStructs<array-type: <class 'pyDive.distribution.single_axis.ndarray'>, shape: [256, 256]>:
+    VirtualArrayOfStructs<array-type: <class 'pyDive.distribution.multiple_axes.ndarray'>, shape: [256, 256]>:
       y -> float32
       x -> float32
 
@@ -75,7 +75,7 @@ Computing the total field energy of an electromagnetic field means squaring and 
 
     h5input = "sample.h5"
 
-    h5fields = pyDive.h5.open(h5input, "/fields", distaxis=0)
+    h5fields = pyDive.h5.open(h5input, "/fields") # defaults to distaxes='all'
     fields = h5fields.load() # read out all fields into cluster's main memory in parallel
     
     energy_field = fields.fieldE.x**2 + fields.fieldE.y**2 + fields.fieldB.z**2
@@ -98,7 +98,7 @@ In this case we want to load the hdf5 data piece by piece. The function :obj:`py
 
     h5input = "sample.h5"
 
-    big_h5fields = pyDive.h5.open(h5input, "/fields", distaxis=0)
+    big_h5fields = pyDive.h5.open(h5input, "/fields")
     # big_h5fields.load() # would cause a crash
     
     total_energy = 0.0
@@ -144,7 +144,7 @@ here is an example of how to get the total field energy for each timestep (see :
         field = h5field.load()
         return field.x**2 + field.x**2 + field.x**2
 
-    for step, h5field in pyDive.picongpu.loadAllSteps("/.../simOutput", "fields/FieldE", distaxis=0):
+    for step, h5field in pyDive.picongpu.loadAllSteps("/.../simOutput", "fields/FieldE"):
         total_energy = pyDive.mapReduce(square_field, np.add, h5field)
 
         print step, total_energy
@@ -155,7 +155,7 @@ Example 2: Particle density field
 Given the list of particles in our ``sample.h5`` we want to create a 2D density field out of it. For this particle-to-mesh
 mapping we need to apply a certain particle shape like cloud-in-cell (CIC), triangular-shaped-cloud (TSC), and so on. A list of 
 these together with the actual mapping functions can be found in the :mod:`pyDive.mappings` module. If you miss a shape you can
-easily create one by your own by basically defining a particle shape function. Note that if you have `numba <http://numba.pydata.org/>`_
+easily create one by your own by defining a particle shape function. Note that if you have `numba <http://numba.pydata.org/>`_
 installed the shape function will be compiled resulting in a significant speed-up.
 
 We assume that the particle positions are distributed randomly. This means although each engine is loading a separate part of all particles it needs to 
@@ -171,7 +171,7 @@ This is the job of :class:`pyDive.cloned_ndarray.cloned_ndarray.cloned_ndarray`.
 
     h5input = "sample.h5"
 
-    particles = pyDive.h5.fromPath(h5input, "/particles", distaxis=0)
+    particles = pyDive.h5.open(h5input, "/particles")
 
     def particles2density(particles, density):
         particles = particles.load()
@@ -223,7 +223,7 @@ Example 3: Particle energy spectrum
 
     h5input = "sample.h5"
 
-    velocities = pyDive.h5.fromPath(h5input, "/particles/vel", distaxis=0)
+    velocities = pyDive.h5.open(h5input, "/particles/vel")
 
     @pyDive.map
     def vel2spectrum(velocities, spectrum, bins):
