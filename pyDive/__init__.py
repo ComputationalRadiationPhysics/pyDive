@@ -21,7 +21,7 @@ If not, see <http://www.gnu.org/licenses/>.
 __doc__ = None
 
 # -*- coding: utf-8 -*-
-__version__ = "1.2"
+__version__ = "1.2.2"
 
 import os
 onTarget = os.environ.get("onTarget", 'False')

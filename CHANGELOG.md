@@ -1,6 +1,18 @@
 Changelog for pyDive
 ====================
 
+1.2.2
+-----
+**Date:** 2015-07-10
+
+ - add `setup_requires` to setup.py
+
+1.2.1
+-----
+**Date:** 2015-07-10
+
+ - add `arrays.local` package to setup.py
+
 1.2
 ---
 **Date:** 2015-06-22
