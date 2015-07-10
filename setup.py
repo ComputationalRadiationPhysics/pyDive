@@ -79,6 +79,7 @@ setup(
     author='Heiko Burau',
     tests_require=['pytest'],
     install_requires=requirements,
+    setup_requires=requirements,
     cmdclass={'test': PyTest},
     author_email='h.burau@hzdr.de',
     description='Distributed Interactive Visualization and Exploration of large datasets',
