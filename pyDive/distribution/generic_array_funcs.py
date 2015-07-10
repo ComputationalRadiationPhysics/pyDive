@@ -90,7 +90,7 @@ def generate_factories(arraytype, factory_names, dtype_default):
 def generate_factories_like(arraytype, factory_names):
 
     def factory_like_wrapper(factory_name, other, kwargs):
-        result = arraytype(other.shape, other.dtype, other.distaxes, other.target_offsets, other.target_ranks, True, **kwargs)
+        result = arraytype(other.shape, other.dtype, other.distaxes, other.decomposition, other.target_ranks, True, **kwargs)
         view = com.getView()
         view.push({'kwargs' : kwargs}, targets=result.target_ranks)
         view.execute("{0} = {1}({2}, **kwargs)".format(result.name, factory_name, other.name), targets=result.target_ranks)
@@ -123,7 +123,7 @@ def generate_ufuncs(ufunc_names, target_modulename):
         arg_string = ",".join(arg_names)
 
         view = com.getView()
-        result = arg0.__class__(arg0.shape, arg0.dtype, arg0.distaxes, arg0.target_offsets, arg0.target_ranks, no_allocation=True, **arg0.kwargs)
+        result = arg0.__class__(arg0.shape, arg0.dtype, arg0.distaxes, arg0.decomposition, arg0.target_ranks, no_allocation=True, **arg0.kwargs)
 
         view.execute("{0} = {1}({2}); dtype={0}.dtype".format(repr(result), ufunc_name, arg_string), targets=arg0.target_ranks)
         result.dtype = view.pull("dtype", targets=result.target_ranks[0])

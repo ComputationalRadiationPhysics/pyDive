@@ -25,6 +25,7 @@ import numpy as np
 import pyDive.IPParallelClient as com
 import helper
 from collections import defaultdict
+import decomposition as decomposition_mod
 
 array_id = 0
 
@@ -58,17 +59,16 @@ class DistributedGenericArray(object):
     interengine_copier = None
     may_allocate = True
 
-    def __init__(self, shape, dtype=np.float, distaxes='all', target_offsets=None, target_ranks=None, no_allocation=False, **kwargs):
+    def __init__(self, shape, dtype=np.float, distaxes='all', decomposition=None, target_ranks=None, no_allocation=False, **kwargs):
         """Creates an instance of {arraytype_name}. This is a low-level method of instantiating an array, it should rather be
         constructed using factory functions ("empty", "zeros", "open", ...)
 
         :param ints shape: shape of array
         :param dtype: datatype of a single element
         :param ints distaxes: distributed axes. Accepts a single integer too. Defaults to 'all' meaning each axis is distributed.
-        :param target_offsets: For each distributed axis there is a (inner) list in the outer list.
-            The inner list contains the offsets of the local array.
-        :type target_offsets: list of lists
-        :param ints target_ranks: linear list of :term:`engine` ranks holding the local arrays.
+        :param decomposition: decomposition object (see :mod:`pyDive.distribution.decomposition` for available decomposition classes)
+            defining the exact decomposition for each distributed axis.
+        :param target_ranks: linear list of :term:`engine` ranks holding the local arrays.
             The last distributed axis is iterated over first.
         :param bool no_allocation: if ``True`` no instance of {local_arraytype_name} will be created on engine. Useful for
             manual instantiation of the local array.
@@ -90,9 +90,26 @@ class DistributedGenericArray(object):
             distaxes = tuple(distaxes)
         #: axes on which memory is distributed across :term:`engines <engine>`
         self.distaxes = distaxes
+
+        # IPython.parallel client view object
+        self.view = com.getView()
+
+        if decomposition is None:
+            if target_ranks is None:
+                num_patches = len(self.view.targets)
+            else:
+                num_patches = len(target_ranks)
+            decomposition = decomposition_mod.completeDC(self.shape, self.distaxes, None, num_patches)
+        self.decomposition = decomposition
+
+        if target_ranks is None:
+            target_ranks = tuple(range(self.decomposition.num_patches))
+        elif type(target_ranks) is not tuple:
+            target_ranks = tuple(target_ranks)
+        self.target_ranks = target_ranks
+
         #: total bytes consumed by elements of this array.
         self.nbytes = np.dtype(dtype).itemsize * np.prod(self.shape)
-        self.view = com.getView()
         self.kwargs = kwargs
         self.local_copy_is_dirty = False
 
@@ -101,60 +118,6 @@ class DistributedGenericArray(object):
         for distaxis in distaxes:
             assert distaxis >= 0 and distaxis < len(self.shape),\
                 "distributed axis ({}) has to be within [0,{}]".format(distaxis, len(self.shape)-1)
-
-        if target_offsets is None and target_ranks is None:
-            # create hypothetical patch with best surface-to-volume ratio
-            patch_volume = np.prod([self.shape[distaxis] for distaxis in distaxes]) / float(len(self.view.targets))
-            patch_edge_length = pow(patch_volume, 1.0/len(distaxes))
-
-            def factorize(n):
-                if n == 1: yield 1; return
-                for f in range(2,n//2+1) + [n]:
-                    while n%f == 0:
-                        n //= f
-                        yield f
-            prime_factors = list(factorize(len(self.view.targets)))[::-1] # get prime factors of number of engines in descending order
-            sorted_distaxes = sorted(distaxes, key=lambda axis: self.shape[axis]) # sort distributed axes in ascending order
-            # calculate number of available targets (engines) per distributed axis
-            # This value should be close to array_edge_length / patch_edge_length
-            num_targets_av = [1] * len(self.shape)
-
-            for distaxis in sorted_distaxes[:-1]:
-                num_patches = self.shape[distaxis] / patch_edge_length
-                while float(num_targets_av[distaxis]) < num_patches and prime_factors:
-                    num_targets_av[distaxis] *= prime_factors.pop()
-            # the largest axis gets the remaining (largest) prime_factors
-            if prime_factors:
-                num_targets_av[sorted_distaxes[-1]] *= np.prod(prime_factors)
-
-            # calculate target_offsets
-            localshape = np.array(self.shape)
-            for distaxis in distaxes:
-                localshape[distaxis] = (self.shape[distaxis] - 1) / num_targets_av[distaxis] + 1
-
-            # number of occupied targets for each distributed axis by this ndarray instance
-            num_targets = [(self.shape[distaxis] - 1) / localshape[distaxis] + 1 for distaxis in distaxes]
-
-            # calculate target_offsets
-            target_offsets = [np.arange(num_targets[i]) * localshape[distaxes[i]] for i in range(len(distaxes))]
-
-            # generate target_ranks list
-            target_ranks = tuple(range(np.prod(num_targets)))
-
-        if target_offsets is None:
-            localshape = np.array(self.shape)
-            for distaxis in distaxes:
-                localshape[distaxis] = (self.shape[distaxis] - 1) / len(target_ranks[distaxis]) + 1
-            target_offsets = [np.arange(num_targets[i]) * localshape[distaxes[i]] for i in range(len(distaxes))]
-
-        if target_ranks is None:
-            num_targets = [len(target_offsets_axis) for target_offsets_axis in target_offsets]
-            target_ranks = tuple(range(np.prod(num_targets)))
-        elif type(target_ranks) is not tuple:
-            target_ranks = tuple(target_ranks)
-
-        self.target_offsets = target_offsets
-        self.target_ranks = target_ranks
 
         # generate a unique variable name used on target representing this instance
         global array_id
@@ -179,14 +142,14 @@ class DistributedGenericArray(object):
     def target_shapes(self):
         """generate a list of the local shape on each target in use"""
         targetshapes = []
-        num_targets = [len(target_offsets_axis) for target_offsets_axis in self.target_offsets]
+        num_targets = [len(target_offsets_axis) for target_offsets_axis in self.decomposition.offsets]
         for rank_idx_vector in np.ndindex(*num_targets): # last dimension is iterated over first
             targetshape = list(self.shape)
             for distaxis_idx in range(len(self.distaxes)):
                 distaxis = self.distaxes[distaxis_idx]
                 i = rank_idx_vector[distaxis_idx]
-                end = self.target_offsets[distaxis_idx][i+1] if i != num_targets[distaxis_idx] - 1 else self.shape[distaxis]
-                targetshape[distaxis] = end - self.target_offsets[distaxis_idx][i]
+                end = self.decomposition.offsets[distaxis_idx][i+1] if i != num_targets[distaxis_idx] - 1 else self.shape[distaxis]
+                targetshape[distaxis] = end - self.decomposition.offsets[distaxis_idx][i]
             targetshapes.append(targetshape)
 
         return targetshapes
@@ -194,13 +157,13 @@ class DistributedGenericArray(object):
     def target_offset_vectors(self):
         """generate a list of the local offset vectors on each target in use"""
         target_offset_vectors = []
-        num_targets = [len(target_offsets_axis) for target_offsets_axis in self.target_offsets]
+        num_targets = [len(target_offsets_axis) for target_offsets_axis in self.decomposition.offsets]
         for rank_idx_vector in np.ndindex(*num_targets): # last dimension is iterated over first
             target_offset_vector = [0] * len(self.shape)
             for distaxis_idx in range(len(self.distaxes)):
                 distaxis = self.distaxes[distaxis_idx]
                 i = rank_idx_vector[distaxis_idx]
-                target_offset_vector[distaxis] = self.target_offsets[distaxis_idx][i]
+                target_offset_vector[distaxis] = self.decomposition.offsets[distaxis_idx][i]
             target_offset_vectors.append(target_offset_vector)
 
         return target_offset_vectors
@@ -208,7 +171,7 @@ class DistributedGenericArray(object):
     def __get_linear_rank_idx(self, rank_idx_vector):
         # convert rank_idx_vector to linear rank index
         # last dimension is iterated over first
-        num_targets = [len(target_offsets_axis) for target_offsets_axis in self.target_offsets]
+        num_targets = [len(target_offsets_axis) for target_offsets_axis in self.decomposition.offsets]
         pitch = [int(np.prod(num_targets[i+1:])) for i in range(len(self.distaxes))]
         return sum(rank_idx_component * pitch_component for rank_idx_component, pitch_component in zip(rank_idx_vector, pitch))
 
@@ -228,8 +191,9 @@ class DistributedGenericArray(object):
             partial_sum = lambda a, b: a + [a[-1] + b]
             new_target_offsets = [ [0] + reduce(partial_sum, new_sizes[1:-1], new_sizes[0:1]) ]
             new_shape = [sum(new_sizes)]
+            new_decomposition = decomposition_mod.completeDC(new_shape, 0, new_target_offsets)
             # create resulting ndarray
-            result = self.__class__(new_shape, self.dtype, 0, new_target_offsets, new_target_ranks, no_allocation=True, **self.kwargs)
+            result = self.__class__(new_shape, self.dtype, 0, new_decomposition, new_target_ranks, no_allocation=True, **self.kwargs)
             self.view.execute("{0} = tmp; del tmp".format(result.name), targets=result.target_ranks)
             return result
 
@@ -253,7 +217,7 @@ class DistributedGenericArray(object):
         if not new_shape:
             local_idx = list(args)
             rank_idx_vector = []
-            for distaxis, target_offsets in zip(self.distaxes, self.target_offsets):
+            for distaxis, target_offsets in zip(self.distaxes, self.decomposition.offsets):
                 dist_idx = args[distaxis]
                 rank_idx_component = np.searchsorted(target_offsets, dist_idx, side="right") - 1
                 local_idx[distaxis] = dist_idx - target_offsets[rank_idx_component]
@@ -265,7 +229,7 @@ class DistributedGenericArray(object):
         if all(type(clean_view[distaxis]) is int for distaxis in self.distaxes):
             # return local array because all distributed axes have vanished
             rank_idx_vector = []
-            for distaxis, target_offsets in zip(self.distaxes, self.target_offsets):
+            for distaxis, target_offsets in zip(self.distaxes, self.decomposition.offsets):
                 dist_idx = clean_view[distaxis]
                 rank_idx_component = np.searchsorted(target_offsets, dist_idx, side="right") - 1
                 clean_view[distaxis] = dist_idx - target_offsets[rank_idx_component]
@@ -283,7 +247,7 @@ class DistributedGenericArray(object):
         new_distaxes = []
 
         for distaxis, distaxis_idx, target_offsets \
-            in zip(self.distaxes, range(len(self.distaxes)), self.target_offsets):
+            in zip(self.distaxes, range(len(self.distaxes)), self.decomposition.offsets):
 
             # slice object in the direction of the distributed axis
             distaxis_slice = clean_view[distaxis]
@@ -350,8 +314,9 @@ class DistributedGenericArray(object):
             rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
             new_target_ranks.append(self.target_ranks[rank_idx])
 
+        new_decomposition = decomposition_mod.completeDC(new_shape, new_distaxes, new_target_offsets)
         # create resulting ndarray
-        result = self.__class__(new_shape, self.dtype, new_distaxes, new_target_offsets, new_target_ranks, no_allocation=True, **self.kwargs)
+        result = self.__class__(new_shape, self.dtype, new_distaxes, new_decomposition, new_target_ranks, no_allocation=True, **self.kwargs)
 
         # remote slicing
         local_args_list = []
@@ -405,7 +370,7 @@ class DistributedGenericArray(object):
             local_idx = list(key)
             local_idx = [(i + s) % s for i, s in zip(local_idx, self.shape)]
             rank_idx_vector = []
-            for distaxis, target_offsets in zip(self.distaxes, self.target_offsets):
+            for distaxis, target_offsets in zip(self.distaxes, self.decomposition.offsets):
                 dist_idx = key[distaxis]
                 rank_idx_component = np.searchsorted(target_offsets, dist_idx, side="right") - 1
                 local_idx[distaxis] = dist_idx - target_offsets[rank_idx_component]
@@ -474,17 +439,12 @@ class DistributedGenericArray(object):
         """
         assert self.__class__.may_allocate == True, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
 
-        result = self.__class__(self.shape, self.dtype, self.distaxes, self.target_offsets, self.target_ranks, no_allocation=True, **self.kwargs)
+        result = self.__class__(self.shape, self.dtype, self.distaxes, self.decomposition, self.target_ranks, no_allocation=True, **self.kwargs)
         self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.target_ranks)
         return result
 
     def is_distributed_like(self, other):
-        if self.distaxes == other.distaxes:
-          if all(np.array_equal(my_target_offsets, other_target_offsets) \
-            for my_target_offsets, other_target_offsets in zip(self.target_offsets, other.target_offsets)):
-              if self.target_ranks == other.target_ranks:
-                  return True
-        return False
+        return self.decomposition == other.decomposition and self.target_ranks == other.target_ranks
 
     def dist_like(self, other):
         """Redistributes a copy of this array (*self*) like *other* and returns the result.
@@ -507,15 +467,18 @@ class DistributedGenericArray(object):
 
         assert self.__class__.may_allocate, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
 
-        # todo: optimization -> helper.common_decomposition should be a generator
-        common_axes, common_offsets, common_idx_pairs = \
-            helper.common_decomposition(self.distaxes, self.target_offsets, other.distaxes, other.target_offsets, self.shape)
+        # todo: optimization -> decomposition_mod.common_decomposition should be a generator
+        common_decomp, common_idx_pairs = \
+            decomposition_mod.common_decomposition(self.decomposition, other.decomposition)
+
+        common_axes = common_decomp.distaxes
+        common_offsets = common_decomp.offsets
 
         my_commData = defaultdict(list)
         other_commData = defaultdict(list)
 
         tag = 0
-        num_offsets = [len(common_offsets_sa) for common_offsets_sa in common_offsets]
+        num_offsets = [len(common_offsets_sa) for common_offsets_sa in common_decomp.offsets]
 
         for idx in np.ndindex(*num_offsets):
             my_rank_idx_vector = [0] * len(self.distaxes)
@@ -534,9 +497,9 @@ class DistributedGenericArray(object):
                     my_rank_idx_vector[self.distaxes.index(common_axis)] = my_rank_idx_comp
                     other_rank_idx_vector[other.distaxes.index(common_axis)] = other_rank_idx_comp
 
-                    my_offset = self.target_offsets[self.distaxes.index(common_axis)][my_rank_idx_comp]
+                    my_offset = self.decomposition.offsets[self.distaxes.index(common_axis)][my_rank_idx_comp]
                     my_window[common_axis] = slice(begin - my_offset, end - my_offset)
-                    other_offset = other.target_offsets[other.distaxes.index(common_axis)][other_rank_idx_comp]
+                    other_offset = other.decomposition.offsets[other.distaxes.index(common_axis)][other_rank_idx_comp]
                     other_window[common_axis] = slice(begin - other_offset, end - other_offset)
 
                     continue
@@ -561,7 +524,7 @@ class DistributedGenericArray(object):
         self.view.scatter('dest_commData', other_commData.values(), targets=other_commData.keys())
 
         # result ndarray
-        result = self.__class__(self.shape, self.dtype, other.distaxes, other.target_offsets, other.target_ranks, False, **self.kwargs)
+        result = self.__class__(self.shape, self.dtype, other.distaxes, other.decomposition, other.target_ranks, False, **self.kwargs)
 
         self.__class__.interengine_copier(self, result)
 
@@ -571,7 +534,7 @@ class DistributedGenericArray(object):
         print name + " info:"
         print "{}.name".format(name), self.name
         print "{}.target_ranks".format(name), self.target_ranks
-        print "{}.target_offsets".format(name), self.target_offsets
+        print "{}.target_offsets".format(name), self.decomposition.offsets
         print "{}.distaxes".format(name), self.distaxes
         self.view.execute("dt = str({}.dtype)".format(repr(self)), targets=self.target_ranks)
         print "{}.dtypes".format(name), self.view.pull("dt", targets=self.target_ranks)
@@ -583,7 +546,7 @@ class DistributedGenericArray(object):
         arg_names = [repr(arg) for arg in args]
         arg_string = ",".join(arg_names)
 
-        result = self.__class__(self.shape, self.dtype, self.distaxes, self.target_offsets, self.target_ranks, no_allocation=True, **self.kwargs)
+        result = self.__class__(self.shape, self.dtype, self.distaxes, self.decomposition, self.target_ranks, no_allocation=True, **self.kwargs)
 
         self.view.execute("{0} = {1}.{2}({3}); dtype={0}.dtype".format(repr(result), repr(self), op, arg_string), targets=self.target_ranks)
         result.dtype = self.view.pull("dtype", targets=result.target_ranks[0])

@@ -71,7 +71,7 @@ def hollow_like(other):
     """Create a pyDive.gpu_ndarray instance with the same
     shape, distribution and type as ``other`` without allocating a local gpu-array.
     """
-    return gpu_ndarray(other.shape, other.dtype, other.distaxes, other.target_offsets, other.target_ranks, True)
+    return gpu_ndarray(other.shape, other.dtype, other.distaxes, other.decomposition, other.target_ranks, True)
 
 def array(array_like, distaxes='all'):
     """Create a pyDive.gpu_ndarray instance from an array-like object.

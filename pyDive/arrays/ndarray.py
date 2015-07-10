@@ -56,7 +56,7 @@ def hollow_like(other):
     """Create a pyDive.ndarray instance with the same
     shape, distribution and type as ``other`` without allocating a local numpy-array.
     """
-    return ndarray(other.shape, other.dtype, other.distaxes, other.target_offsets, other.target_ranks, True)
+    return ndarray(other.shape, other.dtype, other.distaxes, other.decomposition, other.target_ranks, True)
 
 factories.update({"array" : array, "hollow" : hollow, "hollow_like" : hollow_like})
 

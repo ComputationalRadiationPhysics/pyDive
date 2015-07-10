@@ -180,7 +180,7 @@ class VirtualArrayOfStructs(object):
                 "Cannot create a local virtual array-of-structs because not all arrays are distributed equally."
 
             self.distaxes = self.firstArray.distaxes
-            self.target_offsets = self.firstArray.target_offsets
+            self.decomposition = self.firstArray.decomposition
             self.target_ranks = self.firstArray.target_ranks
             view = com.getView()
             self.view = view

@@ -21,7 +21,6 @@ If not, see <http://www.gnu.org/licenses/>.
 __doc__ = None
 
 import numpy as np
-from collections import OrderedDict
 
 def getFirstSliceIdx(slice_obj, begin, end):
     if slice_obj.start > begin:
@@ -62,56 +61,16 @@ def view_of_view(view, window):
 
     return result_view
 
-# create local slice objects for each engine
-def createLocalSlices(slices, distaxis, target_offsets, shape):
-    local_slices = [list(slices) for i in range(len(target_offsets))]
-    distaxis_slice = slices[distaxis]
-    for i in range(len(target_offsets)):
-        begin = target_offsets[i]
-        end = target_offsets[i+1] if i+1 < len(target_offsets) else shape[distaxis]
+## create local slice objects for each engine
+#def createLocalSlices(slices, distaxis, target_offsets, shape):
+    #local_slices = [list(slices) for i in range(len(target_offsets))]
+    #distaxis_slice = slices[distaxis]
+    #for i in range(len(target_offsets)):
+        #begin = target_offsets[i]
+        #end = target_offsets[i+1] if i+1 < len(target_offsets) else shape[distaxis]
 
-        local_slices[i][distaxis] = slice(distaxis_slice.start + distaxis_slice.step * begin,\
-                                          distaxis_slice.start + distaxis_slice.step * end,\
-                                          distaxis_slice.step)
+        #local_slices[i][distaxis] = slice(distaxis_slice.start + distaxis_slice.step * begin,\
+                                          #distaxis_slice.start + distaxis_slice.step * end,\
+                                          #distaxis_slice.step)
 
-    return local_slices
-
-def common_decomposition(axesA, offsetsA, axesB, offsetsB, shape):
-    axes = list(OrderedDict.fromkeys(axesA + axesB)) # remove double axes while preserving order
-    offsets = []
-    ids = []
-    for axis in axes:
-        if not (axis in axesA and axis in axesB):
-            offsets.append(offsetsA[axesA.index(axis)] if axis in axesA else offsetsB[axesB.index(axis)])
-            ids.append([])
-            continue
-
-        offsetsA_sa = offsetsA[axesA.index(axis)]
-        offsetsB_sa = offsetsB[axesB.index(axis)]
-
-        offsets_sa = [] # sa = single axis
-        ids_sa = []
-        A_idx = 0 # partition index
-        B_idx = 0
-        begin = 0
-        # loop the common decomposition of A and B.
-        # the current partition is given by [begin, end)
-        while not begin == shape[axis]:
-            end_A = offsetsA_sa[A_idx+1] if A_idx < len(offsetsA_sa)-1 else shape[axis]
-            end_B = offsetsB_sa[B_idx+1] if B_idx < len(offsetsB_sa)-1 else shape[axis]
-            end = min(end_A, end_B)
-
-            offsets_sa.append(begin)
-            ids_sa.append((A_idx, B_idx))
-
-            # go to next common partition
-            if end == end_A:
-                A_idx += 1
-            if end == end_B:
-                B_idx += 1
-
-            begin = end
-
-        offsets.append(np.array(offsets_sa))
-        ids.append(np.array(ids_sa))
-    return axes, offsets, ids
+    #return local_slices
