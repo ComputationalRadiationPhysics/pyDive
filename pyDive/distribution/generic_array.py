@@ -239,74 +239,10 @@ class DistributedGenericArray(object):
             self.view.execute("sliced = %s%s" % (self.name, repr(clean_view)), targets=self.target_ranks[rank_idx])
             return self.view.pull("sliced", targets=self.target_ranks[rank_idx])
 
-        # determine properties of the new, sliced ndarray
-        # keep these in mind when reading the following for loop
-        local_slices_aa = [] # aa = all (distributed) axes
-        new_target_offsets = []
-        new_rank_ids_aa = []
-        new_distaxes = []
+        # slice the decomposition to get a new one together with the patches' indices and the local slices for each patch
+        new_decomposition, new_rank_ids_aa, local_slices_aa = self.decomposition.slice(args)
 
-        for distaxis, distaxis_idx, target_offsets \
-            in zip(self.distaxes, range(len(self.distaxes)), self.decomposition.offsets):
-
-            # slice object in the direction of the distributed axis
-            distaxis_slice = clean_view[distaxis]
-
-            # if it turns out that distaxis_slice is actually an int, this axis has to vanish.
-            # That means the local slice object has to be an int too.
-            if type(distaxis_slice) == int:
-                dist_idx = distaxis_slice
-                rank_idx_component = np.searchsorted(target_offsets, dist_idx, side="right") - 1
-                local_idx = dist_idx - target_offsets[rank_idx_component]
-                local_slices_aa.append((local_idx,))
-                new_rank_ids_aa.append((rank_idx_component,))
-                continue
-
-            # determine properties of the new, sliced ndarray
-            local_slices_sa = [] # sa = single axis
-            new_target_offsets_sa = []
-            new_rank_ids_sa = []
-            total_ids = 0
-
-            first_rank_idx = np.searchsorted(target_offsets, distaxis_slice.start, side="right") - 1
-            last_rank_idx = np.searchsorted(target_offsets, distaxis_slice.stop, side="right")
-
-            for i in range(first_rank_idx, last_rank_idx):
-
-                # index range of current target
-                begin = target_offsets[i]
-                end = target_offsets[i+1] if i < len(target_offsets)-1 else self.shape[distaxis]
-                # first slice index within [begin, end)
-                firstSliceIdx = helper.getFirstSliceIdx(distaxis_slice, begin, end)
-                if firstSliceIdx is None: continue
-                # calculate last slice index of distaxis_slice
-                tmp = (distaxis_slice.stop-1 - distaxis_slice.start) / distaxis_slice.step
-                lastIdx = distaxis_slice.start + tmp * distaxis_slice.step
-                # calculate last sub index within [begin,end)
-                tmp = (end-1 - firstSliceIdx) / distaxis_slice.step
-                lastSliceIdx = firstSliceIdx + tmp * distaxis_slice.step
-                lastSliceIdx = min(lastSliceIdx, lastIdx)
-                # slice object for current target
-                local_slices_sa.append(slice(firstSliceIdx - begin, lastSliceIdx+1 - begin, distaxis_slice.step))
-                # number of indices remaining on the current target after slicing
-                num_ids = (lastSliceIdx - firstSliceIdx) / distaxis_slice.step + 1
-                # new offset for current target
-                new_target_offsets_sa.append(total_ids)
-                total_ids += num_ids
-                # target rank index
-                new_rank_ids_sa.append(i)
-
-            new_rank_ids_sa = np.array(new_rank_ids_sa)
-
-            local_slices_aa.append(local_slices_sa)
-            new_target_offsets.append(new_target_offsets_sa)
-            new_rank_ids_aa.append(new_rank_ids_sa)
-
-            # shift distaxis by the number of vanished axes in the left of it
-            new_distaxis = distaxis - sum(1 for arg in args[:distaxis] if type(arg) is int)
-            new_distaxes.append(new_distaxis)
-
-        # create list of targets which participate slicing, new_target_ranks
+        # create list of targets which participate slicing, this is new_target_ranks
         num_ranks_aa = [len(new_rank_ids_sa) for new_rank_ids_sa in new_rank_ids_aa]
         new_target_ranks = []
         for idx in np.ndindex(*num_ranks_aa):
@@ -314,9 +250,8 @@ class DistributedGenericArray(object):
             rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
             new_target_ranks.append(self.target_ranks[rank_idx])
 
-        new_decomposition = decomposition_mod.completeDC(new_shape, new_distaxes, new_target_offsets)
         # create resulting ndarray
-        result = self.__class__(new_shape, self.dtype, new_distaxes, new_decomposition, new_target_ranks, no_allocation=True, **self.kwargs)
+        result = self.__class__(new_shape, self.dtype, new_decomposition.distaxes, new_decomposition, new_target_ranks, no_allocation=True, **self.kwargs)
 
         # remote slicing
         local_args_list = []

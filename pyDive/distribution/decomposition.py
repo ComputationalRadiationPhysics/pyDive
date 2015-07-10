@@ -22,6 +22,7 @@ If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 from collections import OrderedDict
 import pyDive.IPParallelClient as com
+import helper
 
 class completeDC:
 
@@ -78,10 +79,88 @@ class completeDC:
             offsets = [np.arange(num_targets[i]) * localshape[self.distaxes[i]] for i in range(len(self.distaxes))]
 
         self.offsets = offsets
-        # to be save recalculate the number of patches
+        # to be safe recalculate the number of patches
         num_patches_pa = [len(offsets_axis) for offsets_axis in offsets]
         num_patches = int(np.prod(num_patches_pa))
         self.num_patches = num_patches
+
+    def slice(self, args):
+        """Performs a slicing operation on the decomposition.
+
+        :return: New, sliced decomposition.
+        """
+        # shape of the new sliced ndarray
+        new_shape, clean_view = helper.view_of_shape(self.shape, args)
+
+        # determine properties of the new, sliced ndarray
+        # keep these in mind when reading the following for loop
+        local_slices_aa = [] # aa = all (distributed) axes
+        new_target_offsets = []
+        new_rank_ids_aa = []
+        new_distaxes = []
+
+        for distaxis, distaxis_idx, target_offsets \
+            in zip(self.distaxes, range(len(self.distaxes)), self.offsets):
+
+            # slice object in the direction of the distributed axis
+            distaxis_slice = clean_view[distaxis]
+
+            # if it turns out that distaxis_slice is actually an int, this axis has to vanish.
+            # That means the local slice object has to be an int too.
+            if type(distaxis_slice) == int:
+                dist_idx = distaxis_slice
+                rank_idx_component = np.searchsorted(target_offsets, dist_idx, side="right") - 1
+                local_idx = dist_idx - target_offsets[rank_idx_component]
+                local_slices_aa.append((local_idx,))
+                new_rank_ids_aa.append((rank_idx_component,))
+                continue
+
+            # determine properties of the new, sliced ndarray
+            local_slices_sa = [] # sa = single axis
+            new_target_offsets_sa = []
+            new_rank_ids_sa = []
+            total_ids = 0
+
+            first_rank_idx = np.searchsorted(target_offsets, distaxis_slice.start, side="right") - 1
+            last_rank_idx = np.searchsorted(target_offsets, distaxis_slice.stop, side="right")
+
+            for i in range(first_rank_idx, last_rank_idx):
+
+                # index range of current target
+                begin = target_offsets[i]
+                end = target_offsets[i+1] if i < len(target_offsets)-1 else self.shape[distaxis]
+                # first slice index within [begin, end)
+                firstSliceIdx = helper.getFirstSliceIdx(distaxis_slice, begin, end)
+                if firstSliceIdx is None: continue
+                # calculate last slice index of distaxis_slice
+                tmp = (distaxis_slice.stop-1 - distaxis_slice.start) / distaxis_slice.step
+                lastIdx = distaxis_slice.start + tmp * distaxis_slice.step
+                # calculate last sub index within [begin,end)
+                tmp = (end-1 - firstSliceIdx) / distaxis_slice.step
+                lastSliceIdx = firstSliceIdx + tmp * distaxis_slice.step
+                lastSliceIdx = min(lastSliceIdx, lastIdx)
+                # slice object for current target
+                local_slices_sa.append(slice(firstSliceIdx - begin, lastSliceIdx+1 - begin, distaxis_slice.step))
+                # number of indices remaining on the current target after slicing
+                num_ids = (lastSliceIdx - firstSliceIdx) / distaxis_slice.step + 1
+                # new offset for current target
+                new_target_offsets_sa.append(total_ids)
+                total_ids += num_ids
+                # target rank index
+                new_rank_ids_sa.append(i)
+
+            new_rank_ids_sa = np.array(new_rank_ids_sa)
+
+            local_slices_aa.append(local_slices_sa)
+            new_target_offsets.append(new_target_offsets_sa)
+            new_rank_ids_aa.append(new_rank_ids_sa)
+
+            # shift distaxis by the number of vanished axes in the left of it
+            new_distaxis = distaxis - sum(1 for arg in args[:distaxis] if type(arg) is int)
+            new_distaxes.append(new_distaxis)
+
+        new_decomposition = completeDC(new_shape, new_distaxes, new_target_offsets)
+        return new_decomposition, new_rank_ids_aa, local_slices_aa
 
     def __eq__(self, other):
         if self.shape != other.shape: return False
