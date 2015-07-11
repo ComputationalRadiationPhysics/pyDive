@@ -88,12 +88,8 @@ def fragment(*arrays, **kwargs):
             print "This fragment's offset is", offset, "on axis:", a.distaxis
     """
     # default keyword arguments
-    kwargs_defaults = {"memory_limit" : 0.25, "offset" : False}
-    kwargs_defaults.update(kwargs)
-    kwargs = kwargs_defaults
-
-    memory_limit = kwargs["memory_limit"]
-    offset = kwargs["offset"]
+    memory_limit = kwargs.get("memory_limit", 0.25)
+    offset = kwargs.get("offset", False)
 
     if not arrays: return
 
