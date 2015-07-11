@@ -142,35 +142,25 @@ class DistributedGenericArray(object):
     def target_shapes(self):
         """generate a list of the local shape on each target in use"""
         targetshapes = []
-        num_targets = [len(target_offsets_axis) for target_offsets_axis in self.decomposition.offsets]
-        for rank_idx_vector in np.ndindex(*num_targets): # last dimension is iterated over first
+
+        for nd_idx in self.decomposition.patches(nd_idx=True):
             targetshape = list(self.shape)
-            for distaxis_idx in range(len(self.distaxes)):
-                distaxis = self.distaxes[distaxis_idx]
-                i = rank_idx_vector[distaxis_idx]
-                end = self.decomposition.offsets[distaxis_idx][i+1] if i != num_targets[distaxis_idx] - 1 else self.shape[distaxis]
-                targetshape[distaxis] = end - self.decomposition.offsets[distaxis_idx][i]
+            for distaxis, idx, offsets_pa \
+              in zip(self.distaxes, nd_idx, self.decomposition.offsets):
+                end = offsets_pa[idx+1] if idx != len(offsets_pa) - 1 else self.shape[distaxis]
+                targetshape[distaxis] = end - offsets_pa[idx]
             targetshapes.append(targetshape)
 
         return targetshapes
 
     def target_offset_vectors(self):
-        """generate a list of the local offset vectors on each target in use"""
-        target_offset_vectors = []
-        num_targets = [len(target_offsets_axis) for target_offsets_axis in self.decomposition.offsets]
-        for rank_idx_vector in np.ndindex(*num_targets): # last dimension is iterated over first
-            target_offset_vector = [0] * len(self.shape)
-            for distaxis_idx in range(len(self.distaxes)):
-                distaxis = self.distaxes[distaxis_idx]
-                i = rank_idx_vector[distaxis_idx]
-                target_offset_vector[distaxis] = self.decomposition.offsets[distaxis_idx][i]
-            target_offset_vectors.append(target_offset_vector)
+        """generate a tuple of the local offset vectors on each target in use"""
 
-        return target_offset_vectors
+        return tuple(self.decomposition.patches(position=True))
 
     def __get_linear_rank_idx(self, rank_idx_vector):
         # convert rank_idx_vector to linear rank index
-        # last dimension is iterated over first
+        # first dimension is iterated over first
         num_targets = [len(target_offsets_axis) for target_offsets_axis in self.decomposition.offsets]
         pitch = [int(np.prod(num_targets[i+1:])) for i in range(len(self.distaxes))]
         return sum(rank_idx_component * pitch_component for rank_idx_component, pitch_component in zip(rank_idx_vector, pitch))
@@ -191,7 +181,7 @@ class DistributedGenericArray(object):
             partial_sum = lambda a, b: a + [a[-1] + b]
             new_target_offsets = [ [0] + reduce(partial_sum, new_sizes[1:-1], new_sizes[0:1]) ]
             new_shape = [sum(new_sizes)]
-            new_decomposition = decomposition_mod.completeDC(new_shape, 0, new_target_offsets)
+            new_decomposition = decomposition_mod.completeDC(new_shape, (0,), new_target_offsets)
             # create resulting ndarray
             result = self.__class__(new_shape, self.dtype, 0, new_decomposition, new_target_ranks, no_allocation=True, **self.kwargs)
             self.view.execute("{0} = tmp; del tmp".format(result.name), targets=result.target_ranks)
@@ -413,22 +403,21 @@ class DistributedGenericArray(object):
         other_commData = defaultdict(list)
 
         tag = 0
-        num_offsets = [len(common_offsets_sa) for common_offsets_sa in common_decomp.offsets]
 
-        for idx in np.ndindex(*num_offsets):
+        for nd_idx in common_decomp.patches(nd_idx=True):
             my_rank_idx_vector = [0] * len(self.distaxes)
             other_rank_idx_vector = [0] * len(other.distaxes)
             my_window = [slice(None)] * len(self.shape)
             other_window = [slice(None)] * len(self.shape)
 
-            for i in range(len(idx)):
-                common_axis = common_axes[i]
-                begin = common_offsets[i][idx[i]]
-                end = common_offsets[i][idx[i]+1] if idx[i] < len(common_offsets[i]) -1 else self.shape[common_axes[i]]
+            for idx, common_axis, common_offsets_pa, common_idx_pairs_pa \
+              in zip(nd_idx, common_axes, common_offsets, common_idx_pairs):
+                begin = common_offsets_pa[idx]
+                end = common_offsets_pa[idx+1] if idx < len(common_offsets_pa)-1 else self.shape[common_axis]
 
                 if common_axis in self.distaxes and common_axis in other.distaxes:
-                    my_rank_idx_comp = common_idx_pairs[i][idx[i],0]
-                    other_rank_idx_comp = common_idx_pairs[i][idx[i],1]
+                    my_rank_idx_comp = common_idx_pairs_pa[idx,0]
+                    other_rank_idx_comp = common_idx_pairs_pa[idx,1]
                     my_rank_idx_vector[self.distaxes.index(common_axis)] = my_rank_idx_comp
                     other_rank_idx_vector[other.distaxes.index(common_axis)] = other_rank_idx_comp
 
@@ -440,10 +429,10 @@ class DistributedGenericArray(object):
                     continue
 
                 if common_axis in self.distaxes:
-                    my_rank_idx_vector[self.distaxes.index(common_axis)] = idx[i]
+                    my_rank_idx_vector[self.distaxes.index(common_axis)] = idx
                     other_window[common_axis] = slice(begin, end)
                 if common_axis in other.distaxes:
-                    other_rank_idx_vector[other.distaxes.index(common_axis)] = idx[i]
+                    other_rank_idx_vector[other.distaxes.index(common_axis)] = idx
                     my_window[common_axis] = slice(begin, end)
 
             my_rank = self.target_ranks[self.__get_linear_rank_idx(my_rank_idx_vector)]

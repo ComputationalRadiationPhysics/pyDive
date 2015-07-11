@@ -21,6 +21,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 from collections import OrderedDict
+import itertools
 import pyDive.IPParallelClient as com
 import helper
 
@@ -37,6 +38,10 @@ class completeDC:
         :type offsets: list of lists
         """
         self.shape = shape
+        if type(distaxes) not in (list, tuple):
+            distaxes = (distaxes,)
+        elif type(distaxes) is not tuple:
+            distaxes = tuple(distaxes)
         self.distaxes = distaxes
 
         if offsets is None:
@@ -79,7 +84,7 @@ class completeDC:
             offsets = [np.arange(num_targets[i]) * localshape[self.distaxes[i]] for i in range(len(self.distaxes))]
 
         self.offsets = offsets
-        # to be safe recalculate the number of patches
+        # to be safe, recalculate the number of patches
         num_patches_pa = [len(offsets_axis) for offsets_axis in offsets]
         num_patches = int(np.prod(num_patches_pa))
         self.num_patches = num_patches
@@ -107,7 +112,7 @@ class completeDC:
 
             # if it turns out that distaxis_slice is actually an int, this axis has to vanish.
             # That means the local slice object has to be an int too.
-            if type(distaxis_slice) == int:
+            if type(distaxis_slice) is int:
                 dist_idx = distaxis_slice
                 rank_idx_component = np.searchsorted(target_offsets, dist_idx, side="right") - 1
                 local_idx = dist_idx - target_offsets[rank_idx_component]
@@ -161,6 +166,27 @@ class completeDC:
 
         new_decomposition = completeDC(new_shape, new_distaxes, new_target_offsets)
         return new_decomposition, new_rank_ids_aa, local_slices_aa
+
+    def patches(self, nd_idx=False, offsets=False, position=False):
+        """Generator looping all patches returning a tuple of enabled properties for each patch.
+
+        :param nd_idx: tuple of partition indices (on each distributed axis)
+        :param offsets: tuple of partition offsets (on each distributed axis)
+        :param position: tuple of patch offsets on each axis
+        """
+        properties = []
+        if nd_idx:
+            indices = [xrange(len(offsets_pa)) for offsets_pa in self.offsets]
+            properties.append(itertools.product(*indices))
+        if offsets:
+            properties.append(itertools.product(*self.offsets))
+        if position:
+            position = [self.offsets[self.distaxes.index(axis)] if axis in self.distaxes else [0] for axis in range(len(self.shape))]
+            properties.append(itertools.product(*position))
+        if len(properties) > 1:
+            return itertools.izip(*properties)
+        else:
+            return properties[0]
 
     def __eq__(self, other):
         if self.shape != other.shape: return False

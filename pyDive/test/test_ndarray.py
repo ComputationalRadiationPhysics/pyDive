@@ -164,7 +164,6 @@ def test_misc(init_pyDive):
         b[:,:,0] = a[:,:,1]
 
     for size in sizes:
-        print "size", size
         np_a = (np.random.rand(*size) * 100.0).astype(np.int)
         np_b = (np.random.rand(*size) * 100.0).astype(np.int)
 
