@@ -79,9 +79,9 @@ def map(f, *arrays, **kwargs):
 
     tmp_targets = view.targets # save current target list
     if type(arrays[0]) == VirtualArrayOfStructs:
-        view.targets = arrays[0].firstArray.target_ranks
+        view.targets = arrays[0].firstArray.decomposition.ranks
     else:
-        view.targets = arrays[0].target_ranks
+        view.targets = arrays[0].decomposition.ranks
 
     hdd_arrays = [a for a in arrays if (hasattr(a, "arraytype") and a.arraytype in hdd_arraytypes) or type(a) in hdd_arraytypes]
     if hdd_arrays:
@@ -129,9 +129,9 @@ def reduce(array, op):
 
     tmp_targets = view.targets # save current target list
     if type(array) == VirtualArrayOfStructs:
-        view.targets = array.firstArray.target_ranks
+        view.targets = array.firstArray.decomposition.ranks
     else:
-        view.targets = array.target_ranks
+        view.targets = array.decomposition.ranks
 
     result = None
 
@@ -188,9 +188,9 @@ def mapReduce(map_func, reduce_op, *arrays, **kwargs):
     view = com.getView()
     tmp_targets = view.targets # save current target list
     if type(arrays[0]) == VirtualArrayOfStructs:
-        view.targets = arrays[0].firstArray.target_ranks
+        view.targets = arrays[0].firstArray.decomposition.ranks
     else:
-        view.targets = arrays[0].target_ranks
+        view.targets = arrays[0].decomposition.ranks
 
     result = None
 

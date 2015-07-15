@@ -61,11 +61,11 @@ def generate_factories(arraytype, factory_names, dtype_default):
         target_shapes = result.target_shapes()
 
         view = com.getView()
-        view.scatter('target_shape', target_shapes, targets=result.target_ranks)
-        view.push({'kwargs' : kwargs, 'dtype' : dtype}, targets=result.target_ranks)
+        view.scatter('target_shape', target_shapes, targets=result.decomposition.ranks)
+        view.push({'kwargs' : kwargs, 'dtype' : dtype}, targets=result.decomposition.ranks)
 
         view.execute("{0} = {1}(shape=target_shape[0], dtype=dtype, **kwargs)".format(result.name, factory_name),\
-            targets=result.target_ranks)
+            targets=result.decomposition.ranks)
         return result
 
     make_factory = lambda factory_name: lambda shape, dtype=dtype_default, distaxes='all', **kwargs:\
@@ -90,10 +90,10 @@ def generate_factories(arraytype, factory_names, dtype_default):
 def generate_factories_like(arraytype, factory_names):
 
     def factory_like_wrapper(factory_name, other, kwargs):
-        result = arraytype(other.shape, other.dtype, other.distaxes, other.decomposition, other.target_ranks, True, **kwargs)
+        result = arraytype(other.shape, other.dtype, other.distaxes, other.decomposition, True, **kwargs)
         view = com.getView()
-        view.push({'kwargs' : kwargs}, targets=result.target_ranks)
-        view.execute("{0} = {1}({2}, **kwargs)".format(result.name, factory_name, other.name), targets=result.target_ranks)
+        view.push({'kwargs' : kwargs}, targets=result.decomposition.ranks)
+        view.execute("{0} = {1}({2}, **kwargs)".format(result.name, factory_name, other.name), targets=result.decomposition.ranks)
         return result
 
     make_factory = lambda factory_name: lambda other, **kwargs: \
@@ -118,15 +118,15 @@ def generate_ufuncs(ufunc_names, target_modulename):
 
     def ufunc_wrapper(ufunc_name, args, kwargs):
         arg0 = args[0]
-        args = [arg.dist_like(arg0) if hasattr(arg, "target_ranks") else arg for arg in args]
+        args = [arg.dist_like(arg0) if hasattr(arg, "dist_like") else arg for arg in args]
         arg_names = [repr(arg) for arg in args]
         arg_string = ",".join(arg_names)
 
         view = com.getView()
-        result = arg0.__class__(arg0.shape, arg0.dtype, arg0.distaxes, arg0.decomposition, arg0.target_ranks, no_allocation=True, **arg0.kwargs)
+        result = arg0.__class__(arg0.shape, arg0.dtype, arg0.distaxes, arg0.decomposition, no_allocation=True, **arg0.kwargs)
 
-        view.execute("{0} = {1}({2}); dtype={0}.dtype".format(repr(result), ufunc_name, arg_string), targets=arg0.target_ranks)
-        result.dtype = view.pull("dtype", targets=result.target_ranks[0])
+        view.execute("{0} = {1}({2}); dtype={0}.dtype".format(repr(result), ufunc_name, arg_string), targets=arg0.decomposition.ranks)
+        result.dtype = view.pull("dtype", targets=result.decomposition.ranks[0])
         result.nbytes = np.dtype(result.dtype).itemsize * np.prod(result.shape)
         return result
 

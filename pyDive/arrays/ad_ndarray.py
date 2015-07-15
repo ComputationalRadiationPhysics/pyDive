@@ -38,7 +38,7 @@ def load(self):
     """
     result = hollow_like(self)
     view = com.getView()
-    view.execute("{0} = {1}.load()".format(result.name, self.name), targets=result.target_ranks)
+    view.execute("{0} = {1}.load()".format(result.name, self.name), targets=result.decomposition.ranks)
     return result
 ad_ndarray.load = load
 del load
@@ -63,10 +63,10 @@ def open_variable(filename, variable_path, distaxis=0):
     target_offset_vectors = result.target_offset_vectors()
 
     view = com.getView()
-    view.scatter("shape", target_shapes, targets=result.target_ranks)
-    view.scatter("offset", target_offset_vectors, targets=result.target_ranks)
+    view.scatter("shape", target_shapes, targets=result.decomposition.ranks)
+    view.scatter("offset", target_offset_vectors, targets=result.decomposition.ranks)
     view.execute("{0} = pyDive.arrays.local.ad_ndarray.ad_ndarray('{1}','{2}',shape=shape[0],offset=offset[0])"\
-        .format(result.name, filename, variable_path), targets=result.target_ranks)
+        .format(result.name, filename, variable_path), targets=result.decomposition.ranks)
 
     return result
 

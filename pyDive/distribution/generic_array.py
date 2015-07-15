@@ -59,7 +59,7 @@ class DistributedGenericArray(object):
     interengine_copier = None
     may_allocate = True
 
-    def __init__(self, shape, dtype=np.float, distaxes='all', decomposition=None, target_ranks=None, no_allocation=False, **kwargs):
+    def __init__(self, shape, dtype=np.float, distaxes='all', decomposition=None, no_allocation=False, **kwargs):
         """Creates an instance of {arraytype_name}. This is a low-level method of instantiating an array, it should rather be
         constructed using factory functions ("empty", "zeros", "open", ...)
 
@@ -67,9 +67,7 @@ class DistributedGenericArray(object):
         :param dtype: datatype of a single element
         :param ints distaxes: distributed axes. Accepts a single integer too. Defaults to 'all' meaning each axis is distributed.
         :param decomposition: decomposition object (see :mod:`pyDive.distribution.decomposition` for available decomposition classes)
-            defining the exact decomposition for each distributed axis.
-        :param target_ranks: linear list of :term:`engine` ranks holding the local arrays.
-            The last distributed axis is iterated over first.
+            defining the exact decomposition (offset, rank, ...) for each distributed axis.
         :param bool no_allocation: if ``True`` no instance of {local_arraytype_name} will be created on engine. Useful for
             manual instantiation of the local array.
         :param kwargs: additional keyword arguments are forwarded to the constructor of the local array.
@@ -95,18 +93,8 @@ class DistributedGenericArray(object):
         self.view = com.getView()
 
         if decomposition is None:
-            if target_ranks is None:
-                num_patches = len(self.view.targets)
-            else:
-                num_patches = len(target_ranks)
-            decomposition = decomposition_mod.completeDC(self.shape, self.distaxes, None, num_patches)
+            decomposition = decomposition_mod.completeDC(self.shape, self.distaxes)
         self.decomposition = decomposition
-
-        if target_ranks is None:
-            target_ranks = tuple(range(self.decomposition.num_patches))
-        elif type(target_ranks) is not tuple:
-            target_ranks = tuple(target_ranks)
-        self.target_ranks = target_ranks
 
         #: total bytes consumed by elements of this array.
         self.nbytes = np.dtype(dtype).itemsize * np.prod(self.shape)
@@ -127,28 +115,26 @@ class DistributedGenericArray(object):
         array_id += 1
 
         if no_allocation:
-            self.view.push({self.name : None}, targets=self.target_ranks)
+            self.view.push({self.name : None}, targets=self.decomposition.ranks)
         else:
             target_shapes = self.target_shapes()
 
-            self.view.scatter('target_shape', target_shapes, targets=self.target_ranks)
-            self.view.push({'kwargs' : kwargs, 'dtype' : dtype}, targets=self.target_ranks)
+            self.view.scatter('target_shape', target_shapes, targets=self.decomposition.ranks)
+            self.view.push({'kwargs' : kwargs, 'dtype' : dtype}, targets=self.decomposition.ranks)
             self.view.execute('%s = %s(shape=target_shape[0], dtype=dtype, **kwargs)' % \
-                (self.name, self.__class__.target_modulename + "." + self.__class__.local_arraytype.__name__), targets=self.target_ranks)
+                (self.name, self.__class__.target_modulename + "." + self.__class__.local_arraytype.__name__), targets=self.decomposition.ranks)
 
     def __del__(self):
-        self.view.execute('del %s' % self.name, targets=self.target_ranks)
+        self.view.execute('del %s' % self.name, targets=self.decomposition.ranks)
 
     def target_shapes(self):
         """generate a list of the local shape on each target in use"""
         targetshapes = []
 
-        for nd_idx in self.decomposition.patches(nd_idx=True):
+        for offsets, next_offsets in self.decomposition.patches(offsets=True, next_offsets=True):
             targetshape = list(self.shape)
-            for distaxis, idx, offsets_pa \
-              in zip(self.distaxes, nd_idx, self.decomposition.offsets):
-                end = offsets_pa[idx+1] if idx != len(offsets_pa) - 1 else self.shape[distaxis]
-                targetshape[distaxis] = end - offsets_pa[idx]
+            for distaxis, begin, end in zip(self.distaxes, offsets, next_offsets):
+                targetshape[distaxis] = end - begin
             targetshapes.append(targetshape)
 
         return targetshapes
@@ -159,11 +145,8 @@ class DistributedGenericArray(object):
         return tuple(self.decomposition.patches(position=True))
 
     def __get_linear_rank_idx(self, rank_idx_vector):
-        # convert rank_idx_vector to linear rank index
-        # first dimension is iterated over first
-        num_targets = [len(target_offsets_axis) for target_offsets_axis in self.decomposition.offsets]
-        pitch = [int(np.prod(num_targets[i+1:])) for i in range(len(self.distaxes))]
-        return sum(rank_idx_component * pitch_component for rank_idx_component, pitch_component in zip(rank_idx_vector, pitch))
+        """convert rank_idx_vector to linear rank index"""
+        return sum(i * p for i, p in itertools.izip(rank_idx_vector, self.decomposition.pitch))
 
     def __getitem__(self, args):
         # bitmask indexing
@@ -174,23 +157,23 @@ class DistributedGenericArray(object):
                     % (str(bitmask.shape), str(self.shape))
 
             bitmask = bitmask.dist_like(self) # equalize distribution if necessary
-            self.view.execute("tmp = {0}[{1}]; tmp_size = tmp.shape[0]".format(repr(self), repr(bitmask)), targets=self.target_ranks)
-            sizes = self.view.pull("tmp_size", targets=self.target_ranks)
-            new_target_ranks = [rank for rank, size in zip(self.target_ranks, sizes) if size > 0]
+            self.view.execute("tmp = {0}[{1}]; tmp_size = tmp.shape[0]".format(repr(self), repr(bitmask)), targets=self.decomposition.ranks)
+            sizes = self.view.pull("tmp_size", targets=self.decomposition.ranks)
+            new_target_ranks = [rank for rank, size in zip(self.decomposition.ranks, sizes) if size > 0]
             new_sizes = [size for size in sizes if size > 0]
             partial_sum = lambda a, b: a + [a[-1] + b]
             new_target_offsets = [ [0] + reduce(partial_sum, new_sizes[1:-1], new_sizes[0:1]) ]
             new_shape = [sum(new_sizes)]
-            new_decomposition = decomposition_mod.completeDC(new_shape, (0,), new_target_offsets)
+            new_decomposition = decomposition_mod.completeDC(new_shape, 0, new_target_offsets, new_target_ranks)
             # create resulting ndarray
-            result = self.__class__(new_shape, self.dtype, 0, new_decomposition, new_target_ranks, no_allocation=True, **self.kwargs)
-            self.view.execute("{0} = tmp; del tmp".format(result.name), targets=result.target_ranks)
+            result = self.__class__(new_shape, self.dtype, 0, new_decomposition, no_allocation=True, **self.kwargs)
+            self.view.execute("{0} = tmp; del tmp".format(result.name), targets=result.decomposition.ranks)
             return result
 
         if args == slice(None):
             args = (slice(None),) * len(self.shape)
 
-        if not isinstance(args, list) and not isinstance(args, tuple):
+        if type(args) not in (tuple, list):
             args = (args,)
 
         assert len(args) == len(self.shape),\
@@ -200,7 +183,7 @@ class DistributedGenericArray(object):
         # wrap all integer indices
         args = [(arg + s) % s if type(arg) is int else arg for arg, s in zip(args, self.shape)]
 
-        # shape of the new sliced ndarray
+        # shape of the new, sliced ndarray
         new_shape, clean_view = helper.view_of_shape(self.shape, args)
 
         # if args is a list of indices then return a single data value
@@ -214,7 +197,7 @@ class DistributedGenericArray(object):
                 rank_idx_vector.append(rank_idx_component)
 
             rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
-            return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=self.target_ranks[rank_idx])
+            return self.view.pull("%s%s" % (self.name, repr(local_idx)), targets=self.decomposition.ranks[rank_idx])
 
         if all(type(clean_view[distaxis]) is int for distaxis in self.distaxes):
             # return local array because all distributed axes have vanished
@@ -226,43 +209,34 @@ class DistributedGenericArray(object):
                 rank_idx_vector.append(rank_idx_component)
 
             rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
-            self.view.execute("sliced = %s%s" % (self.name, repr(clean_view)), targets=self.target_ranks[rank_idx])
-            return self.view.pull("sliced", targets=self.target_ranks[rank_idx])
+            self.view.execute("sliced = %s%s" % (self.name, repr(clean_view)), targets=self.decomposition.ranks[rank_idx])
+            return self.view.pull("sliced", targets=self.decomposition.ranks[rank_idx])
 
-        # slice the decomposition to get a new one together with the patches' indices and the local slices for each patch
-        new_decomposition, new_rank_ids_aa, local_slices_aa = self.decomposition.slice(args)
-
-        # create list of targets which participate slicing, this is new_target_ranks
-        num_ranks_aa = [len(new_rank_ids_sa) for new_rank_ids_sa in new_rank_ids_aa]
-        new_target_ranks = []
-        for idx in np.ndindex(*num_ranks_aa):
-            rank_idx_vector = [new_rank_ids_aa[i][idx[i]] for i in range(len(idx))]
-            rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
-            new_target_ranks.append(self.target_ranks[rank_idx])
+        # slice the decomposition to get the new one
+        new_decomposition = self.decomposition.slice[args]
 
         # create resulting ndarray
-        result = self.__class__(new_shape, self.dtype, new_decomposition.distaxes, new_decomposition, new_target_ranks, no_allocation=True, **self.kwargs)
+        result = self.__class__(new_shape, self.dtype, new_decomposition.distaxes, new_decomposition, no_allocation=True, **self.kwargs)
 
         # remote slicing
-        local_args_list = []
-        for idx in np.ndindex(*num_ranks_aa):
-            local_slices = [local_slices_aa[i][idx[i]] for i in range(len(idx))]
-            local_args = list(args)
-            for distaxis, distaxis_idx in zip(self.distaxes, range(len(self.distaxes))):
-                local_args[distaxis] = local_slices[distaxis_idx]
-            local_args_list.append(local_args)
+        local_slices = tuple(result.decomposition.patches(slices=True))
 
-        self.view.scatter('local_args', local_args_list, targets=result.target_ranks)
-        self.view.execute('%s = %s[local_args[0]]' % (result.name, self.name), targets=result.target_ranks)
+        self.view.scatter('local_slices', local_slices, targets=result.decomposition.ranks)
+        self.view.execute('%s = %s[local_slices[0]]' % (result.name, self.name), targets=result.decomposition.ranks)
+
+        # Because slicing has been done now all local slices in the decomposition have to be removed
+        # in order to prevent double counting
+        result.decomposition.slices = None
 
         return result
 
     def __setitem__(self, key, value):
         self.local_copy_is_dirty = True
+
         # bitmask indexing
         if isinstance(key, self.__class__) and key.dtype == bool:
             bitmask = key.dist_like(self)
-            self.view.execute("%s[%s] = %s" % (repr(self), repr(bitmask), repr(value)), targets=self.target_ranks)
+            self.view.execute("%s[%s] = %s" % (repr(self), repr(bitmask), repr(value)), targets=self.decomposition.ranks)
             return
 
         # if args is [:] then assign value to the entire ndarray
@@ -274,13 +248,13 @@ class DistributedGenericArray(object):
                     window = [slice(start, start+length) for start, length in zip(target_offset_vector, target_shape)]
                     subarrays.append(value[window])
 
-                self.view.scatter("subarray", subarrays, targets=self.target_ranks)
-                self.view.execute("%s[:] = subarray[0]" % self.name, targets=self.target_ranks)
+                self.view.scatter("subarray", subarrays, targets=self.decomposition.ranks)
+                self.view.execute("%s[:] = subarray[0]" % self.name, targets=self.decomposition.ranks)
                 return
 
             # assign other array or value to self
             other = value.dist_like(self) if hasattr(value, "dist_like") else value
-            self.view.execute("%s[:] = %s" % (repr(self), repr(other)), targets=self.target_ranks)
+            self.view.execute("%s[:] = %s" % (repr(self), repr(other)), targets=self.decomposition.ranks)
             return
 
         if not isinstance(key, list) and not isinstance(key, tuple):
@@ -302,8 +276,8 @@ class DistributedGenericArray(object):
                 rank_idx_vector.append(rank_idx_component)
 
             rank_idx = self.__get_linear_rank_idx(rank_idx_vector)
-            self.view.push({'value' : value}, targets=self.target_ranks[rank_idx])
-            self.view.execute("%s%s = value" % (self.name, repr(local_idx)), targets=self.target_ranks[rank_idx])
+            self.view.push({'value' : value}, targets=self.decomposition.ranks[rank_idx])
+            self.view.execute("%s%s = value" % (self.name, repr(local_idx)), targets=self.decomposition.ranks[rank_idx])
             return
 
         # assign value to sub-array of self
@@ -347,7 +321,7 @@ class DistributedGenericArray(object):
 
         :return: instance of {local_arraytype_name}
         """
-        local_arrays = self.view.pull(self.name, targets=self.target_ranks)
+        local_arrays = self.view.pull(self.name, targets=self.decomposition.ranks)
 
         result = self.__class__.local_arraytype(shape=self.shape, dtype=self.dtype, **self.kwargs)
 
@@ -364,12 +338,12 @@ class DistributedGenericArray(object):
         """
         assert self.__class__.may_allocate == True, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
 
-        result = self.__class__(self.shape, self.dtype, self.distaxes, self.decomposition, self.target_ranks, no_allocation=True, **self.kwargs)
-        self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.target_ranks)
+        result = self.__class__(self.shape, self.dtype, self.distaxes, self.decomposition, no_allocation=True, **self.kwargs)
+        self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.decomposition.ranks)
         return result
 
     def is_distributed_like(self, other):
-        return self.decomposition == other.decomposition and self.target_ranks == other.target_ranks
+        return self.decomposition == other.decomposition
 
     def dist_like(self, other):
         """Redistributes a copy of this array (*self*) like *other* and returns the result.
@@ -435,8 +409,8 @@ class DistributedGenericArray(object):
                     other_rank_idx_vector[other.distaxes.index(common_axis)] = idx
                     my_window[common_axis] = slice(begin, end)
 
-            my_rank = self.target_ranks[self.__get_linear_rank_idx(my_rank_idx_vector)]
-            other_rank = other.target_ranks[other.__get_linear_rank_idx(other_rank_idx_vector)]
+            my_rank = self.decomposition.ranks[self.__get_linear_rank_idx(my_rank_idx_vector)]
+            other_rank = other.decomposition.ranks[other.__get_linear_rank_idx(other_rank_idx_vector)]
 
             my_commData[my_rank].append((other_rank, my_window, tag))
             other_commData[other_rank].append((my_rank, other_window, tag))
@@ -448,7 +422,7 @@ class DistributedGenericArray(object):
         self.view.scatter('dest_commData', other_commData.values(), targets=other_commData.keys())
 
         # result ndarray
-        result = self.__class__(self.shape, self.dtype, other.distaxes, other.decomposition, other.target_ranks, False, **self.kwargs)
+        result = self.__class__(self.shape, self.dtype, other.distaxes, other.decomposition, False, **self.kwargs)
 
         self.__class__.interengine_copier(self, result)
 
@@ -457,32 +431,32 @@ class DistributedGenericArray(object):
     def info(self, name):
         print name + " info:"
         print "{}.name".format(name), self.name
-        print "{}.target_ranks".format(name), self.target_ranks
+        print "{}.target_ranks".format(name), self.decomposition.ranks
         print "{}.target_offsets".format(name), self.decomposition.offsets
         print "{}.distaxes".format(name), self.distaxes
-        self.view.execute("dt = str({}.dtype)".format(repr(self)), targets=self.target_ranks)
-        print "{}.dtypes".format(name), self.view.pull("dt", targets=self.target_ranks)
-        self.view.execute("t = str(type({}))".format(repr(self)), targets=self.target_ranks)
-        print "{}.types".format(name), self.view.pull("t", targets=self.target_ranks)
+        self.view.execute("dt = str({}.dtype)".format(repr(self)), targets=self.decomposition.ranks)
+        print "{}.dtypes".format(name), self.view.pull("dt", targets=self.decomposition.ranks)
+        self.view.execute("t = str(type({}))".format(repr(self)), targets=self.decomposition.ranks)
+        print "{}.types".format(name), self.view.pull("t", targets=self.decomposition.ranks)
 
     def __elementwise_op__(self, op, *args):
-        args = [arg.dist_like(self) if hasattr(arg, "target_ranks") else arg for arg in args]
+        args = [arg.dist_like(self) if hasattr(arg, "dist_like") else arg for arg in args]
         arg_names = [repr(arg) for arg in args]
         arg_string = ",".join(arg_names)
 
-        result = self.__class__(self.shape, self.dtype, self.distaxes, self.decomposition, self.target_ranks, no_allocation=True, **self.kwargs)
+        result = self.__class__(self.shape, self.dtype, self.distaxes, self.decomposition, no_allocation=True, **self.kwargs)
 
-        self.view.execute("{0} = {1}.{2}({3}); dtype={0}.dtype".format(repr(result), repr(self), op, arg_string), targets=self.target_ranks)
-        result.dtype = self.view.pull("dtype", targets=result.target_ranks[0])
+        self.view.execute("{0} = {1}.{2}({3}); dtype={0}.dtype".format(repr(result), repr(self), op, arg_string), targets=self.decomposition.ranks)
+        result.dtype = self.view.pull("dtype", targets=result.decomposition.ranks[0])
         result.nbytes = np.dtype(result.dtype).itemsize * np.prod(result.shape)
 
         return result
 
     def __elementwise_iop__(self, op, *args):
-        args = [arg.dist_like(self) if hasattr(arg, "target_ranks") else arg for arg in args]
+        args = [arg.dist_like(self) if hasattr(arg, "dist_like") else arg for arg in args]
         arg_names = [repr(arg) for arg in args]
         arg_string = ",".join(arg_names)
-        self.view.execute("%s = %s.%s(%s)" % (repr(self), repr(self), op, arg_string), targets=self.target_ranks)
+        self.view.execute("%s = %s.%s(%s)" % (repr(self), repr(self), op, arg_string), targets=self.decomposition.ranks)
         return self
 
 #----------------------------------------------------------------

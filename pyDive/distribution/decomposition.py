@@ -27,14 +27,15 @@ import helper
 
 class completeDC:
 
-    def __init__(self, shape, distaxes, offsets=None, num_patches=None):
+    def __init__(self, shape, distaxes, offsets=None, ranks=None, slices=None):
         """
         :param ints shape: shape for all distributed axes
         :param ints distaxes: distributed axes. Accepts a single integer too. Defaults to 'all' meaning each axis is distributed.
         :param offsets: For each distributed axis there is a (inner) list in the outer list.
-            The inner list contains the offsets of the local array.
-        :param num_patches: Number of patches in total. If ``None`` the number of available :term:`engines` is used.
-            Ignored if *offsets* is not ``None``.
+            The inner list contains the offsets for each local array.
+        :param ranks: linear list of :term:`engine` ranks holding the local arrays.
+        :param slices: For each distributed axis there is a (inner) list in the outer list.
+            The inner list contains slices for each local array. Slices are optional.
         :type offsets: list of lists
         """
         self.shape = shape
@@ -45,9 +46,11 @@ class completeDC:
         self.distaxes = distaxes
 
         if offsets is None:
-            if num_patches is None:
+            if ranks is None:
                 view = com.getView()
                 num_patches = len(self.view.targets)
+            else:
+                num_patches = len(ranks)target_
             # create hypothetical patch with best surface-to-volume ratio
             patch_volume = np.prod(self.shape) / float(num_patches)
             patch_edge_length = pow(patch_volume, 1.0/len(self.distaxes))
@@ -84,12 +87,22 @@ class completeDC:
             offsets = [np.arange(num_targets[i]) * localshape[self.distaxes[i]] for i in range(len(self.distaxes))]
 
         self.offsets = offsets
+
         # to be safe, recalculate the number of patches
         num_patches_pa = [len(offsets_axis) for offsets_axis in offsets]
         num_patches = int(np.prod(num_patches_pa))
-        self.num_patches = num_patches
+        if ranks is None:
+            ranks = tuple(range(num_patches))
+        else:
+            ranks = tuple(ranks[:num_patches])
+        self.ranks = ranks
 
-    def slice(self, args):
+        self.slices = slices
+
+        num_ranks_pa = [len(offsets_sa) for offsets_sa in self.offsets]
+        self.pitch = [int(np.prod(num_ranks_pa[i+1:])) for i in range(len(self.distaxes))]
+
+    def __getitem__(self, args):
         """Performs a slicing operation on the decomposition.
 
         :return: New, sliced decomposition.
@@ -100,9 +113,9 @@ class completeDC:
         # determine properties of the new, sliced ndarray
         # keep these in mind when reading the following for loop
         local_slices_aa = [] # aa = all (distributed) axes
-        new_target_offsets = []
-        new_rank_ids_aa = []
+        new_offsets = []
         new_distaxes = []
+        new_rank_ids_aa = []
 
         for distaxis, distaxis_idx, target_offsets \
             in zip(self.distaxes, range(len(self.distaxes)), self.offsets):
@@ -157,22 +170,33 @@ class completeDC:
             new_rank_ids_sa = np.array(new_rank_ids_sa)
 
             local_slices_aa.append(local_slices_sa)
-            new_target_offsets.append(new_target_offsets_sa)
+            new_offsets.append(new_target_offsets_sa)
             new_rank_ids_aa.append(new_rank_ids_sa)
 
             # shift distaxis by the number of vanished axes in the left of it
             new_distaxis = distaxis - sum(1 for arg in args[:distaxis] if type(arg) is int)
             new_distaxes.append(new_distaxis)
 
-        new_decomposition = completeDC(new_shape, new_distaxes, new_target_offsets)
-        return new_decomposition, new_rank_ids_aa, local_slices_aa
+        # create list of targets which participate slicing, this is new_ranks
+        new_ranks = []
+        indices = [xrange(len(offsets_pa)) for offsets_pa in self.offsets]
+        for rank_idx_vector in itertools.product(*indices):
+            rank_idx = sum(i * p for i, p in itertools.izip(rank_idx_vector, self.pitch))
+            new_ranks.append(self.ranks[rank_idx])
 
-    def patches(self, nd_idx=False, offsets=False, position=False):
+        new_decomposition = completeDC(new_shape, new_distaxes, new_offsets, new_ranks, local_slices_aa)
+        return new_decomposition
+
+    def patches(self, nd_idx=False, offsets=False, next_offsets=False, position=False, slices=False):
         """Generator looping all patches returning a tuple of enabled properties for each patch.
 
         :param nd_idx: tuple of partition indices (on each distributed axis)
         :param offsets: tuple of partition offsets (on each distributed axis)
-        :param position: tuple of patch offsets on each axis
+        :param next_offsets: tuple of offsets of the next partition (on each distributed axis).
+            For the last partition the next offset is set to the edge's length.
+        :param position: tuple of patch offsets on each axis.
+            For a non-distributed axis the offset is ``0``.
+        :param slices: tuple of local slices on each axis.
         """
         properties = []
         if nd_idx:
@@ -180,9 +204,17 @@ class completeDC:
             properties.append(itertools.product(*indices))
         if offsets:
             properties.append(itertools.product(*self.offsets))
+        if next_offsets:
+            next_offsets = [itertools.chain(itertools.islice(offsets_pa, start=1), (self.shape[distaxis],) ),\
+                for offsets_pa, distaxis in zip(self.offsets, self.distaxes)]
+            properties.append(itertools.product(*next_offsets))
         if position:
             position = [self.offsets[self.distaxes.index(axis)] if axis in self.distaxes else [0] for axis in range(len(self.shape))]
             properties.append(itertools.product(*position))
+        if slices:
+            slices = [self.slices[self.distaxes.index(axis)] if axis in self.distaxes else slice(None) for axis in range(len(self.shape))]
+            properties.append(itertools.product(*slices))
+
         if len(properties) > 1:
             return itertools.izip(*properties)
         else:
@@ -193,6 +225,7 @@ class completeDC:
         if self.distaxes != other.distaxes: return False
         if self.num_patches != other.num_patches: return False
         if any(not np.array_equal(a, b) for a, b in zip(self.offsets, other.offsets)): return False
+        if self.ranks != other.ranks: return False
         return True
 
     def __ne__(self, other):

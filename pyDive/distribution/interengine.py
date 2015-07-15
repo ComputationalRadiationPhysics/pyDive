@@ -83,13 +83,13 @@ if onTarget == 'False':
 
         # send
         view.execute('{0}_send_tasks = interengine.scatterArrayMPI_async({0}, src_commData[0], target2rank)'\
-            .format(source.name), targets=source.target_ranks)
+            .format(source.name), targets=source.decomposition.ranks)
 
         # receive
         view.execute("""\
             {0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysMPI_async({1}, dest_commData[0], target2rank)
             """.format(source.name, dest.name),\
-            targets=dest.target_ranks)
+            targets=dest.decomposition.ranks)
 
         # finish communication
         view.execute('''\
@@ -101,20 +101,20 @@ if onTarget == 'False':
                 interengine.finish_MPIcommunication({1}, dest_commData[0], {0}_recv_bufs)
                 del {0}_recv_tasks, {0}_recv_bufs
             '''.format(source.name, dest.name),
-            targets=tuple(set(source.target_ranks + dest.target_ranks)))
+            targets=tuple(set(source.decomposition.ranks + dest.decomposition.ranks)))
 
     def GPU_copier(source, dest):
         view = com.getView()
 
         # send
         view.execute('{0}_send_tasks = interengine.scatterArrayGPU_async({0}, src_commData[0], target2rank)'\
-            .format(source.name), targets=source.target_ranks)
+            .format(source.name), targets=source.decomposition.ranks)
 
         # receive
         view.execute("""\
             {0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysGPU_async({1}, dest_commData[0], target2rank)
             """.format(source.name, dest.name),\
-            targets=dest.target_ranks)
+            targets=dest.decomposition.ranks)
 
         # finish communication
         view.execute('''\
@@ -126,4 +126,4 @@ if onTarget == 'False':
                 interengine.finish_GPUcommunication({1}, dest_commData[0], {0}_recv_bufs)
                 del {0}_recv_tasks, {0}_recv_bufs
             '''.format(source.name, dest.name),
-            targets=tuple(set(source.target_ranks + dest.target_ranks)))
+            targets=tuple(set(source.decomposition.ranks + dest.decomposition.ranks)))

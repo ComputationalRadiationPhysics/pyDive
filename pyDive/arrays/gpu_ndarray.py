@@ -52,7 +52,7 @@ def to_cpu(self):
     """
     result = pyDive.arrays.ndarray.hollow_like(self)
     view = com.getView()
-    view.execute("{0} = {1}.to_cpu()".format(result.name, self.name), targets=result.target_ranks)
+    view.execute("{0} = {1}.to_cpu()".format(result.name, self.name), targets=result.decomposition.ranks)
     return result
 gpu_ndarray.to_cpu = to_cpu
 del to_cpu
@@ -71,7 +71,7 @@ def hollow_like(other):
     """Create a pyDive.gpu_ndarray instance with the same
     shape, distribution and type as ``other`` without allocating a local gpu-array.
     """
-    return gpu_ndarray(other.shape, other.dtype, other.distaxes, other.decomposition, other.target_ranks, True)
+    return gpu_ndarray(other.shape, other.dtype, other.distaxes, other.decomposition, True)
 
 def array(array_like, distaxes='all'):
     """Create a pyDive.gpu_ndarray instance from an array-like object.
@@ -83,7 +83,7 @@ def array(array_like, distaxes='all'):
     result = hollow_like(result_cpu)
     view = com.getView()
     view.execute("{0} = pyDive.arrays.local.gpu_ndarray.gpu_ndarray_cast(pycuda.gpuarray.to_gpu({1}))"\
-        .format(repr(result), repr(result_cpu)), targets=result.target_ranks)
+        .format(repr(result), repr(result_cpu)), targets=result.decomposition.ranks)
 
     return result
 

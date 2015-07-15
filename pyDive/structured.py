@@ -159,7 +159,7 @@ class VirtualArrayOfStructs(object):
     def __del__(self):
         if onTarget == 'False' and self.has_local_instance:
             # delete remote structured object
-            self.view.execute('del %s' % self.name, targets=self.target_ranks)
+            self.view.execute('del %s' % self.name, targets=self.decomposition.ranks)
 
     def __getattr__(self, name):
         if hasattr(self.firstArray, name):
@@ -174,14 +174,13 @@ class VirtualArrayOfStructs(object):
 
     def __repr__(self):
         # if arrays are distributed create a local representation of this object on engine
-        if onTarget == 'False' and not self.has_local_instance and hasattr(self.firstArray, "target_ranks"):
+        if onTarget == 'False' and not self.has_local_instance and hasattr(self.firstArray, "decomposition"):
             items = [item for item in treeItems(self.structOfArrays)]
             assert all(self.firstArray.is_distributed_like(a) for name, a in items),\
                 "Cannot create a local virtual array-of-structs because not all arrays are distributed equally."
 
             self.distaxes = self.firstArray.distaxes
             self.decomposition = self.firstArray.decomposition
-            self.target_ranks = self.firstArray.target_ranks
             view = com.getView()
             self.view = view
 
@@ -193,12 +192,12 @@ class VirtualArrayOfStructs(object):
             # create a VirtualArrayOfStructs object containing the local arrays on the targets in use
             names_tree = makeTree_fromTree(self.structOfArrays, lambda a: repr(a))
 
-            view.push({'names_tree' : names_tree}, targets=self.target_ranks)
+            view.push({'names_tree' : names_tree}, targets=self.decomposition.ranks)
 
             view.execute('''\
                 structOfArrays = structured.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
                 %s = structured.structured(structOfArrays)''' % self.name,\
-                targets=self.target_ranks)
+                targets=self.decomposition.ranks)
 
             self.has_local_instance = True
 
