@@ -30,13 +30,14 @@ class completeDC:
     def __init__(self, shape, distaxes, offsets=None, ranks=None, slices=None):
         """
         :param ints shape: shape for all distributed axes
-        :param ints distaxes: distributed axes. Accepts a single integer too. Defaults to 'all' meaning each axis is distributed.
+        :param ints distaxes: distributed axes. Accepts a single integer too.
         :param offsets: For each distributed axis there is a (inner) list in the outer list.
             The inner list contains the offsets for each local array.
+        :type offsets: list of lists
         :param ranks: linear list of :term:`engine` ranks holding the local arrays.
         :param slices: For each distributed axis there is a (inner) list in the outer list.
             The inner list contains slices for each local array. Slices are optional.
-        :type offsets: list of lists
+        :type slices: list of lists
         """
         self.shape = shape
         if type(distaxes) not in (list, tuple):
@@ -48,9 +49,9 @@ class completeDC:
         if offsets is None:
             if ranks is None:
                 view = com.getView()
-                num_patches = len(self.view.targets)
+                num_patches = len(view.targets)
             else:
-                num_patches = len(ranks)target_
+                num_patches = len(ranks)
             # create hypothetical patch with best surface-to-volume ratio
             patch_volume = np.prod(self.shape) / float(num_patches)
             patch_edge_length = pow(patch_volume, 1.0/len(self.distaxes))
@@ -97,10 +98,12 @@ class completeDC:
             ranks = tuple(ranks[:num_patches])
         self.ranks = ranks
 
+        if not slices:
+            slices = [(slice(None),)] * len(self.shape)
         self.slices = slices
 
-        num_ranks_pa = [len(offsets_sa) for offsets_sa in self.offsets]
-        self.pitch = [int(np.prod(num_ranks_pa[i+1:])) for i in range(len(self.distaxes))]
+        num_parts_aa = [len(offsets_sa) for offsets_sa in self.offsets]
+        self.pitch = [int(np.prod(num_parts_aa[i+1:])) for i in range(len(self.distaxes))]
 
     def __getitem__(self, args):
         """Performs a slicing operation on the decomposition.
@@ -112,13 +115,12 @@ class completeDC:
 
         # determine properties of the new, sliced ndarray
         # keep these in mind when reading the following for loop
-        local_slices_aa = [] # aa = all (distributed) axes
+        new_slices = [(arg,) for arg in args]
         new_offsets = []
         new_distaxes = []
-        new_rank_ids_aa = []
+        new_rank_ids_aa = [] # aa = all (distributed) axes
 
-        for distaxis, distaxis_idx, target_offsets \
-            in zip(self.distaxes, range(len(self.distaxes)), self.offsets):
+        for distaxis, offsets_sa in zip(self.distaxes, self.offsets):
 
             # slice object in the direction of the distributed axis
             distaxis_slice = clean_view[distaxis]
@@ -127,26 +129,26 @@ class completeDC:
             # That means the local slice object has to be an int too.
             if type(distaxis_slice) is int:
                 dist_idx = distaxis_slice
-                rank_idx_component = np.searchsorted(target_offsets, dist_idx, side="right") - 1
-                local_idx = dist_idx - target_offsets[rank_idx_component]
-                local_slices_aa.append((local_idx,))
+                rank_idx_component = np.searchsorted(offsets_sa, dist_idx, side="right") - 1
+                local_idx = dist_idx - offsets_sa[rank_idx_component]
+                new_slices[distaxis] = (local_idx,)
                 new_rank_ids_aa.append((rank_idx_component,))
                 continue
 
             # determine properties of the new, sliced ndarray
-            local_slices_sa = [] # sa = single axis
-            new_target_offsets_sa = []
+            new_slices_sa = [] # sa = single axis
+            new_offsets_sa = []
             new_rank_ids_sa = []
             total_ids = 0
 
-            first_rank_idx = np.searchsorted(target_offsets, distaxis_slice.start, side="right") - 1
-            last_rank_idx = np.searchsorted(target_offsets, distaxis_slice.stop, side="right")
+            first_rank_idx = np.searchsorted(offsets_sa, distaxis_slice.start, side="right") - 1
+            last_rank_idx = np.searchsorted(offsets_sa, distaxis_slice.stop, side="right")
 
             for i in range(first_rank_idx, last_rank_idx):
 
                 # index range of current target
-                begin = target_offsets[i]
-                end = target_offsets[i+1] if i < len(target_offsets)-1 else self.shape[distaxis]
+                begin = offsets_sa[i]
+                end = offsets_sa[i+1] if i < len(offsets_sa)-1 else self.shape[distaxis]
                 # first slice index within [begin, end)
                 firstSliceIdx = helper.getFirstSliceIdx(distaxis_slice, begin, end)
                 if firstSliceIdx is None: continue
@@ -158,19 +160,19 @@ class completeDC:
                 lastSliceIdx = firstSliceIdx + tmp * distaxis_slice.step
                 lastSliceIdx = min(lastSliceIdx, lastIdx)
                 # slice object for current target
-                local_slices_sa.append(slice(firstSliceIdx - begin, lastSliceIdx+1 - begin, distaxis_slice.step))
+                new_slices_sa.append(slice(firstSliceIdx - begin, lastSliceIdx+1 - begin, distaxis_slice.step))
                 # number of indices remaining on the current target after slicing
                 num_ids = (lastSliceIdx - firstSliceIdx) / distaxis_slice.step + 1
                 # new offset for current target
-                new_target_offsets_sa.append(total_ids)
+                new_offsets_sa.append(total_ids)
                 total_ids += num_ids
                 # target rank index
                 new_rank_ids_sa.append(i)
 
             new_rank_ids_sa = np.array(new_rank_ids_sa)
 
-            local_slices_aa.append(local_slices_sa)
-            new_offsets.append(new_target_offsets_sa)
+            new_slices[distaxis] = new_slices_sa
+            new_offsets.append(new_offsets_sa)
             new_rank_ids_aa.append(new_rank_ids_sa)
 
             # shift distaxis by the number of vanished axes in the left of it
@@ -179,16 +181,18 @@ class completeDC:
 
         # create list of targets which participate slicing, this is new_ranks
         new_ranks = []
-        indices = [xrange(len(offsets_pa)) for offsets_pa in self.offsets]
-        for rank_idx_vector in itertools.product(*indices):
+        for rank_idx_vector in itertools.product(*new_rank_ids_aa):
             rank_idx = sum(i * p for i, p in itertools.izip(rank_idx_vector, self.pitch))
             new_ranks.append(self.ranks[rank_idx])
 
-        new_decomposition = completeDC(new_shape, new_distaxes, new_offsets, new_ranks, local_slices_aa)
-        return new_decomposition
+        return completeDC(new_shape, new_distaxes, new_offsets, new_ranks, new_slices)
+
+    def __str__(self):
+        return "shape: {}\ndistaxes: {}\noffsets: {}\nranks: {}\nslices: {}".format(\
+            self.shape, self.distaxes, self.offsets, self.ranks, self.slices)
 
     def patches(self, nd_idx=False, offsets=False, next_offsets=False, position=False, slices=False):
-        """Generator looping all patches returning a tuple of enabled properties for each patch.
+        """Iterator looping all patches returning a tuple of enabled properties for each patch.
 
         :param nd_idx: tuple of partition indices (on each distributed axis)
         :param offsets: tuple of partition offsets (on each distributed axis)
@@ -205,15 +209,14 @@ class completeDC:
         if offsets:
             properties.append(itertools.product(*self.offsets))
         if next_offsets:
-            next_offsets = [itertools.chain(itertools.islice(offsets_pa, start=1), (self.shape[distaxis],) ),\
+            next_offsets = [tuple(offsets_pa[1:]) + (self.shape[distaxis],) \
                 for offsets_pa, distaxis in zip(self.offsets, self.distaxes)]
             properties.append(itertools.product(*next_offsets))
         if position:
             position = [self.offsets[self.distaxes.index(axis)] if axis in self.distaxes else [0] for axis in range(len(self.shape))]
             properties.append(itertools.product(*position))
         if slices:
-            slices = [self.slices[self.distaxes.index(axis)] if axis in self.distaxes else slice(None) for axis in range(len(self.shape))]
-            properties.append(itertools.product(*slices))
+            properties.append(itertools.product(*self.slices))
 
         if len(properties) > 1:
             return itertools.izip(*properties)
@@ -223,7 +226,6 @@ class completeDC:
     def __eq__(self, other):
         if self.shape != other.shape: return False
         if self.distaxes != other.distaxes: return False
-        if self.num_patches != other.num_patches: return False
         if any(not np.array_equal(a, b) for a, b in zip(self.offsets, other.offsets)): return False
         if self.ranks != other.ranks: return False
         return True

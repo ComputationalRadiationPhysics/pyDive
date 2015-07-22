@@ -146,7 +146,7 @@ class DistributedGenericArray(object):
 
     def __get_linear_rank_idx(self, rank_idx_vector):
         """convert rank_idx_vector to linear rank index"""
-        return sum(i * p for i, p in itertools.izip(rank_idx_vector, self.decomposition.pitch))
+        return sum(i * p for i, p in zip(rank_idx_vector, self.decomposition.pitch))
 
     def __getitem__(self, args):
         # bitmask indexing
@@ -213,7 +213,7 @@ class DistributedGenericArray(object):
             return self.view.pull("sliced", targets=self.decomposition.ranks[rank_idx])
 
         # slice the decomposition to get the new one
-        new_decomposition = self.decomposition.slice[args]
+        new_decomposition = self.decomposition[args]
 
         # create resulting ndarray
         result = self.__class__(new_shape, self.dtype, new_decomposition.distaxes, new_decomposition, no_allocation=True, **self.kwargs)

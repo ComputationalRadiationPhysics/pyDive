@@ -56,7 +56,7 @@ def open_dset(filename, dataset_path, distaxes='all'):
     shape = dataset.shape
     fileHandle.close()
 
-    result = h5_ndarray(shape, dtype, distaxes, None, None, True)
+    result = h5_ndarray(shape, dtype, distaxes, None, True)
 
     target_shapes = result.target_shapes()
     target_offset_vectors = result.target_offset_vectors()

@@ -56,7 +56,7 @@ def distribute(local_arraytype, newclassname, target_modulename, interengine_cop
 def generate_factories(arraytype, factory_names, dtype_default):
 
     def factory_wrapper(factory_name, shape, dtype, distaxes, kwargs):
-        result = arraytype(shape, dtype, distaxes, None, None, True, **kwargs)
+        result = arraytype(shape, dtype, distaxes, None, True, **kwargs)
 
         target_shapes = result.target_shapes()
 
