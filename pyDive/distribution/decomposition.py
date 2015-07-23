@@ -21,7 +21,7 @@ If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 from collections import OrderedDict
-import itertools
+from itertools import product, izip
 import pyDive.IPParallelClient as com
 import helper
 
@@ -172,7 +172,7 @@ class completeDC:
             new_rank_ids_sa = np.array(new_rank_ids_sa)
 
             new_slices[distaxis] = new_slices_sa
-            new_offsets.append(new_offsets_sa)
+            new_offsets.append(np.array(new_offsets_sa))
             new_rank_ids_aa.append(new_rank_ids_sa)
 
             # shift distaxis by the number of vanished axes in the left of it
@@ -181,8 +181,8 @@ class completeDC:
 
         # create list of targets which participate slicing, this is new_ranks
         new_ranks = []
-        for rank_idx_vector in itertools.product(*new_rank_ids_aa):
-            rank_idx = sum(i * p for i, p in itertools.izip(rank_idx_vector, self.pitch))
+        for rank_idx_vector in product(*new_rank_ids_aa):
+            rank_idx = sum(i * p for i, p in izip(rank_idx_vector, self.pitch))
             new_ranks.append(self.ranks[rank_idx])
 
         return completeDC(new_shape, new_distaxes, new_offsets, new_ranks, new_slices)
@@ -205,21 +205,21 @@ class completeDC:
         properties = []
         if nd_idx:
             indices = [xrange(len(offsets_pa)) for offsets_pa in self.offsets]
-            properties.append(itertools.product(*indices))
+            properties.append(product(*indices))
         if offsets:
-            properties.append(itertools.product(*self.offsets))
+            properties.append(product(*self.offsets))
         if next_offsets:
             next_offsets = [tuple(offsets_pa[1:]) + (self.shape[distaxis],) \
                 for offsets_pa, distaxis in zip(self.offsets, self.distaxes)]
-            properties.append(itertools.product(*next_offsets))
+            properties.append(product(*next_offsets))
         if position:
             position = [self.offsets[self.distaxes.index(axis)] if axis in self.distaxes else [0] for axis in range(len(self.shape))]
-            properties.append(itertools.product(*position))
+            properties.append(product(*position))
         if slices:
-            properties.append(itertools.product(*self.slices))
+            properties.append(product(*self.slices))
 
         if len(properties) > 1:
-            return itertools.izip(*properties)
+            return izip(*properties)
         else:
             return properties[0]
 
@@ -235,28 +235,43 @@ class completeDC:
 
 # ============================ end of completeDC ==================================================
 
+def common_axes(dcA, dcB):
+    # remove double axes
+    return sorted(list(set(dcA.distaxes + dcB.distaxes)))
+
 def common_decomposition(dcA, dcB):
     assert dcA.shape == dcB.shape,\
         "Shapes of decompositions do not match: " + str(dcA.shape) + " <-> " + str(dcB.shape)
 
-    axes = list(OrderedDict.fromkeys(dcA.distaxes + dcB.distaxes)) # remove double axes while preserving order
-    offsets = []
-    ids = []
+    axes = common_axes(dcA, dcB)
+    new_offsets = []
+    nd_idx_AB = []
+    offsets_AB = []
     for axis in axes:
         if not (axis in dcA.distaxes and axis in dcB.distaxes):
-            offsets.append(dcA.offsets[dcA.distaxes.index(axis)] if axis in dcA.distaxes else dcB.offsets[dcB.distaxes.index(axis)])
-            ids.append([])
+            dc = dcA if axis in dcA.distaxes else dcB
+
+            offsets_sa = dc.offsets[dc.distaxes.index(axis)]
+            new_offsets.append(offsets_sa)
+            # partition indices of A and B
+            ids = range(len(offsets_sa))
+            nd_idx_AB.append((ids,[None]*len(ids)) if id(dc) == id(dcA) else ([None]*len(ids),ids))
+            # offsets of A and B
+            offsets_AB.append((offsets_sa, np.zeros(len(offsets_sa),dtype=int)) if id(dc) == id(dcA) else (np.zeros(len(offsets_sa),dtype=int),offsets_sa) )
             continue
 
         offsetsA_sa = dcA.offsets[dcA.distaxes.index(axis)]
         offsetsB_sa = dcB.offsets[dcB.distaxes.index(axis)]
 
         offsets_sa = [] # sa = single axis
-        ids_sa = []
+        offsetsA_com = []
+        offsetsB_com = []
+        A_ids = []
+        B_ids = []
         A_idx = 0 # partition index
         B_idx = 0
         begin = 0
-        # loop the common decomposition of A and B.
+        # loop the common decomposition of A and B along ``axis``.
         # the current partition is given by [begin, end)
         while not begin == dcA.shape[axis]:
             end_A = offsetsA_sa[A_idx+1] if A_idx < len(offsetsA_sa)-1 else dcA.shape[axis]
@@ -264,7 +279,10 @@ def common_decomposition(dcA, dcB):
             end = min(end_A, end_B)
 
             offsets_sa.append(begin)
-            ids_sa.append((A_idx, B_idx))
+            A_ids.append(A_idx)
+            B_ids.append(B_idx)
+            offsetsA_com.append(offsetsA_sa[A_idx])
+            offsetsB_com.append(offsetsB_sa[B_idx])
 
             # go to next common partition
             if end == end_A:
@@ -274,7 +292,40 @@ def common_decomposition(dcA, dcB):
 
             begin = end
 
-        offsets.append(np.array(offsets_sa))
-        ids.append(np.array(ids_sa))
+        new_offsets.append(np.array(offsets_sa))
 
-    return completeDC(dcA.shape, axes, offsets), ids
+        nd_idx_AB.append((A_ids, B_ids))
+        offsets_AB.append((np.array(offsetsA_com), np.array(offsetsB_com)))
+
+    return completeDC(dcA.shape, axes, new_offsets), nd_idx_AB, offsets_AB
+
+def common_patches(dcA, dcB, nd_idx=False, offsets=False, next_offsets=False, ranks_AB = False, offsets_AB=False):
+
+    dc, nd_idx_AB, offsets_AB = common_decomposition(dcA, dcB)
+
+    def get_ranks_AB(dcA, dcB, nd_idx_AB):
+        nd_ids_A = zip(*nd_idx_AB)[0]
+        nd_ids_B = zip(*nd_idx_AB)[1]
+
+        for nd_idx_A, nd_idx_B in izip(product(*nd_ids_A), product(*nd_ids_B)):
+            nd_idx_A = [i for i in nd_idx_A if i is not None]
+            nd_idx_B = [i for i in nd_idx_B if i is not None]
+
+            idx_A = sum(i * p for i, p in izip(nd_idx_A, dcA.pitch))
+            idx_B = sum(i * p for i, p in izip(nd_idx_B, dcB.pitch))
+
+            yield dcA.ranks[idx_A], dcB.ranks[idx_B]
+
+    def get_offsets_AB(offsets_AB):
+        offsets_A = zip(*offsets_AB)[0]
+        offsets_B = zip(*offsets_AB)[1]
+
+        return izip(product(*offsets_A), product(*offsets_B))
+
+    properties = []
+    if ranks_AB:
+        properties.append(get_ranks_AB(dcA, dcB, nd_idx_AB))
+    if offsets_AB:
+        properties.append(get_offsets_AB(offsets_AB))
+
+    return izip(dc.patches(nd_idx, offsets, next_offsets), *properties)

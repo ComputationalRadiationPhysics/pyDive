@@ -87,7 +87,7 @@ class DistributedGenericArray(object):
         elif type(distaxes) is not tuple:
             distaxes = tuple(distaxes)
         #: axes on which memory is distributed across :term:`engines <engine>`
-        self.distaxes = distaxes
+        self.distaxes = sorted(distaxes)
 
         # IPython.parallel client view object
         self.view = com.getView()
@@ -212,7 +212,7 @@ class DistributedGenericArray(object):
             self.view.execute("sliced = %s%s" % (self.name, repr(clean_view)), targets=self.decomposition.ranks[rank_idx])
             return self.view.pull("sliced", targets=self.decomposition.ranks[rank_idx])
 
-        # slice the decomposition to get the new one
+        # slice decomposition to get the new one
         new_decomposition = self.decomposition[args]
 
         # create resulting ndarray
@@ -366,51 +366,27 @@ class DistributedGenericArray(object):
 
         assert self.__class__.may_allocate, "{0} is not allowed to allocate new memory.".format(self.__class__.__name__)
 
-        # todo: optimization -> decomposition_mod.common_decomposition should be a generator
-        common_decomp, common_idx_pairs = \
-            decomposition_mod.common_decomposition(self.decomposition, other.decomposition)
-
-        common_axes = common_decomp.distaxes
-        common_offsets = common_decomp.offsets
-
+        common_axes = decomposition_mod.common_axes(self.decomposition, other.decomposition)
+        tag = 0
         my_commData = defaultdict(list)
         other_commData = defaultdict(list)
 
-        tag = 0
+        # loop patches of common decomposition
+        for (offsets, next_offsets), ranks_AB, offsets_AB in \
+          decomposition_mod.common_patches(self.decomposition, other.decomposition, \
+            offsets=True, next_offsets=True, ranks_AB=True, offsets_AB=True):
 
-        for nd_idx in common_decomp.patches(nd_idx=True):
-            my_rank_idx_vector = [0] * len(self.distaxes)
-            other_rank_idx_vector = [0] * len(other.distaxes)
+            my_rank = ranks_AB[0]
+            other_rank = ranks_AB[1]
+
             my_window = [slice(None)] * len(self.shape)
             other_window = [slice(None)] * len(self.shape)
 
-            for idx, common_axis, common_offsets_pa, common_idx_pairs_pa \
-              in zip(nd_idx, common_axes, common_offsets, common_idx_pairs):
-                begin = common_offsets_pa[idx]
-                end = common_offsets_pa[idx+1] if idx < len(common_offsets_pa)-1 else self.shape[common_axis]
-
-                if common_axis in self.distaxes and common_axis in other.distaxes:
-                    my_rank_idx_comp = common_idx_pairs_pa[idx,0]
-                    other_rank_idx_comp = common_idx_pairs_pa[idx,1]
-                    my_rank_idx_vector[self.distaxes.index(common_axis)] = my_rank_idx_comp
-                    other_rank_idx_vector[other.distaxes.index(common_axis)] = other_rank_idx_comp
-
-                    my_offset = self.decomposition.offsets[self.distaxes.index(common_axis)][my_rank_idx_comp]
-                    my_window[common_axis] = slice(begin - my_offset, end - my_offset)
-                    other_offset = other.decomposition.offsets[other.distaxes.index(common_axis)][other_rank_idx_comp]
-                    other_window[common_axis] = slice(begin - other_offset, end - other_offset)
-
-                    continue
-
-                if common_axis in self.distaxes:
-                    my_rank_idx_vector[self.distaxes.index(common_axis)] = idx
-                    other_window[common_axis] = slice(begin, end)
-                if common_axis in other.distaxes:
-                    other_rank_idx_vector[other.distaxes.index(common_axis)] = idx
-                    my_window[common_axis] = slice(begin, end)
-
-            my_rank = self.decomposition.ranks[self.__get_linear_rank_idx(my_rank_idx_vector)]
-            other_rank = other.decomposition.ranks[other.__get_linear_rank_idx(other_rank_idx_vector)]
+            for distaxis, begin, end, beginA, beginB in\
+              zip(common_axes, offsets, next_offsets, offsets_AB[0], offsets_AB[1]):
+                #print "beginAB", beginAB
+                my_window[distaxis] = slice(begin - beginA, end - beginA)
+                other_window[distaxis] = slice(begin - beginB, end - beginB)
 
             my_commData[my_rank].append((other_rank, my_window, tag))
             other_commData[other_rank].append((my_rank, other_window, tag))
