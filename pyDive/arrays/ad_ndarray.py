@@ -23,13 +23,13 @@ __doc__ = None
 import numpy as np
 import adios as ad
 from pyDive.arrays.ndarray import hollow_like
-import pyDive.distribution.multiple_axes as multiple_axes
+import pyDive.distribution.generic_array as generic_array
 import pyDive.IPParallelClient as com
 from itertools import islice
 from .. import structured
 import pyDive.arrays.local.ad_ndarray
 
-ad_ndarray = multiple_axes.distribute(pyDive.arrays.local.ad_ndarray.ad_ndarray, "ad_ndarray", "ad_ndarray", may_allocate=False)
+ad_ndarray = generic_array.distribute(pyDive.arrays.local.ad_ndarray.ad_ndarray, "ad_ndarray", "ad_ndarray", may_allocate=False)
 
 def load(self):
     """Load array from file into main memory of all engines in parallel.

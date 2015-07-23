@@ -49,7 +49,7 @@ def test_slicing(init_pyDive):
                 test_array2[bitmask] = 1
                 assert np.array_equal(ref2, test_array2.gather())
 
-def test_multiple_axes(init_pyDive):
+def test_generic_array(init_pyDive):
     for size in sizes:
         for dtype in dtypes:
             ref = (np.random.rand(*size) * 100.0).astype(dtype)
@@ -122,7 +122,7 @@ def test_interengine(init_pyDive):
 
                 assert np.array_equal(test_array.gather(), ref)
 
-def test_interengine_multiple_axes(init_pyDive):
+def test_interengine_generic_array(init_pyDive):
     for size in sizes:
         for dtype in dtypes:
             ref = (np.random.rand(*size) * 100.0).astype(dtype)

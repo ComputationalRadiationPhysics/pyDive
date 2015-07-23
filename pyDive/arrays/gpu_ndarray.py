@@ -21,15 +21,15 @@ If not, see <http://www.gnu.org/licenses/>.
 __doc__ = None
 
 import numpy as np
-import pyDive.distribution.multiple_axes as multiple_axes
+import pyDive.distribution.generic_array as generic_array
 from pyDive.distribution.interengine import GPU_copier
 import pyDive.arrays.local.gpu_ndarray
 
-gpu_ndarray = multiple_axes.distribute(pyDive.arrays.local.gpu_ndarray.gpu_ndarray, "gpu_ndarray",\
+gpu_ndarray = generic_array.distribute(pyDive.arrays.local.gpu_ndarray.gpu_ndarray, "gpu_ndarray",\
     "pyDive.arrays.local.gpu_ndarray", interengine_copier=GPU_copier)
 
-factories = multiple_axes.generate_factories(gpu_ndarray, ("empty", "zeros"), np.float)
-factories.update(multiple_axes.generate_factories_like(gpu_ndarray, ("empty_like", "zeros_like")))
+factories = generic_array.generate_factories(gpu_ndarray, ("empty", "zeros"), np.float)
+factories.update(generic_array.generate_factories_like(gpu_ndarray, ("empty_like", "zeros_like")))
 globals().update(factories)
 
 def ones(shape, dtype=np.float, distaxes='all', **kwargs):
@@ -88,6 +88,6 @@ def array(array_like, distaxes='all'):
     return result
 
 #ufunc_names = [key for key, value in np.__dict__.items() if isinstance(value, np.ufunc)]
-#ufuncs = multiple_axes.generate_ufuncs(ufunc_names, "np")
+#ufuncs = generic_array.generate_ufuncs(ufunc_names, "np")
 
 #globals().update(ufuncs)

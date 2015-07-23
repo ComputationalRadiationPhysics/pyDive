@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import types
-from multiple_axes import DistributedGenericArray
+from generic_array import DistributedGenericArray
 import numpy as np
 import pyDive.IPParallelClient as com
 

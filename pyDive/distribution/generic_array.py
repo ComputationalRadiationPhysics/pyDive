@@ -600,4 +600,4 @@ class DistributedGenericArray(object):
 
 #----------------------------------------------------------------
 
-from multiple_axes_funcs import *
+from generic_array_funcs import *
