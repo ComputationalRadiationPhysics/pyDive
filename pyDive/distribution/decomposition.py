@@ -327,8 +327,8 @@ def common_patches(dcA, dcB, nd_idx=False, offsets=False, next_offsets=False, ra
         nd_ids_B = zip(*nd_idx_AB)[1]
 
         for nd_idx_A, nd_idx_B in izip(product(*nd_ids_A), product(*nd_ids_B)):
-            nd_idx_A = [i for i in nd_idx_A if i is not None]
-            nd_idx_B = [i for i in nd_idx_B if i is not None]
+            nd_idx_A = filter(lambda i: i is not None, nd_idx_A)
+            nd_idx_B = filter(lambda i: i is not None, nd_idx_B)
 
             idx_A = sum(i * p for i, p in izip(nd_idx_A, dcA.pitch))
             idx_B = sum(i * p for i, p in izip(nd_idx_B, dcB.pitch))
