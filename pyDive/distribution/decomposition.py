@@ -28,7 +28,7 @@ import helper
 
 class completeDC:
 
-    def __init__(self, shape, distaxes, offsets=None, ranks=None, slices=None):
+    def __init__(self, shape, distaxes, offsets=None, ranks=None):
         """
         :param ints shape: shape for all distributed axes
         :param ints distaxes: distributed axes. Accepts a single integer too.
@@ -36,9 +36,6 @@ class completeDC:
             The inner list contains the offsets for each local array.
         :type offsets: list of lists
         :param ranks: linear list of :term:`engine` ranks holding the local arrays.
-        :param slices: For each axis there is a (inner) list in the outer list.
-            The inner list contains slices for each local array. Slices are optional.
-        :type slices: list of lists
         """
         self.shape = shape
         if type(distaxes) not in (list, tuple):
@@ -99,17 +96,12 @@ class completeDC:
             ranks = tuple(ranks[:num_patches])
         self.ranks = ranks
 
-        if not slices:
-            slices = [(slice(None),) * num_parts_aa[distaxes.index(axis)] if axis in distaxes else (slice(None),)\
-                for axis in range(len(self.shape)) ]
-        self.slices = slices
-
         self.pitch = [int(np.prod(num_parts_aa[i+1:])) for i in range(len(self.distaxes))]
 
     def __getitem__(self, args):
         """Performs a slicing operation on the decomposition.
 
-        :return: New, sliced decomposition.
+        :return: pair of the new, sliced decomposition and a list-of-lists of local slices
         """
         # shape of the new sliced ndarray
         new_shape, clean_view = helper.window_of_shape(self.shape, args)
@@ -186,13 +178,13 @@ class completeDC:
             rank_idx = sum(imap(mul, rank_idx_vector, self.pitch))
             new_ranks.append(self.ranks[rank_idx])
 
-        return completeDC(new_shape, new_distaxes, new_offsets, new_ranks, new_slices)
+        return completeDC(new_shape, new_distaxes, new_offsets, new_ranks), new_slices
 
     def __str__(self):
-        return "shape: {}\ndistaxes: {}\noffsets: {}\nranks: {}\nslices: {}".format(\
-            self.shape, self.distaxes, self.offsets, self.ranks, self.slices)
+        return "shape: {}\ndistaxes: {}\noffsets: {}\nranks: {}".format(\
+            self.shape, self.distaxes, self.offsets, self.ranks)
 
-    def patches(self, nd_idx=False, offsets=False, next_offsets=False, position=False, slices=False):
+    def patches(self, nd_idx=False, offsets=False, next_offsets=False, position=False):
         """Iterator looping all patches returning a tuple of enabled properties for each patch.
 
         :param nd_idx: tuple of partition indices (on each distributed axis)
@@ -201,7 +193,6 @@ class completeDC:
             For the last partition the next offset is set to the edge's length.
         :param position: tuple of patch offsets on each axis.
             For a non-distributed axis the offset is ``0``.
-        :param slices: tuple of local slices on each axis.
         """
         properties = []
         if nd_idx:
@@ -216,8 +207,6 @@ class completeDC:
         if position:
             position = [self.offsets[self.distaxes.index(axis)] if axis in self.distaxes else [0] for axis in range(len(self.shape))]
             properties.append(product(*position))
-        if slices:
-            properties.append(product(*self.slices))
 
         if len(properties) > 1:
             return izip(*properties)

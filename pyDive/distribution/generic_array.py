@@ -26,7 +26,7 @@ import pyDive.IPParallelClient as com
 import helper
 from collections import defaultdict
 from operator import mul
-from itertools import imap
+from itertools import imap, product
 import decomposition as decomposition_mod
 
 array_id = 0
@@ -215,20 +215,15 @@ class DistributedGenericArray(object):
             return self.view.pull("sliced", targets=self.decomposition.ranks[rank_idx])
 
         # slice decomposition to get the new one
-        new_decomposition = self.decomposition[args]
+        new_decomposition, new_slices = self.decomposition[args]
 
         # create resulting ndarray
         result = self.__class__(new_shape, self.dtype, new_decomposition.distaxes, new_decomposition, no_allocation=True, **self.kwargs)
 
         # remote slicing
-        local_slices = tuple(result.decomposition.patches(slices=True))
-
+        local_slices = tuple(product(*new_slices))
         self.view.scatter('local_slices', local_slices, targets=result.decomposition.ranks)
         self.view.execute('%s = %s[local_slices[0]]' % (result.name, self.name), targets=result.decomposition.ranks)
-
-        # Because slicing has been done now all local slices in the decomposition have to be removed
-        # in order to prevent double counting
-        result.decomposition.slices = None
 
         return result
 
