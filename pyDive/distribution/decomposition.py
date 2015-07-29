@@ -36,7 +36,7 @@ class completeDC:
             The inner list contains the offsets for each local array.
         :type offsets: list of lists
         :param ranks: linear list of :term:`engine` ranks holding the local arrays.
-        :param slices: For each distributed axis there is a (inner) list in the outer list.
+        :param slices: For each axis there is a (inner) list in the outer list.
             The inner list contains slices for each local array. Slices are optional.
         :type slices: list of lists
         """
@@ -91,8 +91,8 @@ class completeDC:
         self.offsets = offsets
 
         # to be safe, recalculate the number of patches
-        num_patches_pa = [len(offsets_axis) for offsets_axis in offsets]
-        num_patches = int(np.prod(num_patches_pa))
+        num_parts_aa = [len(offsets_sa) for offsets_sa in self.offsets]
+        num_patches = int(np.prod(num_parts_aa))
         if ranks is None:
             ranks = tuple(range(num_patches))
         else:
@@ -100,10 +100,10 @@ class completeDC:
         self.ranks = ranks
 
         if not slices:
-            slices = [(slice(None),)] * len(self.shape)
+            slices = [(slice(None),) * num_parts_aa[distaxes.index(axis)] if axis in distaxes else (slice(None),)\
+                for axis in range(len(self.shape)) ]
         self.slices = slices
 
-        num_parts_aa = [len(offsets_sa) for offsets_sa in self.offsets]
         self.pitch = [int(np.prod(num_parts_aa[i+1:])) for i in range(len(self.distaxes))]
 
     def __getitem__(self, args):
@@ -112,7 +112,7 @@ class completeDC:
         :return: New, sliced decomposition.
         """
         # shape of the new sliced ndarray
-        new_shape, clean_view = helper.view_of_shape(self.shape, args)
+        new_shape, clean_view = helper.window_of_shape(self.shape, args)
 
         # determine properties of the new, sliced ndarray
         # keep these in mind when reading the following for loop

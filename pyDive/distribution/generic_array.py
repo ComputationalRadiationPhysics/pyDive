@@ -186,7 +186,7 @@ class DistributedGenericArray(object):
         args = [(arg + s) % s if type(arg) is int else arg for arg, s in zip(args, self.shape)]
 
         # shape of the new, sliced ndarray
-        new_shape, clean_view = helper.view_of_shape(self.shape, args)
+        new_shape, clean_view = helper.window_of_shape(self.shape, args)
 
         # if args is a list of indices then return a single data value
         if not new_shape:

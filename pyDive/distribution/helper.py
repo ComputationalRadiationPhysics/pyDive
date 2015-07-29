@@ -31,7 +31,7 @@ def getFirstSliceIdx(slice_obj, begin, end):
     if idx >= end or idx >= slice_obj.stop: return None
     return idx
 
-def view_of_shape(shape, window):
+def window_of_shape(shape, window):
     new_shape = []
     clean_view = []
     for s, w in zip(shape, window):
@@ -45,7 +45,7 @@ def view_of_shape(shape, window):
         new_shape.append((clean_slice.stop-1 - clean_slice.start) / clean_slice.step + 1)
     return new_shape, clean_view
 
-def view_of_view(view, window):
+def window_of_view(view, window):
     result_view = []
     window = iter(window)
     for v in view:
@@ -60,17 +60,3 @@ def view_of_view(view, window):
         result_view.append(slice(v.start + w.start * v.step, v.start + w.stop * v.step, v.step * w.step))
 
     return result_view
-
-## create local slice objects for each engine
-#def createLocalSlices(slices, distaxis, target_offsets, shape):
-    #local_slices = [list(slices) for i in range(len(target_offsets))]
-    #distaxis_slice = slices[distaxis]
-    #for i in range(len(target_offsets)):
-        #begin = target_offsets[i]
-        #end = target_offsets[i+1] if i+1 < len(target_offsets) else shape[distaxis]
-
-        #local_slices[i][distaxis] = slice(distaxis_slice.start + distaxis_slice.step * begin,\
-                                          #distaxis_slice.start + distaxis_slice.step * end,\
-                                          #distaxis_slice.step)
-
-    #return local_slices

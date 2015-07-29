@@ -102,7 +102,7 @@ class cloned_ndarray(object):
                  % (len(args), len(self.shape))
 
         # shape of the new sliced ndarray
-        new_shape, clean_view = helper.view_of_shape(self.shape, args)
+        new_shape, clean_view = helper.window_of_shape(self.shape, args)
 
         result = pyDive.cloned.hollow_engines_like(new_shape, self.dtype, self)
 

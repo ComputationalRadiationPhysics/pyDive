@@ -78,9 +78,9 @@ class h5_ndarray(object):
         assert not all(type(arg) is int for arg in args),\
             "single data access is not supported"
 
-        result_shape, clean_view = helper.view_of_shape(self.shape, args)
+        result_shape, clean_view = helper.window_of_shape(self.shape, args)
 
         # Applying 'clean_view' after 'self.window', results in 'result_window'
-        result_window = helper.view_of_view(self.window, clean_view)
+        result_window = helper.window_of_view(self.window, clean_view)
 
         return h5_ndarray(self.filename, self.dataset_path, result_shape, result_window, self.offset)

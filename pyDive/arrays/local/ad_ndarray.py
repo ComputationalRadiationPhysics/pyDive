@@ -89,9 +89,9 @@ class ad_ndarray(object):
         assert all(arg.step == 1 or arg.step == None for arg in args if type(arg) is slice),\
             "strided access in not supported by adios"
 
-        result_shape, clean_view = helper.view_of_shape(self.shape, args)
+        result_shape, clean_view = helper.window_of_shape(self.shape, args)
 
         # Applying 'clean_view' after 'self.window', results in 'result_window'
-        result_window = helper.view_of_view(self.window, clean_view)
+        result_window = helper.window_of_view(self.window, clean_view)
 
         return ad_ndarray(self.filename, self.variable_path, result_shape, result_window, self.offset)
