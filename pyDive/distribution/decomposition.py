@@ -240,6 +240,13 @@ def common_axes(dcA, dcB):
     return sorted(list(set(dcA.distaxes + dcB.distaxes)))
 
 def common_decomposition(dcA, dcB):
+    """Compute the common (total) decomposition of two individual decompositions
+
+    :param dcA: instance of ``completeDC``
+    :param dcB: instance of ``completeDC``
+    :return: (common decomposition, partition indices for each distributed axis, offsets
+        for each distributed axis)
+    """
     assert dcA.shape == dcB.shape,\
         "Shapes of decompositions do not match: " + str(dcA.shape) + " <-> " + str(dcB.shape)
 
@@ -300,6 +307,18 @@ def common_decomposition(dcA, dcB):
     return completeDC(dcA.shape, axes, new_offsets), nd_idx_AB, offsets_AB
 
 def common_patches(dcA, dcB, nd_idx=False, offsets=False, next_offsets=False, ranks_AB = False, offsets_AB=False):
+    """Iterator looping all common patches of two decompositions returning a tuple
+        of enabled properties for each common patch.
+
+    :param dcA: instance of ``completeDC``
+    :param dcB: instance of ``completeDC``
+    :param nd_idx: tuple of partition indices (on each distributed axis)
+    :param offsets: tuple of partition offsets (on each distributed axis)
+    :param next_offsets: tuple of offsets of the next partition (on each distributed axis).
+        For the last partition the next offset is set to the edge's length.
+    :param ranks_AB: pair of engine-ranks for ``dcA`` and ``dcB``.
+    :param offsets_AB: pair of ndim-offsets (n = # distributed axes) for ``dcA`` and ``dcB``.
+    """
 
     dc, nd_idx_AB, offsets_AB = common_decomposition(dcA, dcB)
 
