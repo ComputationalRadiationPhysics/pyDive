@@ -21,7 +21,8 @@ If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 from collections import OrderedDict
-from itertools import product, izip
+from itertools import product, izip, imap
+from operator import mul
 import pyDive.IPParallelClient as com
 import helper
 
@@ -76,7 +77,7 @@ class completeDC:
             if prime_factors:
                 num_targets_av[sorted_distaxes[-1]] *= np.prod(prime_factors)
 
-            # calculate offsets
+            # calculate offsetsnd_idx_A
             localshape = np.array(self.shape)
             for distaxis in self.distaxes:
                 localshape[distaxis] = (self.shape[distaxis] - 1) / num_targets_av[distaxis] + 1
@@ -182,7 +183,7 @@ class completeDC:
         # create list of targets which participate slicing, this is new_ranks
         new_ranks = []
         for rank_idx_vector in product(*new_rank_ids_aa):
-            rank_idx = sum(i * p for i, p in izip(rank_idx_vector, self.pitch))
+            rank_idx = sum(imap(mul, rank_idx_vector, self.pitch))
             new_ranks.append(self.ranks[rank_idx])
 
         return completeDC(new_shape, new_distaxes, new_offsets, new_ranks, new_slices)
@@ -330,8 +331,8 @@ def common_patches(dcA, dcB, nd_idx=False, offsets=False, next_offsets=False, ra
             nd_idx_A = filter(lambda i: i is not None, nd_idx_A)
             nd_idx_B = filter(lambda i: i is not None, nd_idx_B)
 
-            idx_A = sum(i * p for i, p in izip(nd_idx_A, dcA.pitch))
-            idx_B = sum(i * p for i, p in izip(nd_idx_B, dcB.pitch))
+            idx_A = sum(imap(mul, nd_idx_A, dcA.pitch))
+            idx_B = sum(imap(mul, nd_idx_B, dcB.pitch))
 
             yield dcA.ranks[idx_A], dcB.ranks[idx_B]
 

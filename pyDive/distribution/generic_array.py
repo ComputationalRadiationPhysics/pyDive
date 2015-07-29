@@ -25,6 +25,8 @@ import numpy as np
 import pyDive.IPParallelClient as com
 import helper
 from collections import defaultdict
+from operator import mul
+from itertools import imap
 import decomposition as decomposition_mod
 
 array_id = 0
@@ -146,7 +148,7 @@ class DistributedGenericArray(object):
 
     def __get_linear_rank_idx(self, rank_idx_vector):
         """convert rank_idx_vector to linear rank index"""
-        return sum(i * p for i, p in zip(rank_idx_vector, self.decomposition.pitch))
+        return sum(imap(mul, rank_idx_vector, self.decomposition.pitch))
 
     def __getitem__(self, args):
         # bitmask indexing
