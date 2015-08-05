@@ -37,6 +37,10 @@ class completeDC:
         :type offsets: list of lists
         :param ranks: linear list of :term:`engine` ranks holding the local arrays.
         """
+        if type(shape) not in (list, tuple):
+            shape = (shape,)
+        elif type(shape) is not tuple:
+            shape = tuple(shape)
         self.shape = shape
         if type(distaxes) not in (list, tuple):
             distaxes = (distaxes,)
