@@ -21,8 +21,9 @@ If not, see <http://www.gnu.org/licenses/>.
 
 from itertools import chain
 
-class lean_expression():
-    
+class lean_expression(object):
+    #__slots__ = ["obj", "op", "args"] # reduces memory consumption of this class
+
     def __init__(self, obj, op=None, *args):
         self.obj = obj
         self.op = op
@@ -31,9 +32,11 @@ class lean_expression():
     def isterminal(self):
         return self.op is None
 
-    def __getattr__(self, name):
-        print "__getattr__", name
-        return getattr(self.obj, name)
+    def __getattr__(self, key):
+        if key.startswith('__') and key.endswith('__'):
+            return super(lean_expression, self).__getattr__(key)
+
+        return getattr(self.obj, key)
 
     def __str__(self):
         def printExpr(expr, indent, result=""):
@@ -48,12 +51,13 @@ class lean_expression():
                     result += "\n".join([printExpr(arg, indent + "  ") if isinstance(arg, lean_expression) else indent + "  " + str(arg) for arg in expr.args])
             else:
                 result += indent + "terminal: {}\n".format(expr)
-            
+
             return result
 
         return printExpr(self, "", "")
 
     def map(self, f):
+        """Apply ``f`` on each terminal's ``obj`` and store the result in a new expression tree."""
         if self.isterminal():
             return lean_expression(f(self.obj))
         return lean_expression(self.obj.map(f), self.op, *[arg.map(f) if isinstance(arg, lean_expression) else f(arg) for arg in self.args])
@@ -63,13 +67,16 @@ class lean_expression():
         if self.isterminal():
             return iter((self,))
         else:
-            return chain(*[iter(arg) for arg in self.args if isinstance(arg, lean_expression)])
+            return chain(iter(self.obj), *[iter(arg) for arg in self.args if isinstance(arg, lean_expression)])
 
     def evaluate(self, f):
-        """Call f for each expression recursively and return the result."""
+        """Call ``f`` for each expression recursively and return the result.
+
+        For a terminal expression ``f`` is not called but their ``obj`` is returned.
+        """
         if self.isterminal():
             return self.obj
-        return f(self.obj.evaluate(f), self.op, [arg.evaluate(f) if isinstance(arg, lean_expression) else arg for args in self.args])
+        return f(self.obj.evaluate(f), self.op, [arg.evaluate(f) if isinstance(arg, lean_expression) else arg for arg in self.args])
 
 class expression(lean_expression):
     def __init__(self, context, obj, op=None, *args):

@@ -25,19 +25,20 @@ import pyDive.IPParallelClient as com
 
 class lazy_context(object):
 
-    def __init__(self, evaluator, arrays_dicts):
+    def __init__(self, evaluator, *arrays_dicts):
         self.evaluator = evaluator
         self.arrays_dicts = arrays_dicts
-        self.expressions = []
-
-    def add_expression(self, expr):
-        self.expressions.append(expr)
 
     def __enter__(self):
+        self.expressions = []
+
         for arrays_dict in self.arrays_dicts:
             for key, value in arrays_dict.items():
                 if hasattr(value, "dist_like"):
                     arrays_dict[key] = expression(self, value)
+
+    def add_expression(self, expr):
+        self.expressions.append(expr)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.evaluate()
@@ -50,12 +51,11 @@ class lazy_context(object):
     def evaluate(self):
         """Evaluate all expressions"""
 
-        @require(self.evaluator.__module__)
         def local_evaluate(expr, evaluator_name):
             evaluator = eval(evaluator_name)
+            _globals = globals()
+            expr = expr.map(lambda a: _globals[a] if a in _globals else eval(a)) # convert strings back to objects
             evaluator(expr)
-
-        print self.expressions
 
         for expr in self.expressions:
             root_array = expr.obj
@@ -63,19 +63,16 @@ class lazy_context(object):
 
             # first, equalize distribution of all arrays of the expression
             for terminal_expr in expr:
-                terminal_expr.obj = terminal_expr.obj.dist_like(root_array)
+                if hasattr(terminal_expr.obj, "dist_like"):
+                    terminal_expr.obj = terminal_expr.obj.dist_like(root_array)
 
-            # replace all terminals by their representation. For distributed arrays it's the local name.
+            # replace all terminals by their representation strings. For distributed arrays it's the local name.
             local_expr = expr.map(repr)
 
             # evaluate expression on engine
             view = com.getView()
             tmp_targets = view.targets # save current target list
             view.targets = root_array.decomposition.ranks
-            view.apply(interactive(local_evaluate), local_expr, self.evaluator.__module__ + "." + self.evaluator.__name__)
+            _local_evaluate = require(self.evaluator.__module__)(interactive(local_evaluate)) # prepare local function
+            view.apply(_local_evaluate, local_expr, self.evaluator.__module__ + "." + self.evaluator.__name__)
             view.targets = tmp_targets # restore target list
-
-
-def lazy_evaluation(evaluator, *arrays_dicts):
-    return lazy_context(evaluator, arrays_dicts)
-
