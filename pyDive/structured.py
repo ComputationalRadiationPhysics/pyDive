@@ -70,77 +70,15 @@ if onTarget == 'False':
     import IPParallelClient as com
     from IPython.parallel import interactive
 import numpy as np
-
-def makeTree_fromTree(tree, expression):
-    def traverseTree(outTree, inTree):
-        for key, value in inTree.items():
-            if type(value) is dict:
-                outTree[key] = {}
-                traverseTree(outTree[key], value)
-            else:
-                outTree[key] = expression(value)
-    outTree = {}
-    traverseTree(outTree, tree)
-    return outTree
-
-def makeTree_fromTwoTrees(treeA, treeB, expression):
-    def traverseTrees(outTree, inTreeA, inTreeB):
-        for key, valueA in inTreeA.items():
-            valueB = inTreeB[key]
-            if type(valueA) is dict:
-                outTree[key] = {}
-                traverseTrees(outTree[key], valueA, valueB)
-            else:
-                outTree[key] = expression(valueA, valueB)
-    outTree = {}
-    traverseTrees(outTree, treeA, treeB)
-    return outTree
-
-def visitTwoTrees(treeA, treeB, visitor):
-    # traverse trees
-    for key, valueA in treeA.items():
-        valueB = treeB[key]
-        if type(valueA) is dict:
-            visitTwoTrees(valueA, valueB, visitor)
-        else:
-            visitor(treeA, treeB, key, valueA, valueB)
-    return treeA, treeB
-
-# generator object which iterates the tree's leafs
-def treeItems(tree):
-    items = list(tree.items())
-    while items:
-        key, value = items.pop()
-        if type(value) is dict:
-            items += list(value.items())
-        else:
-            yield key, value
-
-class ForeachLeafCall(object):
-    def __init__(self, tree, op):
-        self.tree = tree
-        self.op = op
-
-    def __call__(self, *args, **kwargs):
-        def apply_unary(a):
-            f = getattr(a, self.op)
-            return f(*args, **kwargs)
-        def apply_binary(a, b):
-            f = getattr(a, self.op)
-            return f(b, *args[1:], **kwargs)
-
-        if args and type(args[0]).__name__ == "VirtualArrayOfStructs":
-            structOfArrays = makeTree_fromTwoTrees(self.tree, args[0].structOfArrays, apply_binary)
-        else:
-            structOfArrays = makeTree_fromTree(self.tree, apply_unary)
-        return structured(structOfArrays)
-
+import operator
 
 arrayOfStructs_id = 0
 
 class VirtualArrayOfStructs(object):
     def __init__(self, structOfArrays):
-        items = [item for item in treeItems(structOfArrays)]
+        self.structOfArrays = structOfArrays
+
+        items = list(self.items())
         self.firstArray = items[0][1]
         self.arraytype = type(self.firstArray)
         assert all(type(a) == self.arraytype for name, a in items),\
@@ -151,9 +89,8 @@ class VirtualArrayOfStructs(object):
             str({name : a.shape for name, a in items})
 
         self.shape = self.firstArray.shape
-        self.dtype = makeTree_fromTree(structOfArrays, lambda a: a.dtype)
+        self.dtype = self.map(lambda a: a.dtype)
         self.nbytes = sum(a.nbytes for name, a in items)
-        self.structOfArrays = structOfArrays
         self.has_local_instance = False
 
     def __del__(self):
@@ -163,20 +100,33 @@ class VirtualArrayOfStructs(object):
 
     def __getattr__(self, name):
         if hasattr(self.firstArray, name):
-            assert callable(getattr(self.firstArray, name)),\
+            method = getattr(type(self.firstArray), name)
+            assert callable(method),\
                 "Unlike method access, attribute access of individual arrays is not supported."
-            return ForeachLeafCall(self.structOfArrays, name)
+
+            def foreachLeafCall(*args, **kwargs):
+                aos = tuple(arg.structOfArrays for arg in args if type(arg).__name__ is "VirtualArrayOfStructs")
+                misc_args = tuple(filter(lambda arg: type(arg) is not VirtualArrayOfStructs, args))
+                return structured(map_trees(lambda *a: method(*(a + misc_args), **kwargs), *((self.structOfArrays,) + aos)))
+
+            return foreachLeafCall
 
         return self[name]
 
     def __special_operation__(self, op, *args):
-        return ForeachLeafCall(self.structOfArrays, op)(*args)
+        if args:
+            if type(args[0]) is VirtualArrayOfStructs:
+                return structured(map_trees(lambda a,b: getattr(a, op)(b),\
+                    self.structOfArrays, args[0].structOfArrays))
+            else:
+                return structured(self.map(lambda a: getattr(a, op)(args[0])))
+        else:
+            return structured(self.map(lambda a: getattr(a, op)()))
 
     def __repr__(self):
         # if arrays are distributed create a local representation of this object on engine
         if onTarget == 'False' and not self.has_local_instance and hasattr(self.firstArray, "decomposition"):
-            items = [item for item in treeItems(self.structOfArrays)]
-            assert all(self.firstArray.is_distributed_like(a) for name, a in items),\
+            assert all(self.firstArray.is_distributed_like(a) for name, a in self.items()),\
                 "Cannot create a local virtual array-of-structs because not all arrays are distributed equally."
 
             self.distaxes = self.firstArray.distaxes
@@ -190,12 +140,12 @@ class VirtualArrayOfStructs(object):
             arrayOfStructs_id += 1
 
             # create a VirtualArrayOfStructs object containing the local arrays on the targets in use
-            names_tree = makeTree_fromTree(self.structOfArrays, lambda a: repr(a))
+            names_tree = self.map(repr)
 
             view.push({'names_tree' : names_tree}, targets=self.decomposition.ranks)
 
             view.execute('''\
-                structOfArrays = structured.makeTree_fromTree(names_tree, lambda a_name: globals()[a_name])
+                structOfArrays = structured.map_trees(globals().get, names_tree)
                 %s = structured.structured(structOfArrays)''' % self.name,\
                 targets=self.decomposition.ranks)
 
@@ -217,6 +167,35 @@ class VirtualArrayOfStructs(object):
             ", shape: " + str(self.shape) + ">:\n"
         return printTree(self.structOfArrays, "  ", result)
 
+    def __iter__(self):
+        paths = list(self.structOfArrays)
+        values = list(self.structOfArrays.values())
+        while paths:
+            path = paths.pop()
+            value = values.pop()
+            if type(value) is dict:
+                paths += [path + "/" + k for k in value]
+                values += list(value.values())
+            else:
+                yield path
+
+    def items(self):
+        items = list(self.structOfArrays.items())
+        while items:
+            key, value = items.pop()
+            if type(value) is dict:
+                items += list(value.items())
+            else:
+                yield key, value
+
+    def map(self, f):
+        def mapTree(tree):
+            if type(tree) is not dict:
+                return f(tree)
+            return {k : mapTree(v) for k,v in tree.items()}
+
+        return mapTree(self.structOfArrays)
+
     def __getitem__(self, args):
         # component access
         # ----------------
@@ -234,7 +213,7 @@ class VirtualArrayOfStructs(object):
 
         # slicing
         # -------
-        result = makeTree_fromTree(self.structOfArrays, lambda a: a[args])
+        result = self.map(lambda a: a[args])
 
         # if args is a list of indices then return a single data value tree
         if type(args) not in (list, tuple):
@@ -255,10 +234,7 @@ class VirtualArrayOfStructs(object):
             last_node_name = path[-1]
             if type(node[last_node_name]) is dict:
                 # node
-                def doArrayAssignment(treeA, treeB, name, arrayA, arrayB):
-                    treeA[name] = arrayB
-
-                visitTwoTrees(node[last_node_name], other.structOfArrays, doArrayAssignment)
+                node[last_node_name] = other.structOfArrays
             else:
                 # leaf
                 node[last_node_name] = other
@@ -266,10 +242,8 @@ class VirtualArrayOfStructs(object):
 
         # slicing
         # -------
-        def doArrayAssignmentWithSlice(treeA, treeB, name, arrayA, arrayB):
-            arrayA[args] = arrayB
+        map_trees(lambda a, b: operator.setitem(a, args, b), self.structOfArrays, other.structOfArrays)
 
-        visitTwoTrees(self.structOfArrays, other.structOfArrays, doArrayAssignmentWithSlice)
 
 # Add special methods like "__add__", "__sub__", ... that call __special_operation__
 # forwarding them to the individual arrays.
@@ -292,6 +266,10 @@ from types import MethodType
 for name, func in special_ops_dict.items():
     setattr(VirtualArrayOfStructs, name, MethodType(func, None, VirtualArrayOfStructs))
 
+def map_trees(f, *trees):
+    if type(trees[0]) is not dict:
+        return f(*trees)
+    return {k : map_trees(f, *[t[k] for t in trees]) for k in trees[0]}
 
 def structured(structOfArrays):
     """Convert a *structure-of-arrays* into a virtual *array-of-structures*.
