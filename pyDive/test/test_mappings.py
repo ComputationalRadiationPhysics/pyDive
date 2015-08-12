@@ -37,7 +37,6 @@ def test_mesh2particles(init_pyDive):
 
     field_strengths = pyDive.empty(particles.shape)
 
-    @pyDive.map
     def mesh2particles(field_strengths, particles, field):
         total_pos = particles["cellidx"].astype(np.float32) + particles["pos"]
 
@@ -48,7 +47,7 @@ def test_mesh2particles(init_pyDive):
         import pyDive.mappings
         field_strengths[:] = pyDive.mappings.mesh2particles(field, total_pos, pyDive.mappings.CIC)
 
-    mesh2particles(field_strengths, particles, field=field)
+    pyDive.map(mesh2particles, field_strengths, particles, field=field)
 
     ref_field_strengths = np.load(os.path.join(dirname, "m2p_CIC.npy"))
 

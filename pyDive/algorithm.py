@@ -24,7 +24,7 @@ import IPParallelClient as com
 from IPython.parallel import interactive, require
 from structured import VirtualArrayOfStructs
 import numpy as np
-from distribution.generic_array import hollow_like
+from distribution.generic_array import record
 
 def map(f, *arrays, **kwargs):
     """Applies *f* on local arrays of *arrays*. It is very similar
@@ -58,23 +58,24 @@ def map(f, *arrays, **kwargs):
         arrays = map(globals().get, array_names)
         map_result = f(*arrays, **kwargs)
         globals()["map_result"] = map_result
-        return map_result is not None
+        return (type(map_result), map_result.dtype) if map_result is not None else None
+
+    # reference array.
+    ref_array = arrays[0].firstArray if type(arrays[0]) == VirtualArrayOfStructs else arrays[0]
 
     view = com.getView()
-
     tmp_targets = view.targets # save current target list
-    if type(arrays[0]) == VirtualArrayOfStructs:
-        view.targets = arrays[0].firstArray.ranks()
-    else:
-        view.targets = arrays[0].ranks()
+    view.targets = ref_array.ranks()
 
     import __builtin__
     array_names = __builtin__.map(repr, arrays)
-    is_not_None = view.apply(interactive(map_wrapper), interactive(f), array_names, **kwargs)
+    local_results = view.apply(interactive(map_wrapper), interactive(f), array_names, **kwargs)
 
     result = None
-    if all(is_not_None):
-        result = hollow_like(arrays[0])
+    if all(r is not None for r in local_results):
+        array_type = record[local_results[0][0]]
+        dtype = local_results[0][1]
+        result = array_type(ref_array.shape, dtype, ref_array.distaxes, ref_array.decomposition, True)
         view.execute("{} = map_result; del map_result".format(repr(result)))
 
     view.targets = tmp_targets # restore target list

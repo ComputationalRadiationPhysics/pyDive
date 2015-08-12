@@ -5,6 +5,9 @@ from generic_array import DistributedGenericArray
 import numpy as np
 import pyDive.IPParallelClient as com
 
+#: dictionary of *local array* to *distributed array* for all generated arrays.
+record = {}
+
 def distribute(local_arraytype, newclassname, target_modulename, interengine_copier=None, may_allocate = True):
     binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow", "lshift", "rshift", "and", "xor", "or"]
 
@@ -50,6 +53,9 @@ def distribute(local_arraytype, newclassname, target_modulename, interengine_cop
         method.__doc__ = method.__doc__.format(\
             local_arraytype_name=local_arraytype.__module__ + "." +  local_arraytype.__name__,
             arraytype_name=newclassname)
+
+    global record
+    record[local_arraytype] = result
 
     return result
 
