@@ -435,6 +435,12 @@ class DistributedGenericArray(object):
         self.view.execute("%s = %s.%s(%s)" % (repr(self), repr(self), op, arg_string), targets=self.decomposition.ranks)
         return self
 
+    def __iter__(self):
+        for rank in self.ranks():
+            local_array = self.view.pull(self.name, targets=rank)
+            for v in local_array:
+                yield v
+
 #----------------------------------------------------------------
 
 from generic_array_funcs import *
