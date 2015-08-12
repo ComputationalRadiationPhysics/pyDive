@@ -23,6 +23,7 @@ __doc__ = None
 import numpy as np
 import pyDive.distribution.generic_array as generic_array
 from pyDive.distribution.interengine import MPI_copier
+from pyDive.distribution.generic_array import hollow_like
 
 ndarray = generic_array.distribute(np.ndarray, "ndarray", "np", interengine_copier=MPI_copier)
 
@@ -51,12 +52,6 @@ def hollow(shape, dtype=np.float, distaxes='all'):
     :param ints distaxes: distributed axes. Defaults to 'all' meaning each axis is distributed.
     """
     return ndarray(shape, dtype, distaxes, None, None, True)
-
-def hollow_like(other):
-    """Create a pyDive.ndarray instance with the same
-    shape, distribution and type as ``other`` without allocating a local numpy-array.
-    """
-    return ndarray(other.shape, other.dtype, other.distaxes, other.decomposition, True)
 
 factories.update({"array" : array, "hollow" : hollow, "hollow_like" : hollow_like})
 
