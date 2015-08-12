@@ -57,7 +57,6 @@ from fragment import fragment
 import algorithm
 map = algorithm.map
 reduce = algorithm.reduce
-mapReduce = algorithm.mapReduce
 
 # particle-mesh mappings
 import mappings

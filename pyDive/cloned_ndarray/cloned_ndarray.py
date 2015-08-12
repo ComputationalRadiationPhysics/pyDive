@@ -111,6 +111,9 @@ class cloned_ndarray(object):
 
         return result
 
+    def ranks(self):
+        return self.target_ranks
+
     def merge(self, op):
         """Merge all local arrays in a pair-wise operation into a single numpy-array.
 

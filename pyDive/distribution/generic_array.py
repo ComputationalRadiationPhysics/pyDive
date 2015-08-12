@@ -146,6 +146,9 @@ class DistributedGenericArray(object):
 
         return tuple(self.decomposition.patches(position=True))
 
+    def ranks(self):
+        return self.decomposition.ranks
+
     def __get_linear_rank_idx(self, rank_idx_vector):
         """convert rank_idx_vector to linear rank index"""
         return sum(imap(mul, rank_idx_vector, self.decomposition.pitch))

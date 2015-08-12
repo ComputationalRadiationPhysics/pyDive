@@ -53,8 +53,8 @@ def hollow(shape, dtype=np.float, distaxes='all'):
     return ndarray(shape, dtype, distaxes, None, None, True)
 
 def hollow_like(other):
-    """Create a pyDive.ndarray instance with the same
-    shape, distribution and type as ``other`` without allocating a local numpy-array.
+    """Create a pyDive.ndarray instance of the same
+    shape, distribution and dtype as ``other`` without allocating a local numpy-array.
     """
     return ndarray(other.shape, other.dtype, other.distaxes, other.decomposition, True)
 
