@@ -342,6 +342,9 @@ class DistributedGenericArray(object):
         self.view.execute("%s = %s.copy()" % (result.name, self.name), targets=self.decomposition.ranks)
         return result
 
+    def __copy__(self):
+        return self.copy()
+
     def is_distributed_like(self, other):
         return self.decomposition == other.decomposition
 
