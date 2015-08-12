@@ -163,7 +163,7 @@ class VirtualArrayOfStructs(object):
 
     def __getattr__(self, name):
         if hasattr(self.firstArray, name):
-            assert hasattr(getattr(self.firstArray, name), "__call__"),\
+            assert callable(getattr(self.firstArray, name)),\
                 "Unlike method access, attribute access of individual arrays is not supported."
             return ForeachLeafCall(self.structOfArrays, name)
 
