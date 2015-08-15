@@ -71,6 +71,7 @@ if onTarget == 'False':
     from IPython.parallel import interactive
 import numpy as np
 import operator
+from types import UnboundMethodType
 
 arrayOfStructs_id = 0
 
@@ -104,13 +105,12 @@ class VirtualArrayOfStructs(object):
             assert callable(method),\
                 "Unlike method access, attribute access of individual arrays is not supported."
 
-            # make *method* unbounded. TODO: better solution
-            method = MethodType(method.im_func, None, method.im_class)
+            method_tree = self.map(lambda a: getattr(a, name))
 
             def foreachLeafCall(*args, **kwargs):
                 aos = tuple(arg.structOfArrays for arg in args if type(arg).__name__ is "VirtualArrayOfStructs")
                 misc_args = tuple(filter(lambda arg: type(arg) is not VirtualArrayOfStructs, args))
-                return structured(map_trees(lambda *a: method(*(a + misc_args), **kwargs), *((self.structOfArrays,) + aos)))
+                return structured(map_trees(lambda method, *a: method(*(a + misc_args), **kwargs), *((method_tree,) + aos)))
 
             return foreachLeafCall
 
