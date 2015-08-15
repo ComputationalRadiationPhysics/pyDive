@@ -25,8 +25,7 @@ import adios as ad
 from pyDive.arrays.ndarray import hollow_like
 import pyDive.distribution.generic_array as generic_array
 import pyDive.IPParallelClient as com
-from itertools import islice
-from .. import structured
+from pyDive.structured import structured
 import pyDive.arrays.local.ad_ndarray
 
 ad_ndarray = generic_array.distribute(pyDive.arrays.local.ad_ndarray.ad_ndarray, "ad_ndarray", "ad_ndarray", may_allocate=False)
@@ -43,66 +42,61 @@ def load(self):
 ad_ndarray.load = load
 del load
 
-def open_variable(filename, variable_path, distaxis=0):
+def open_variable(filename, variable_path, distaxes='all'):
     """Create a pyDive.adios.ad_ndarray instance from file.
 
     :param filename: name of adios file.
     :param variable_path: path within adios file to a single variable.
-    :param distaxis int: distributed axis
+    :param distaxes ints: distributed axes. Defaults to 'all' meaning each axis is distributed.
     :return: pyDive.adios.ad_ndarray instance
     """
     fileHandle = ad.file(filename)
     variable = fileHandle.var[variable_path]
-    dtype = variable.type
-    shape = tuple(variable.dims)
+    dtype = variable.dtype
+    shape = tuple(map(int, variable.dims))
     fileHandle.close()
 
-    result = ad_ndarray(shape, dtype, distaxis, None, None, True)
+    result = ad_ndarray(shape, dtype, distaxes, None, True)
 
     target_shapes = result.target_shapes()
     target_offset_vectors = result.target_offset_vectors()
 
     view = com.getView()
-    view.scatter("shape", target_shapes, targets=result.decomposition.ranks)
-    view.scatter("offset", target_offset_vectors, targets=result.decomposition.ranks)
+    view.scatter("shape", target_shapes, targets=result.ranks())
+    view.scatter("offset", target_offset_vectors, targets=result.ranks())
     view.execute("{0} = pyDive.arrays.local.ad_ndarray.ad_ndarray('{1}','{2}',shape=shape[0],offset=offset[0])"\
-        .format(result.name, filename, variable_path), targets=result.decomposition.ranks)
+        .format(repr(result), filename, variable_path), targets=result.ranks())
 
     return result
 
-def open(filename, datapath, distaxis=0):
+def open(filename, datapath, distaxes='all'):
     """Create a pyDive.adios.ad_ndarray instance respectively a structure of
     pyDive.adios.ad_ndarray instances from file.
 
     :param filename: name of adios file.
     :param datapath: path within adios file to a single variable or a group of variables.
-    :param distaxis int: distributed axis
+    :param distaxes ints: distributed axes. Defaults to 'all' meaning each axis is distributed.
     :return: pyDive.adios.ad_ndarray instance
     """
     fileHandle = ad.file(filename)
     variable_paths = fileHandle.var.keys()
     fileHandle.close()
 
-    def update_tree(tree, variable_path, variable_path_iter, leaf):
-        node = variable_path_iter.next()
-        if node == leaf:
-            tree[leaf] = open_variable(filename, variable_path, distaxis)
-            return
-        tree[node] = {}
-        update_tree(tree[node], variable_path, variable_path_iter, leaf)
+    pairs = []
 
-    n = len(datapath.split("/"))
+    datapath_nodes = datapath.strip("/").split("/")
+    for var_path in variable_paths:
+        var_path_nodes = var_path.strip("/").split("/")
+        # if lists matches exactly return a single *ad_ndarray* instance
+        if datapath_nodes == var_path_nodes:
+            return open_variable(filename, var_path, distaxes)
 
-    structOfArrays = {}
-    for variable_path in variable_paths:
-        if not variable_path.startswith(datapath):
-            continue
-        path_nodes = variable_path.split("/")
-        path_nodes_it = iter(path_nodes)
+        # if *var_path* includes *datapath* add it to the tree
+        if datapath_nodes == var_path_nodes[:len(datapath_nodes)]:
+            path = "/".join(var_path_nodes[len(datapath_nodes):])
+            array = open_variable(filename, var_path, distaxes)
+            pairs.append((path, array))
 
-        # advance 'path_nodes_it' n times
-        next(islice(path_nodes_it, n, n), None)
+    assert pairs, "{} does not have variable: {}".format(filename, datapath)
 
-        update_tree(structOfArrays, variable_path, path_nodes_it, path_nodes[-1])
-
-    return structured.structured(structOfArrays)
+    return structured(pairs)

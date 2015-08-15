@@ -33,9 +33,9 @@ class ad_ndarray(object):
 
         fileHandle = ad.file(filename)
         variable = fileHandle.var[variable_path]
-        self.dtype = variable.type
+        self.dtype = variable.dtype
         if shape is None:
-            shape = variable.dims
+            shape = map(int, variable.dims)
         self.shape = tuple(shape)
         fileHandle.close()
 
@@ -65,8 +65,12 @@ class ad_ndarray(object):
         result = variable.read(tuple(begin), tuple(size))
         fileHandle.close()
 
-        # remove all single dimensional axes unless they are a result of slicing, i.e. a[n,n+1]
-        single_dim_axes = [axis for axis in range(len(self.window)) if type(self.window[axis]) is int]
+        # add axes which are removed by adios because they have a length of 1
+        for axis in [axis for axis, length in enumerate(size) if length == 1]:
+            result = np.expand_dims(result, axis=axis)
+
+        # remove all axes which were sliced by index
+        single_dim_axes = [axis for axis, edge in enumerate(self.window) if type(edge) is int]
         if single_dim_axes:
             result = np.squeeze(result, axis=single_dim_axes)
 
@@ -76,7 +80,7 @@ class ad_ndarray(object):
         if args == slice(None):
             args = (slice(None),) * len(self.shape)
 
-        if not isinstance(args, list) and not isinstance(args, tuple):
+        if type(args) not in (list, tuple):
             args = [args]
 
         assert len(args) == len(self.shape),\

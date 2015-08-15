@@ -100,9 +100,12 @@ class VirtualArrayOfStructs(object):
 
     def __getattr__(self, name):
         if hasattr(self.firstArray, name):
-            method = getattr(type(self.firstArray), name)
+            method = getattr(self.firstArray, name)
             assert callable(method),\
                 "Unlike method access, attribute access of individual arrays is not supported."
+
+            # make *method* unbounded. TODO: better solution
+            method = MethodType(method.im_func, None, method.im_class)
 
             def foreachLeafCall(*args, **kwargs):
                 aos = tuple(arg.structOfArrays for arg in args if type(arg).__name__ is "VirtualArrayOfStructs")
@@ -271,14 +274,40 @@ def map_trees(f, *trees):
         return f(*trees)
     return {k : map_trees(f, *[t[k] for t in trees]) for k in trees[0]}
 
-def structured(structOfArrays):
-    """Convert a *structure-of-arrays* into a virtual *array-of-structures*.
+def structured(data):
+    """Create a new virtual *array-of-structures*.
 
-    :param structOfArrays: tree-like (dict-of-dicts) dictionary of arrays.
+    :param data: input data (see below)
     :raises AssertionError: if the *arrays-types* do not match. Datatypes may differ.
     :raises AssertionError: if the shapes do not match.
     :return: Custom object representing a virtual array whose elements have the same tree-like structure
-        as *structOfArrays*.
+        as `data`.
+
+    `data` can either be a tree-like (dict-of-dicts) dictionary of arrays
+    or a list of key/value pairs. Nodes a separated by `/`. Example: ::
+
+        fields = structured([("fieldE/x", fieldE_x), ("fieldE/y", fieldE_y), ("fieldB/z", fieldB_z)])
+        # or:
+        fields = structured({"fieldE" : {"x" : fieldE_x, "y" : fieldE_y}, "fieldB" : {"z" : fieldB_z} })
     """
+
+    if type(data) is dict:
+        return VirtualArrayOfStructs(data)
+
+    assert type(data) in (tuple, list),\
+        "`data` must be either a dictionary, a list or a tuple."
+
+    def update_tree(tree, nodes, array):
+        if len(nodes) == 1:
+            tree[nodes[0]] = array
+            return
+        if not nodes[0] in tree:
+            tree[nodes[0]] = {}
+        update_tree(tree[nodes[0]], nodes[1:], array)
+
+    structOfArrays = {}
+    for path, array in data:
+        nodes = path.strip("/").split("/")
+        update_tree(structOfArrays, nodes, array)
 
     return VirtualArrayOfStructs(structOfArrays)
