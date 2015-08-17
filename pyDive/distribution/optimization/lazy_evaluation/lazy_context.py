@@ -22,6 +22,7 @@ If not, see <http://www.gnu.org/licenses/>.
 from expression import expression
 from IPython.parallel import interactive, require
 import pyDive.IPParallelClient as com
+from pyDive.structured import VirtualArrayOfStructs, structured
 
 class lazy_context(object):
 
@@ -35,7 +36,10 @@ class lazy_context(object):
         for arrays_dict in self.arrays_dicts:
             for key, value in arrays_dict.items():
                 if hasattr(value, "dist_like"):
-                    arrays_dict[key] = expression(self, value)
+                    if type(value) is VirtualArrayOfStructs:
+                        arrays_dict[key] = structured(value.map(lambda a: expression(self, a)))
+                    else:
+                        arrays_dict[key] = expression(self, value)
 
     def add_expression(self, expr):
         self.expressions.append(expr)
@@ -45,8 +49,11 @@ class lazy_context(object):
 
         for arrays_dict in self.arrays_dicts:
             for key, value in arrays_dict.items():
-                if isinstance(value, expression) and value.isterminal():
-                    arrays_dict[key] = value.obj
+                if hasattr(value, "dist_like"):
+                    if type(value) is VirtualArrayOfStructs:
+                        arrays_dict[key] = structured(value.map(lambda e: e.obj))
+                    else:
+                        arrays_dict[key] = value.obj
 
     def evaluate(self):
         """Evaluate all expressions"""

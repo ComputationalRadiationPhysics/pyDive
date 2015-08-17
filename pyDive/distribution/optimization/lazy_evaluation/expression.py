@@ -72,7 +72,7 @@ class lean_expression(object):
     def evaluate(self, f):
         """Call ``f`` for each expression recursively and return the result.
 
-        For a terminal expression ``f`` is not called but their ``obj`` is returned.
+        For a terminal expression ``f`` is not called but its ``obj`` is returned.
         """
         if self.isterminal():
             return self.obj
