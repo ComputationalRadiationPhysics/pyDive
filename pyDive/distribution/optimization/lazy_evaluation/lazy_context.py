@@ -23,6 +23,7 @@ from expression import expression
 from IPython.parallel import interactive, require
 import pyDive.IPParallelClient as com
 from pyDive.structured import VirtualArrayOfStructs, structured
+from itertools import groupby
 
 class lazy_context(object):
 
@@ -58,28 +59,37 @@ class lazy_context(object):
     def evaluate(self):
         """Evaluate all expressions"""
 
-        def local_evaluate(expr, evaluator_name):
+        def local_evaluate(exprs, evaluator_name):
             evaluator = eval(evaluator_name)
             _globals = globals()
-            expr = expr.map(lambda a: _globals[a] if a in _globals else eval(a)) # convert strings back to objects
-            evaluator(expr)
 
-        for expr in self.expressions:
-            root_array = expr.obj
-            assert hasattr(root_array, "dist_like"), "The root array of an expression has to be distributed."
+            # convert strings back to objects
+            exprs = [expr.map(lambda a: _globals[a] if a in _globals else eval(a)) for expr in exprs]
 
-            # first, equalize distribution of all arrays of the expression
-            for terminal_expr in expr:
-                if hasattr(terminal_expr.obj, "dist_like"):
-                    terminal_expr.obj = terminal_expr.obj.dist_like(root_array)
+            evaluator(exprs)
 
-            # replace all terminals by their representation strings. For distributed arrays it's the local name.
-            local_expr = expr.map(repr)
+        assert all(hasattr(e.obj, "dist_like") for e in self.expressions),\
+            "The root array of an expression has to be distributed."
 
-            # evaluate expression on engine
+        # group expressions by occupied ranks. Thus a group can be evaluated in a single engine call.
+        for ranks, exprs in groupby(self.expressions, lambda e: e.obj.ranks()):
+            local_exprs = []
+            for expr in exprs:
+                root_array = expr.obj
+
+                # first, equalize distribution of all arrays in the expression
+                for terminal_expr in expr:
+                    if hasattr(terminal_expr.obj, "dist_like"):
+                        terminal_expr.obj = terminal_expr.obj.dist_like(root_array)
+
+                # replace all terminals by their representation strings. For distributed arrays it's the local name.
+                local_expr = expr.map(repr)
+                local_exprs.append(local_expr)
+
+            # evaluate expressions on engine
             view = com.getView()
             tmp_targets = view.targets # save current target list
-            view.targets = root_array.decomposition.ranks
+            view.targets = ranks
             _local_evaluate = require(self.evaluator.__module__)(interactive(local_evaluate)) # prepare local function
-            view.apply(_local_evaluate, local_expr, self.evaluator.__module__ + "." + self.evaluator.__name__)
+            view.apply(_local_evaluate, local_exprs, self.evaluator.__module__ + "." + self.evaluator.__name__)
             view.targets = tmp_targets # restore target list

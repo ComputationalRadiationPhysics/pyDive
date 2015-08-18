@@ -19,6 +19,6 @@ and the GNU Lesser General Public License along with pyDive.
 If not, see <http://www.gnu.org/licenses/>.
 """
 
-def std_evaluator(expr):
-    return expr.evaluate(lambda obj, op, args: getattr(obj, op)(*args))
-
+def std_evaluator(exprs):
+    for expr in exprs:
+        expr.evaluate(lambda obj, op, args: getattr(obj, op)(*args))
