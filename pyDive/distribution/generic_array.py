@@ -61,7 +61,13 @@ class DistributedGenericArray(object):
     interengine_copier = None
     may_allocate = True
 
-    def __init__(self, shape, dtype=np.float, distaxes='all', decomposition=None, no_allocation=False, **kwargs):
+    def __init__(self,
+        shape,
+        dtype=np.float,
+        distaxes='all',
+        decomposition=None,
+        no_allocation=False,
+        **kwargs):
         """Creates an instance of {arraytype_name}. This is a low-level method of instantiating an array, it should rather be
         constructed using factory functions ("empty", "zeros", "open", ...)
 
