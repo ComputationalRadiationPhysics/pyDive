@@ -3,6 +3,8 @@ pyDive
 
 Distributed Interactive Visualization and Exploration of large datasets.
 
+[![Build Status master](https://img.shields.io/travis/ComputationalRadiationPhysics/pyDive/master.svg?label=master)](https://travis-ci.org/ComputationalRadiationPhysics/pyDive/branches)
+[![Build Status dev](https://img.shields.io/travis/ComputationalRadiationPhysics/pyDive/dev.svg?label=dev)](https://travis-ci.org/ComputationalRadiationPhysics/pyDive/branches)
 [![pypi version](https://img.shields.io/pypi/v/pyDive.svg)](https://pypi.python.org/pypi/pyDive)
 [![Number of pyDive Downloads](https://img.shields.io/pypi/dm/pyDive.svg)](https://pypi.python.org/pypi/pyDive/)
 [![pyDive license](https://img.shields.io/pypi/l/pyDive.svg)](#software-license)
