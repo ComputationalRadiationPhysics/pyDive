@@ -42,7 +42,7 @@ def ones_like(other, **kwargs):
     result += 1
     return result
 
-import pyDive.IPParallelClient as com
+import pyDive.ipyParallelClient as com
 import pyDive.arrays.ndarray
 
 def to_cpu(self):

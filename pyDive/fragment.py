@@ -20,8 +20,8 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-import IPParallelClient as com
-from IPython.parallel import interactive
+import ipyParallelClient as com
+from ipyparallel import interactive
 try:
     from arrays.h5_ndarray import h5_ndarray
 except ImportError:

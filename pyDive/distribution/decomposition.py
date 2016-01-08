@@ -23,7 +23,7 @@ import numpy as np
 from collections import OrderedDict
 from itertools import product, izip, imap
 from operator import mul
-import pyDive.IPParallelClient as com
+import pyDive.ipyParallelClient as com
 import helper
 
 class completeDC:

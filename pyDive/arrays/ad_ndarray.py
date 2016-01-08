@@ -24,7 +24,7 @@ import numpy as np
 import adios as ad
 from pyDive.arrays.ndarray import hollow_like
 import pyDive.distribution.generic_array as generic_array
-import pyDive.IPParallelClient as com
+import pyDive.ipyParallelClient as com
 from pyDive.structured import structured
 import pyDive.arrays.local.ad_ndarray
 

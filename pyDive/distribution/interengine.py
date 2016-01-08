@@ -76,7 +76,7 @@ onTarget = os.environ.get("onTarget", 'False')
 
 # execute this code only if it is not executed on engine
 if onTarget == 'False':
-    import pyDive.IPParallelClient as com
+    import pyDive.ipyParallelClient as com
 
     def MPI_copier(source, dest):
         view = com.getView()

@@ -72,8 +72,8 @@ import picongpu
 picongpu = picongpu
 
 # init
-import IPParallelClient
-init = IPParallelClient.init
+import ipyParallelClient
+init = ipyParallelClient.init
 
 
 # module doc
