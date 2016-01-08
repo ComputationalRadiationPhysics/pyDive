@@ -20,8 +20,8 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-import IPParallelClient as com
-from IPython.parallel import interactive, require
+import ipyParallelClient as com
+from ipyparallel import interactive, require
 from structured import VirtualArrayOfStructs
 import numpy as np
 from distribution.generic_array import record

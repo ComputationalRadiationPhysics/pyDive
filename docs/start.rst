@@ -4,7 +4,7 @@ Getting started
 Quickstart
 ----------
 
-pyDive is built on top of *IPython.parallel*, *numpy* and *mpi4py*. *h5py*, *adios* and *pycuda* are optional. Running ``python setup.py install`` will install
+pyDive is built on top of *ipyparallel*, *numpy* and *mpi4py*. *h5py*, *adios* and *pycuda* are optional. Running ``python setup.py install`` will install
 pyDive with these and other required packages from `requirements.txt`. Alternatively you can install it via pip: ``pip install pyDive``.
 
 Basic code example: ::
@@ -22,7 +22,7 @@ Basic code example: ::
   import matplotlib.pyplot as plt
   plt.imshow(arrayC[500,::10,::10])
 
-Before actually running this script there must have been an IPython.parallel cluster launched (see section below) otherwise `pyDive.init()` fails.
+Before actually running this script there must have been an ipyparallel cluster launched (see section below) otherwise `pyDive.init()` fails.
 
 pyDive distributes array-memory along one or multiple user-specified axes:
 
@@ -38,10 +38,10 @@ when calling ``imshow()``.
 
 .. _cluster-config:
 
-Setup an IPython.parallel cluster configuration
+Setup an ipyparallel cluster configuration
 -----------------------------------------------
 
-The first step is to create an IPython.parallel profile: http://ipython.org/ipython-doc/2/parallel/parallel_process.html.
+The first step is to create an ipyparallel profile: http://ipython.org/ipython-doc/2/parallel/parallel_process.html.
 The name of this profile is the argument of :func:`pyDive.init`. It defaults to ``"mpi"``.
 Starting the cluster is then the second and final step::
 
@@ -54,9 +54,9 @@ In order to test the pyDive installation run::
 
   $ python setup.py test
 
-This will ask you for the IPython.parallel profile to be used and the number of engines to be started, e.g.: ::
+This will ask you for the ipyparallel profile to be used and the number of engines to be started, e.g.: ::
 
-  $ Name of your IPython-parallel profile you want to run the tests with: pbs
+  $ Name of your ipyparallel profile you want to run the tests with: pbs
   $ Number of engines: 256
 
 Then the script starts the cluster, runs the tests and finally stops the cluster. If you have already a cluster running by your own

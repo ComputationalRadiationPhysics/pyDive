@@ -52,7 +52,7 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        profile_name = raw_input("Name of your IPython-parallel profile you want to run the tests with: ")
+        profile_name = raw_input("Name of your ipyparallel profile you want to run the tests with: ")
         n_engines = raw_input("Number of engines: ")
 
         # start ipcluster

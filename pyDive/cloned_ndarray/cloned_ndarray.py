@@ -20,7 +20,7 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-from .. import IPParallelClient as com
+from .. import ipyParallelClient as com
 import numpy as np
 
 cloned_ndarray_id = 0

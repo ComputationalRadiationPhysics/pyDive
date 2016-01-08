@@ -2,7 +2,7 @@ import pyDive
 import numpy as np
 import pytest
 import random
-from pyDive import IPParallelClient as com
+from pyDive import ipyParallelClient as com
 
 sizes = ((1,), (5,),
         (5, 29), (64, 1), (64, 64),

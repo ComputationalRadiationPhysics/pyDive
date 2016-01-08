@@ -24,7 +24,7 @@ import numpy as np
 import h5py as h5
 from pyDive.arrays.ndarray import hollow_like
 import pyDive.distribution.generic_array as generic_array
-import pyDive.IPParallelClient as com
+import pyDive.ipyParallelClient as com
 from .. import structured
 import pyDive.arrays.local.h5_ndarray
 

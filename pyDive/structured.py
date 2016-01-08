@@ -67,8 +67,8 @@ import os
 # check whether this code is executed on target or not
 onTarget = os.environ.get("onTarget", 'False')
 if onTarget == 'False':
-    import IPParallelClient as com
-    from IPython.parallel import interactive
+    import ipyParallelClient as com
+    from ipyparallel import interactive
 import numpy as np
 import operator
 from types import UnboundMethodType

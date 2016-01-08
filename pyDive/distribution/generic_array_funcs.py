@@ -3,7 +3,7 @@
 import types
 from generic_array import DistributedGenericArray
 import numpy as np
-import pyDive.IPParallelClient as com
+import pyDive.ipyParallelClient as com
 
 #: dictionary of *local array* to *distributed array* for all generated arrays.
 record = {}

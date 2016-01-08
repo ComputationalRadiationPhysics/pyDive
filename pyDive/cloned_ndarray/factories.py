@@ -23,7 +23,7 @@ __doc__=\
 """This module holds high-level functions for instanciating :ref:`pyDive.cloned_ndarrays <pyDive.cloned_ndarrays>`."""
 
 import pyDive.cloned_ndarray.cloned_ndarray as cloned_ndarray
-from .. import IPParallelClient as com
+from .. import ipyParallelClient as com
 import numpy as np
 
 def hollow_engines_like(shape, dtype, a):

@@ -20,8 +20,8 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-from IPython.parallel import Client
-from IPython.parallel import interactive
+from ipyparallel import Client
+from ipyparallel import interactive
 from collections import Counter
 import sys
 
@@ -33,7 +33,7 @@ ppn = None
 def init(profile='mpi'):
     """Initialize pyDive.
 
-    :param str profile: The name of the cluster profile of *IPython.parallel*. Has to be an MPI-profile.\
+    :param str profile: The name of the cluster profile of *ipyparallel*. Has to be an MPI-profile.\
         Defaults to 'mpi'.
     """
     # init direct view

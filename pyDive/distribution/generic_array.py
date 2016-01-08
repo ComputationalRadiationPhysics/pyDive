@@ -22,7 +22,7 @@ If not, see <http://www.gnu.org/licenses/>.
 __doc__ = None
 
 import numpy as np
-import pyDive.IPParallelClient as com
+import pyDive.ipyParallelClient as com
 import helper
 from collections import defaultdict
 from operator import mul
@@ -34,14 +34,14 @@ array_id = 0
 class DistributedGenericArray(object):
     """
     Represents a cluster-wide, multidimensional, homogeneous array of fixed-size elements.
-    *cluster-wide* means that its elements are distributed across IPython.parallel-engines.
+    *cluster-wide* means that its elements are distributed across ipyparallel-engines.
     The distribution is done in one or multiply dimensions along user-specified axes.
     The user can optionally specify which engine maps to which index range or leave the default
     that persuits an uniform distribution across all engines.
 
     This **{arraytype_name}** - class is auto-generated out of its local counterpart: **{local_arraytype_name}**.
 
-    The implementation is based on IPython.parallel and local {local_arraytype_name} - arrays.
+    The implementation is based on ipyparallel and local {local_arraytype_name} - arrays.
     Every special operation {local_arraytype_name} implements ("__add__", "__le__", ...) is also
     available for {arraytype_name}.
 
@@ -97,7 +97,7 @@ class DistributedGenericArray(object):
         #: axes on which memory is distributed across :term:`engines <engine>`
         self.distaxes = sorted(distaxes)
 
-        # IPython.parallel client view object
+        # ipyparallel client view object
         self.view = com.getView()
 
         if decomposition is None:
