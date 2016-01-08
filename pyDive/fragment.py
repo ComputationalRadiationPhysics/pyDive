@@ -22,6 +22,7 @@ __doc__ = None
 
 from . import ipyParallelClient as com
 from ipyparallel import interactive
+import psutil
 try:
     from .arrays.h5_ndarray import h5_ndarray
 except ImportError:

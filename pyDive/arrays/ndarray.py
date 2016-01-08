@@ -29,7 +29,12 @@ ndarray = generic_array.distribute(np.ndarray, "ndarray", "np", interengine_copi
 factories = generic_array.generate_factories(ndarray, ("empty", "zeros", "ones"), np.float)
 factories.update(generic_array.generate_factories_like(ndarray, ("empty_like", "zeros_like", "ones_like")))
 
-globals().update(factories)
+empty = factories["empty"]
+zeros = factories["zeros"]
+ones = factories["ones"]
+empty_like = factories["empty_like"]
+zeros_like = factories["zeros_like"]
+ones_like = factories["ones_like"]
 
 def array(array_like, distaxes='all'):
     """Create a pyDive.ndarray instance from an array-like object.

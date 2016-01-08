@@ -185,8 +185,7 @@ make_special_op = lambda op: lambda self, *args: self.__elementwise_op__(op, *ar
 special_ops_dict = {op : make_special_op(op) for op in \
     set(binary_ops + binary_rops + binary_iops + unary_ops + comp_ops) & special_ops_avail}
 
-from types import MethodType
-
+# add everything to class
 for name, func in special_ops_dict.items():
     setattr(gpu_ndarray, name, func)
 

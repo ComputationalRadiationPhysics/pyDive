@@ -20,7 +20,6 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-import numpy as np
 import h5py as h5
 from pyDive.arrays.ndarray import hollow_like
 import pyDive.distribution.generic_array as generic_array

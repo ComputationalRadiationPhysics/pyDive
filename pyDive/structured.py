@@ -62,14 +62,11 @@ every method call or operation is forwarded to the individual arrays.::
 Here the forwarded method calls are ``astype`` and ``__add__``.
 """
 
-import sys
 import os
 # check whether this code is executed on target or not
 onTarget = os.environ.get("onTarget", 'False')
 if onTarget == 'False':
     from . import ipyParallelClient as com
-    from ipyparallel import interactive
-import numpy as np
 import operator
 
 arrayOfStructs_id = 0
@@ -266,10 +263,11 @@ make_special_op = lambda op: lambda self, *args: self.__special_operation__(op, 
 
 special_ops_dict = {op : make_special_op(op) for op in binary_ops + binary_rops + unary_ops + comp_ops}
 
-from types import MethodType
-
+# add everything to class
 for name, func in special_ops_dict.items():
     setattr(VirtualArrayOfStructs, name, func)
+
+#---------------------------------------------------------------------------------------------
 
 def map_trees(f, *trees):
     if type(trees[0]) is not dict:

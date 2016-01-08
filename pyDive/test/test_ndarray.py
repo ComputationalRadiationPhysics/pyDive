@@ -1,6 +1,5 @@
 import pyDive
 import numpy as np
-import random
 
 sizes = ((1,), (5,), (29,), (64,),
         (1, 1), (1, 5), (5, 29), (64, 1), (64, 64),

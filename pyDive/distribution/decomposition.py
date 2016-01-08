@@ -20,7 +20,6 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 
 import numpy as np
-from collections import OrderedDict
 from itertools import product
 from operator import mul
 import pyDive.ipyParallelClient as com

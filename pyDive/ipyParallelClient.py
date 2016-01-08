@@ -23,7 +23,7 @@ __doc__ = None
 from ipyparallel import Client
 from ipyparallel import interactive
 from collections import Counter
-import sys
+from mpi4py import MPI
 
 #: IPParallel direct view
 view = None

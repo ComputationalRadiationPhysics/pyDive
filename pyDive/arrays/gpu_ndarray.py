@@ -30,7 +30,11 @@ gpu_ndarray = generic_array.distribute(pyDive.arrays.local.gpu_ndarray.gpu_ndarr
 
 factories = generic_array.generate_factories(gpu_ndarray, ("empty", "zeros"), np.float)
 factories.update(generic_array.generate_factories_like(gpu_ndarray, ("empty_like", "zeros_like")))
-globals().update(factories)
+
+empty = factories["empty"]
+zeros = factories["zeros"]
+empty_like = factories["empty_like"]
+zeros_like = factories["zeros_like"]
 
 def ones(shape, dtype=np.float, distaxes='all', **kwargs):
     result = zeros(shape, dtype, distaxes, **kwargs)

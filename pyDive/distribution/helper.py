@@ -20,8 +20,6 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-import numpy as np
-
 def getFirstSliceIdx(slice_obj, begin, end):
     if slice_obj.start > begin:
         if slice_obj.start >= end: return None

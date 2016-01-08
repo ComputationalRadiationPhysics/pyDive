@@ -22,6 +22,7 @@ __doc__ = None
 
 from .. import ipyParallelClient as com
 import numpy as np
+from pyDive.distribution import helper
 
 cloned_ndarray_id = 0
 
@@ -104,7 +105,7 @@ class cloned_ndarray(object):
         # shape of the new sliced ndarray
         new_shape, clean_view = helper.window_of_shape(self.shape, args)
 
-        result = pyDive.cloned.hollow_engines_like(new_shape, self.dtype, self)
+        result = cloned_ndarray(new_shape, self.dtype, self.target_ranks, True)
 
         self.view.push({'args' : args}, targets=self.target_ranks)
         self.view.execute('%s = %s[args]' % (result.name, self.name), targets=self.target_ranks)

@@ -21,9 +21,8 @@ If not, see <http://www.gnu.org/licenses/>.
 __doc__ = None
 
 from . import ipyParallelClient as com
-from ipyparallel import interactive, require
+from ipyparallel import interactive
 from .structured import VirtualArrayOfStructs, flat_values
-import numpy as np
 from .distribution.generic_array import record
 
 def map(f, *arrays, **kwargs):

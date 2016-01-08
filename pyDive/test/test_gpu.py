@@ -2,7 +2,6 @@
 
 import pyDive
 import numpy as np
-import random
 import pytest
 
 gpu_enabled = pytest.mark.skipif(not hasattr(pyDive, "gpu"), reason="pycuda not installed")
