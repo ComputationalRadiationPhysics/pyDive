@@ -46,8 +46,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pyDive'
-copyright = u'2014,2015, Heiko Burau'
+project = 'pyDive'
+copyright = '2014,2015, Heiko Burau'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -199,8 +199,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'pyDive.tex', u'pyDive Documentation',
-   u'Heiko Burau', 'manual'),
+  ('index', 'pyDive.tex', 'pyDive Documentation',
+   'Heiko Burau', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -229,8 +229,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pydive', u'pyDive Documentation',
-     [u'Heiko Burau'], 1)
+    ('index', 'pydive', 'pyDive Documentation',
+     ['Heiko Burau'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -243,8 +243,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'pyDive', u'pyDive Documentation',
-   u'Heiko Burau', 'pyDive', 'One line description of project.',
+  ('index', 'pyDive', 'pyDive Documentation',
+   'Heiko Burau', 'pyDive', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -264,10 +264,10 @@ texinfo_documents = [
 # -- Options for Epub output ----------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'pyDive'
-epub_author = u'Author'
-epub_publisher = u'Author'
-epub_copyright = u'2014, Author'
+epub_title = 'pyDive'
+epub_author = 'Author'
+epub_publisher = 'Author'
+epub_copyright = '2014, Author'
 
 # The basename for the epub file. It defaults to the project name.
 #epub_basename = u'pyDive'

@@ -21,10 +21,10 @@ If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
 from collections import OrderedDict
-from itertools import product, izip, imap
+from itertools import product
 from operator import mul
 import pyDive.ipyParallelClient as com
-import helper
+from . import helper
 
 class completeDC:
 
@@ -37,11 +37,15 @@ class completeDC:
         :type offsets: list of lists
         :param ranks: linear list of :term:`engine` ranks holding the local arrays.
         """
+        try:
+            shape = tuple(shape)
+        except TypeError:
+            shape = (shape,)
         self.shape = shape
-        if type(distaxes) not in (list, tuple):
-            distaxes = (distaxes,)
-        elif type(distaxes) is not tuple:
+        try:
             distaxes = tuple(distaxes)
+        except TypeError:
+            distaxes = (distaxes,)
         self.distaxes = distaxes
 
         if offsets is None:
@@ -56,18 +60,19 @@ class completeDC:
 
             def factorize(n):
                 if n == 1: yield 1; return
-                for f in range(2,n//2+1) + [n]:
+                for f in list(range(2,n//2+1)) + [n]:
                     while n%f == 0:
                         n //= f
                         yield f
             prime_factors = list(factorize(num_patches))[::-1] # get prime factors of number of engines in descending order
+
             sorted_distaxes = sorted(self.distaxes, key=lambda axis: self.shape[axis]) # sort distributed axes in ascending order
             # calculate number of available targets (engines) per distributed axis
             # This value should be close to array_edge_length / patch_edge_length
             num_targets_av = [1] * len(self.shape)
 
             for distaxis in sorted_distaxes[:-1]:
-                num_partitions = self.shape[distaxis] / patch_edge_length
+                num_partitions = self.shape[distaxis] // patch_edge_length
                 while float(num_targets_av[distaxis]) < num_partitions and prime_factors:
                     num_targets_av[distaxis] *= prime_factors.pop()
             # the largest axis gets the remaining (largest) prime_factors
@@ -77,19 +82,19 @@ class completeDC:
             # calculate offsetsnd_idx_A
             localshape = np.array(self.shape)
             for distaxis in self.distaxes:
-                localshape[distaxis] = (self.shape[distaxis] - 1) / num_targets_av[distaxis] + 1
+                localshape[distaxis] = (self.shape[distaxis] - 1) // num_targets_av[distaxis] + 1
 
             # number of occupied targets for each distributed axis by this ndarray instance
-            num_targets = [(self.shape[distaxis] - 1) / localshape[distaxis] + 1 for distaxis in self.distaxes]
+            num_targets = [(self.shape[distaxis] - 1) // localshape[distaxis] + 1 for distaxis in self.distaxes]
 
             # calculate offsets
             offsets = [np.arange(num_targets[i]) * localshape[self.distaxes[i]] for i in range(len(self.distaxes))]
 
         self.offsets = offsets
-
         # to be safe, recalculate the number of patches
         num_parts_aa = [len(offsets_sa) for offsets_sa in self.offsets]
         num_patches = int(np.prod(num_parts_aa))
+
         if ranks is None:
             ranks = tuple(range(num_patches))
         else:
@@ -146,16 +151,16 @@ class completeDC:
                 firstSliceIdx = helper.getFirstSliceIdx(distaxis_slice, begin, end)
                 if firstSliceIdx is None: continue
                 # calculate last slice index of distaxis_slice
-                tmp = (distaxis_slice.stop-1 - distaxis_slice.start) / distaxis_slice.step
+                tmp = (distaxis_slice.stop-1 - distaxis_slice.start) // distaxis_slice.step
                 lastIdx = distaxis_slice.start + tmp * distaxis_slice.step
                 # calculate last sub index within [begin,end)
-                tmp = (end-1 - firstSliceIdx) / distaxis_slice.step
+                tmp = (end-1 - firstSliceIdx) // distaxis_slice.step
                 lastSliceIdx = firstSliceIdx + tmp * distaxis_slice.step
                 lastSliceIdx = min(lastSliceIdx, lastIdx)
                 # slice object for current target
                 new_slices_sa.append(slice(firstSliceIdx - begin, lastSliceIdx+1 - begin, distaxis_slice.step))
                 # number of indices remaining on the current target after slicing
-                num_ids = (lastSliceIdx - firstSliceIdx) / distaxis_slice.step + 1
+                num_ids = (lastSliceIdx - firstSliceIdx) // distaxis_slice.step + 1
                 # new offset for current target
                 new_offsets_sa.append(total_ids)
                 total_ids += num_ids
@@ -175,7 +180,7 @@ class completeDC:
         # create list of targets which participate slicing, this is new_ranks
         new_ranks = []
         for rank_idx_vector in product(*new_rank_ids_aa):
-            rank_idx = sum(imap(mul, rank_idx_vector, self.pitch))
+            rank_idx = sum(map(mul, rank_idx_vector, self.pitch))
             new_ranks.append(self.ranks[rank_idx])
 
         return completeDC(new_shape, new_distaxes, new_offsets, new_ranks), new_slices
@@ -196,7 +201,7 @@ class completeDC:
         """
         properties = []
         if nd_idx:
-            indices = [xrange(len(offsets_pa)) for offsets_pa in self.offsets]
+            indices = [range(len(offsets_pa)) for offsets_pa in self.offsets]
             properties.append(product(*indices))
         if offsets:
             properties.append(product(*self.offsets))
@@ -209,7 +214,7 @@ class completeDC:
             properties.append(product(*position))
 
         if len(properties) > 1:
-            return izip(*properties)
+            return zip(*properties)
         else:
             return properties[0]
 
@@ -251,7 +256,7 @@ def common_decomposition(dcA, dcB):
             offsets_sa = dc.offsets[dc.distaxes.index(axis)]
             new_offsets.append(offsets_sa)
             # partition indices of A and B
-            ids = range(len(offsets_sa))
+            ids = list(range(len(offsets_sa)))
             nd_idx_AB.append((ids,[None]*len(ids)) if id(dc) == id(dcA) else ([None]*len(ids),ids))
             # offsets of A and B
             offsets_AB.append((offsets_sa, np.zeros(len(offsets_sa),dtype=int)) if id(dc) == id(dcA) else (np.zeros(len(offsets_sa),dtype=int),offsets_sa) )
@@ -313,23 +318,25 @@ def common_patches(dcA, dcB, nd_idx=False, offsets=False, next_offsets=False, ra
     dc, nd_idx_AB, offsets_AB = common_decomposition(dcA, dcB)
 
     def get_ranks_AB(dcA, dcB, nd_idx_AB):
-        nd_ids_A = zip(*nd_idx_AB)[0]
-        nd_ids_B = zip(*nd_idx_AB)[1]
+        AB_nd_idx = tuple(zip(*nd_idx_AB))
+        nd_ids_A = AB_nd_idx[0]
+        nd_ids_B = AB_nd_idx[1]
 
-        for nd_idx_A, nd_idx_B in izip(product(*nd_ids_A), product(*nd_ids_B)):
-            nd_idx_A = filter(lambda i: i is not None, nd_idx_A)
-            nd_idx_B = filter(lambda i: i is not None, nd_idx_B)
+        for nd_idx_A, nd_idx_B in zip(product(*nd_ids_A), product(*nd_ids_B)):
+            nd_idx_A = [i for i in nd_idx_A if i is not None]
+            nd_idx_B = [i for i in nd_idx_B if i is not None]
 
-            idx_A = sum(imap(mul, nd_idx_A, dcA.pitch))
-            idx_B = sum(imap(mul, nd_idx_B, dcB.pitch))
+            idx_A = sum(map(mul, nd_idx_A, dcA.pitch))
+            idx_B = sum(map(mul, nd_idx_B, dcB.pitch))
 
             yield dcA.ranks[idx_A], dcB.ranks[idx_B]
 
     def get_offsets_AB(offsets_AB):
-        offsets_A = zip(*offsets_AB)[0]
-        offsets_B = zip(*offsets_AB)[1]
+        AB_offsets = tuple(zip(*offsets_AB))
+        offsets_A = AB_offsets[0]
+        offsets_B = AB_offsets[1]
 
-        return izip(product(*offsets_A), product(*offsets_B))
+        return zip(product(*offsets_A), product(*offsets_B))
 
     properties = []
     if ranks_AB:
@@ -337,4 +344,4 @@ def common_patches(dcA, dcB, nd_idx=False, offsets=False, next_offsets=False, ra
     if offsets_AB:
         properties.append(get_offsets_AB(offsets_AB))
 
-    return izip(dc.patches(nd_idx, offsets, next_offsets), *properties)
+    return zip(dc.patches(nd_idx, offsets, next_offsets), *properties)

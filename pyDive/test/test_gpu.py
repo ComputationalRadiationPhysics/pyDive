@@ -18,7 +18,7 @@ def test_basics(init_pyDive):
         for dtype in dtypes:
             ref = (np.random.rand(*size) * 100.0).astype(dtype)
             test_array_cpu = pyDive.array(ref)
-            test_array = pyDive.gpu.empty(size, dtype, distaxes=range(len(size)))
+            test_array = pyDive.gpu.empty(size, dtype, distaxes=list(range(len(size))))
 
             test_array[:] = test_array_cpu
 
@@ -45,7 +45,7 @@ def test_interengine(init_pyDive):
         for dtype in dtypes:
             ref = (np.random.rand(*size) * 100.0).astype(dtype)
             test_array_cpu = pyDive.array(ref)
-            test_array = pyDive.gpu.empty(size, dtype, distaxes=range(len(size)))
+            test_array = pyDive.gpu.empty(size, dtype, distaxes=list(range(len(size))))
 
             test_array[:] = test_array_cpu
 

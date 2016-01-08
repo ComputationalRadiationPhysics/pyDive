@@ -27,8 +27,8 @@ __doc__=\
 import os
 import os.path
 import re
-import arrays.h5_ndarray as h5
-import structured
+from .arrays import h5_ndarray as h5
+from . import structured
 
 def loadSteps(steps, folder_path, data_path, distaxis=0):
     """Python generator object looping all hdf5-data found in *folder_path*
@@ -130,5 +130,5 @@ def loadStep(step, folder_path, data_path, distaxis=0):
         Notes:
             - If the dataset has a '**sim_unit**' attribute its value is stored in ``h5array.unit``.
     """
-    step, field = loadSteps([step], folder_path, data_path, distaxis).next()
+    step, field = next(loadSteps([step], folder_path, data_path, distaxis))
     return field

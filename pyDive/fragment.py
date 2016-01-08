@@ -20,14 +20,14 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-import ipyParallelClient as com
+from . import ipyParallelClient as com
 from ipyparallel import interactive
 try:
-    from arrays.h5_ndarray import h5_ndarray
+    from .arrays.h5_ndarray import h5_ndarray
 except ImportError:
     h5_ndarray = None
 try:
-    from arrays.ad_ndarray import ad_ndarray
+    from .arrays.ad_ndarray import ad_ndarray
 except ImportError:
     ad_ndarray = None
 import math
@@ -85,7 +85,7 @@ def fragment(*arrays, **kwargs):
 
         for h5_array, offset in pyDive.fragment(big_h5_array, offset=True):
             a = h5_array.load() # no crash
-            print "This fragment's offset is", offset, "on axis:", a.distaxis
+            print("This fragment's offset is", offset, "on axis:", a.distaxis)
     """
     # default keyword arguments
     memory_limit = kwargs.get("memory_limit", 0.25)

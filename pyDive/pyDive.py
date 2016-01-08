@@ -23,56 +23,55 @@ __doc__=\
 """Make most used functions and modules directly accessable from pyDive."""
 
 # ndarray
-import arrays.ndarray
-globals().update(arrays.ndarray.factories)
-globals().update(arrays.ndarray.ufuncs)
-from arrays.ndarray import ndarray
+from .arrays import ndarray as ndarray_mod
+globals().update(ndarray_mod.factories)
+globals().update(ndarray_mod.ufuncs)
+from .arrays.ndarray import ndarray
 
 # hdf5
 try:
-    import arrays.h5_ndarray as h5
+    from .arrays import h5_ndarray as h5
 except ImportError:
     pass
 
 # adios
 try:
-    import arrays.ad_ndarray as adios
+    from .arrays import ad_ndarray as adios
 except ImportError:
     pass
 
 # gpu
 try:
-    import arrays.gpu_ndarray as gpu
+    from .arrays import gpu_ndarray as gpu
 except ImportError:
     pass
 
 # cloned_ndarray
-import cloned_ndarray.factories
-cloned = cloned_ndarray.factories
+from .cloned_ndarray import factories as cloned
 
 # fragmentation
-from fragment import fragment
+from .fragment import fragment
 
 ## algorithm
-import algorithm
+from . import algorithm
 map = algorithm.map
 reduce = algorithm.reduce
 
 # particle-mesh mappings
-import mappings
+from . import mappings
 mesh2particles = mappings.mesh2particles
 particles2mesh = mappings.particles2mesh
 
 # structured
-import structured
+from . import structured
 structured = structured.structured
 
 # picongpu
-import picongpu
+from . import picongpu
 picongpu = picongpu
 
 # init
-import ipyParallelClient
+from . import ipyParallelClient
 init = ipyParallelClient.init
 
 

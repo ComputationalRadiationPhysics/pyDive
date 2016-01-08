@@ -20,11 +20,11 @@ If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-import ipyParallelClient as com
+from . import ipyParallelClient as com
 from ipyparallel import interactive, require
-from structured import VirtualArrayOfStructs
+from .structured import VirtualArrayOfStructs, flat_values
 import numpy as np
-from distribution.generic_array import record
+from .distribution.generic_array import record
 
 def map(f, *arrays, **kwargs):
     """Applies *f* on local arrays of *arrays*. It is very similar
@@ -50,12 +50,21 @@ def map(f, *arrays, **kwargs):
      - ``f`` must not return a *VirtualArrayOfStructs* yet.
     """
 
-    with_decomposition = filter(lambda a: hasattr(a, "decomposition"), arrays)
-    assert all(with_decomposition[0] == d for d in with_decomposition),\
+    with_decomposition = [a for a in arrays if hasattr(a, "decomposition")]
+    decompositions = []
+    for a in with_decomposition:
+        decomp = a.decomposition
+        if type(decomp) is dict:
+            # `decomp` is a tree (dict of dicts), so flatten it first
+            decompositions += list(flat_values(decomp))
+        else:
+            decompositions.append(decomp)
+
+    assert all(decompositions[0] == d for d in decompositions),\
         "All arrays must have the same decomposition."
 
     def map_wrapper(f, array_names, **kwargs):
-        arrays = map(globals().get, array_names)
+        arrays = tuple(map(globals().get, array_names))
         map_result = f(*arrays, **kwargs)
         globals()["map_result"] = map_result
         return (type(map_result), map_result.dtype) if map_result is not None else None
@@ -67,8 +76,7 @@ def map(f, *arrays, **kwargs):
     tmp_targets = view.targets # save current target list
     view.targets = ref_array.ranks()
 
-    import __builtin__
-    array_names = __builtin__.map(repr, arrays)
+    array_names = [repr(a) for a in arrays]
     local_results = view.apply(interactive(map_wrapper), interactive(f), array_names, **kwargs)
 
     result = None
@@ -120,8 +128,8 @@ def reduce(op, array, op_array=None):
     else:
         targets_results = view.apply(interactive(reduce_wrapper_generic), array_name, op_array)
 
-    import __builtin__
-    result = __builtin__.reduce(op, targets_results) # reduce over targets' results
+    import functools
+    result = functools.reduce(op, targets_results) # reduce over targets' results
 
     view.targets = tmp_targets # restore target list
     return result

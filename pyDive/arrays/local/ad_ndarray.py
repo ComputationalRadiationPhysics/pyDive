@@ -35,7 +35,7 @@ class ad_ndarray(object):
         variable = fileHandle.var[variable_path]
         self.dtype = variable.dtype
         if shape is None:
-            shape = map(int, variable.dims)
+            shape = list(map(int, variable.dims))
         self.shape = tuple(shape)
         fileHandle.close()
 

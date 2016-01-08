@@ -62,6 +62,7 @@ class h5_ndarray(object):
         dataset = fileHandle[self.dataset_path]
         result = dataset[tuple(window)]
         fileHandle.close()
+
         return result
 
     def __getitem__(self, args):
