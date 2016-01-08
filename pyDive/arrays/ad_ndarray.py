@@ -79,7 +79,7 @@ def open(filename, datapath, distaxes='all'):
     :return: pyDive.adios.ad_ndarray instance
     """
     fileHandle = ad.file(filename)
-    variable_paths = fileHandle.var.keys()
+    variable_paths = list(fileHandle.var.keys())
     fileHandle.close()
 
     pairs = []

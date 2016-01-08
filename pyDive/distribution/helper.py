@@ -26,7 +26,7 @@ def getFirstSliceIdx(slice_obj, begin, end):
     if slice_obj.start > begin:
         if slice_obj.start >= end: return None
         return slice_obj.start
-    i = (begin-1 - slice_obj.start) / slice_obj.step + 1
+    i = (begin-1 - slice_obj.start) // slice_obj.step + 1
     idx = slice_obj.start + i * slice_obj.step
     if idx >= end or idx >= slice_obj.stop: return None
     return idx
@@ -42,7 +42,7 @@ def window_of_shape(shape, window):
         clean_slice = slice(*w.indices(s))
         clean_view.append(clean_slice)
         # new size of axis i
-        new_shape.append((clean_slice.stop-1 - clean_slice.start) / clean_slice.step + 1)
+        new_shape.append((clean_slice.stop-1 - clean_slice.start) // clean_slice.step + 1)
     return new_shape, clean_view
 
 def window_of_view(view, window):
@@ -52,7 +52,7 @@ def window_of_view(view, window):
         if type(v) is int:
             result_view.append(v)
             continue
-        w = window.next()
+        w = next(window)
         if type(w) is int:
             result_view.append(v.start + w * v.step)
             continue

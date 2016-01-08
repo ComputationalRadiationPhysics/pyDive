@@ -23,11 +23,12 @@ __doc__ = None
 
 import numpy as np
 import pyDive.ipyParallelClient as com
-import helper
+from . import helper
 from collections import defaultdict
 from operator import mul
-from itertools import imap, product
-import decomposition as decomposition_mod
+from itertools import product
+from functools import reduce
+from . import decomposition as decomposition_mod
 
 array_id = 0
 
@@ -157,7 +158,7 @@ class DistributedGenericArray(object):
 
     def __get_linear_rank_idx(self, rank_idx_vector):
         """convert rank_idx_vector to linear rank index"""
-        return sum(imap(mul, rank_idx_vector, self.decomposition.pitch))
+        return sum(map(mul, rank_idx_vector, self.decomposition.pitch))
 
     def __getitem__(self, args):
         # bitmask indexing
@@ -393,7 +394,6 @@ class DistributedGenericArray(object):
 
             for distaxis, begin, end, beginA, beginB in\
               zip(common_axes, offsets, next_offsets, offsets_AB[0], offsets_AB[1]):
-                #print "beginAB", beginAB
                 my_window[distaxis] = slice(begin - beginA, end - beginA)
                 other_window[distaxis] = slice(begin - beginB, end - beginB)
 
@@ -403,8 +403,8 @@ class DistributedGenericArray(object):
             tag += 1
 
         # push communication meta-data to engines
-        self.view.scatter('src_commData', my_commData.values(), targets=my_commData.keys())
-        self.view.scatter('dest_commData', other_commData.values(), targets=other_commData.keys())
+        self.view.scatter('src_commData', my_commData.values(), targets=tuple(my_commData.keys()))
+        self.view.scatter('dest_commData', other_commData.values(), targets=tuple(other_commData.keys()))
 
         # result ndarray
         result = self.__class__(self.shape, self.dtype, other.distaxes, other.decomposition, False, **self.kwargs)
@@ -414,15 +414,15 @@ class DistributedGenericArray(object):
         return result
 
     def info(self, name):
-        print name + " info:"
-        print "{}.name".format(name), self.name
-        print "{}.target_ranks".format(name), self.decomposition.ranks
-        print "{}.target_offsets".format(name), self.decomposition.offsets
-        print "{}.distaxes".format(name), self.distaxes
+        print(name + " info:")
+        print("{}.name".format(name), self.name)
+        print("{}.target_ranks".format(name), self.decomposition.ranks)
+        print("{}.target_offsets".format(name), self.decomposition.offsets)
+        print("{}.distaxes".format(name), self.distaxes)
         self.view.execute("dt = str({}.dtype)".format(repr(self)), targets=self.decomposition.ranks)
-        print "{}.dtypes".format(name), self.view.pull("dt", targets=self.decomposition.ranks)
+        print("{}.dtypes".format(name), self.view.pull("dt", targets=self.decomposition.ranks))
         self.view.execute("t = str(type({}))".format(repr(self)), targets=self.decomposition.ranks)
-        print "{}.types".format(name), self.view.pull("t", targets=self.decomposition.ranks)
+        print("{}.types".format(name), self.view.pull("t", targets=self.decomposition.ranks))
 
     def __elementwise_op__(self, op, *args):
         args = [arg.dist_like(self) if hasattr(arg, "dist_like") else arg for arg in args]
@@ -452,4 +452,4 @@ class DistributedGenericArray(object):
 
 #----------------------------------------------------------------
 
-from generic_array_funcs import *
+from .generic_array_funcs import *

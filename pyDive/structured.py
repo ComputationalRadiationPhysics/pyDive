@@ -67,11 +67,10 @@ import os
 # check whether this code is executed on target or not
 onTarget = os.environ.get("onTarget", 'False')
 if onTarget == 'False':
-    import ipyParallelClient as com
+    from . import ipyParallelClient as com
     from ipyparallel import interactive
 import numpy as np
 import operator
-from types import UnboundMethodType
 
 arrayOfStructs_id = 0
 
@@ -101,16 +100,19 @@ class VirtualArrayOfStructs(object):
 
     def __getattr__(self, name):
         if hasattr(self.firstArray, name):
-            method = getattr(self.firstArray, name)
-            assert callable(method),\
-                "Unlike method access, attribute access of individual arrays is not supported."
+            #method = getattr(self.firstArray, name)
+            #assert callable(method),\
+            #    "Unlike method access, attribute access of individual arrays is not supported."
 
-            method_tree = self.map(lambda a: getattr(a, name))
+            attr_tree = self.map(lambda a: getattr(a, name))
+
+            if not callable(getattr(self.firstArray, name)):
+                return attr_tree
 
             def foreachLeafCall(*args, **kwargs):
                 aos = tuple(arg.structOfArrays for arg in args if type(arg).__name__ is "VirtualArrayOfStructs")
-                misc_args = tuple(filter(lambda arg: type(arg) is not VirtualArrayOfStructs, args))
-                return structured(map_trees(lambda method, *a: method(*(a + misc_args), **kwargs), *((method_tree,) + aos)))
+                misc_args = tuple(arg for arg in args if type(arg) is not VirtualArrayOfStructs)
+                return structured(map_trees(lambda method, *a: method(*(a + misc_args), **kwargs), *((attr_tree,) + aos)))
 
             return foreachLeafCall
 
@@ -267,12 +269,21 @@ special_ops_dict = {op : make_special_op(op) for op in binary_ops + binary_rops 
 from types import MethodType
 
 for name, func in special_ops_dict.items():
-    setattr(VirtualArrayOfStructs, name, MethodType(func, None, VirtualArrayOfStructs))
+    setattr(VirtualArrayOfStructs, name, func)
 
 def map_trees(f, *trees):
     if type(trees[0]) is not dict:
         return f(*trees)
     return {k : map_trees(f, *[t[k] for t in trees]) for k in trees[0]}
+
+def flat_values(tree):
+    values = list(tree.values())
+    while values:
+        value = values.pop()
+        if type(value) is dict:
+            values += list(value.values())
+        else:
+            yield value
 
 def structured(data):
     """Create a new virtual *array-of-structures*.

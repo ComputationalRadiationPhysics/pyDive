@@ -19,7 +19,7 @@ and the GNU Lesser General Public License along with pyDive.
 If not, see <http://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
+
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 import io
@@ -52,8 +52,11 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
-        profile_name = raw_input("Name of your ipyparallel profile you want to run the tests with: ")
-        n_engines = raw_input("Number of engines: ")
+        # python2/3 agnostic
+        real_raw_input = vars(__builtins__).get('raw_input', input)
+
+        profile_name = real_raw_input("Name of your ipyparallel profile you want to run the tests with: ")
+        n_engines = real_raw_input("Number of engines: ")
 
         # start ipcluster
         print("Waiting for engines to start...")

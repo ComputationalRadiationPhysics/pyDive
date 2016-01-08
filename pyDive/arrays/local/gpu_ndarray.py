@@ -188,7 +188,7 @@ special_ops_dict = {op : make_special_op(op) for op in \
 from types import MethodType
 
 for name, func in special_ops_dict.items():
-    setattr(gpu_ndarray, name, MethodType(func, None, gpu_ndarray))
+    setattr(gpu_ndarray, name, func)
 
 # -------------------- factories -----------------------------------
 

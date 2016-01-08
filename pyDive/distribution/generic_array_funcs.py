@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import types
-from generic_array import DistributedGenericArray
+from .generic_array import DistributedGenericArray
 import numpy as np
+from copy import deepcopy
 import pyDive.ipyParallelClient as com
 
 #: dictionary of *local array* to *distributed array* for all generated arrays.
@@ -35,7 +36,9 @@ def distribute(local_arraytype, newclassname, target_modulename, interengine_cop
         local_arraytype_name=local_arraytype.__module__ + "." +  local_arraytype.__name__,
         arraytype_name=newclassname)
     # copy methods which have formated docstrings because their docstrings are going to be modified
-    copied_methods = {k : types.FunctionType(v.func_code, v.func_globals, name=v.func_name, argdefs=v.func_defaults)\
+    #copied_methods = {k : types.FunctionType(v.func_code, v.func_globals, name=v.func_name, argdefs=v.func_defaults)\
+    #    for k,v in result_dict.items() if k in formated_doc_funs}
+    copied_methods = {k : deepcopy(v) \
         for k,v in result_dict.items() if k in formated_doc_funs}
     result_dict.update(copied_methods)
 
