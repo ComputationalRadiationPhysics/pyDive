@@ -1,0 +1,119 @@
+language: python
+python:
+  - "2.7"
+  - "3.5"
+
+sudo: false
+
+matrix:
+  allow_failures:
+    # ADIOS is not Python3 compatible
+    - env: USE_ADIOS=SERIAL
+      python: "3.5"
+    # Segmentation fault (why?)
+    - env: USE_ADIOS=SERIAL
+      python: "2.7"
+
+env:
+  global:
+    # h5py: pip install work-around for "mpi.h: No such file or directory"
+    - C_INCLUDE_PATH=/usr/lib/openmpi/include
+    # paths
+    - MXML_ROOT=$HOME/lib/mxml
+    - ADIOS_ROOT=$HOME/lib/adios
+    # default ipython environment for tests
+    - IPP_PROFILE_NAME="mpi"
+    - IPP_NUM_MPI_TASKS=1
+  matrix:
+    - USE_ADIOS=OFF
+    - USE_ADIOS=SERIAL
+  # - USE_ADIOS=MPI # not used by pyDive (yet)
+  # - USE_ADIOS=OFF USE_CUDA=ON
+
+addons:
+  apt:
+    packages:
+    # ipython parallel
+      - openmpi-bin
+      - libopenmpi-dev
+    # h5py
+      - libhdf5-openmpi-dev
+    # ADIOS dependencies
+    # - libadios-dev # outdated version
+    # for build from latest master
+    # - libmxml-dev  # needs whitelisting: https://github.com/travis-ci/apt-package-whitelist/issues/2229
+      - gfortran
+      - zlib1g-dev
+    # CUDA 6.5 dependencies
+    # - nvidia-common
+    # - nvidia-cuda-dev
+    # - nvidia-cuda-toolkit
+
+cache:
+  apt: true
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/lib
+
+install:
+  # ADIOS install & mxml
+  - export LD_LIBRARY_PATH=$ADIOS_ROOT/lib:$MXML_ROOT/lib:$LD_LIBRARY_PATH
+  - export PATH=$ADIOS_ROOT/bin:$PATH
+  - if [ "$USE_ADIOS" != "OFF" ]; then
+      wget http://www.msweet.org/files/project3/mxml-2.9.tar.gz &&
+      tar -xvzf mxml-2.9.tar.gz &&
+      cd mxml-2.9 &&
+      ./configure --prefix=$MXML_ROOT --enable-shared &&
+      make -j && make install;
+      cd -; fi
+  - ADIOS_FOUND=$(which adios_config >/dev/null && { echo 0; } || { echo 1; })
+  - if [ $ADIOS_FOUND -ne 0 ] && [ "$USE_ADIOS" != "OFF" ]; then
+      git clone --depth=50 --branch=master https://github.com/ornladios/ADIOS.git adios &&
+      cd adios &&
+      ls -hal . &&
+      ./autogen.sh &&
+      LDFLAGS="-fPIC -pthread" CFLAGS="-fPIC -g -O2" CXXFLAGS="-fPIC -g -O2"
+     ./configure --prefix=$ADIOS_ROOT
+     --with-zlib --with-mpi
+     --enable-static --enable-shared
+     --with-mxml=$MXML_ROOT --without-dataspaces &&
+     make -j && make install;
+     cd -; fi
+  # python packages
+  - pip install --upgrade pip
+  - pip install --upgrade pyflakes
+  - pip install --upgrade flake8
+# - pip install --upgrade pylint
+  - pip install --upgrade -r requirements.txt
+  - if [ "$USE_ADIOS" == "SERIAL" ]; then pip install --upgrade adios; fi
+  - if [ "$USE_ADIOS" == "MPI" ]; then pip install --upgrade adios_mpi; fi
+  - if [ "$USE_CUDA"  == "ON" ]; then pip install --upgrade pycuda; fi
+
+before_script:
+  # print interesting versions
+  - python --version
+  - ipython --version
+  - python -c "import numpy as np; print( np.__version__ )"
+  - python -c "import h5py as h5; print( h5.__version__ )"
+  - python -c "import mpi4py; print( mpi4py.__version__ )"
+  - if [ "$USE_ADIOS" != "OFF" ]; then
+      python -c "import pkg_resources; print(pkg_resources.get_distribution('adios').version)";
+    fi
+  # static code analysis
+  #   pyflakes: mainly warnings, unused code, etc.
+  # - python -m pyflakes .
+  #   flake8: style only, enforce PEP 8
+  - python -m flake8 --max-line-length=109 --ignore=E226,E731 ./pyDive/
+  #   Pylint: yet an other linter
+  # - python -m pylint pyDive
+
+script:
+  # test suite
+  - ipython profile create --parallel --profile=mpi
+  - ipcluster start -n $IPP_NUM_MPI_TASKS --profile=mpi &
+  - sleep 35 # -.-
+  - py.test
+  - killall ipcluster
+  # install pyDive
+  - python setup.py install
+    # or: pip -vvv install .

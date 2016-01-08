@@ -5,3 +5,4 @@ mpi4py>=2.0.0
 h5py>=2.5.0
 psutil>=3.3.0
 pyzmq>=15.1.0
+pytest>=2.8.0
