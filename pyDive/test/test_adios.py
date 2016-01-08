@@ -2,7 +2,6 @@
 
 import pyDive
 import numpy as np
-import adios
 import pytest
 import os
 
@@ -12,6 +11,8 @@ adios_enabled = pytest.mark.skipif(not hasattr(pyDive, "adios"), reason="adios n
 
 @adios_enabled
 def test_adios1(init_pyDive):
+    import adios
+
     var_path = "temperature"
 
     fileHandle = adios.file(input_file)
