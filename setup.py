@@ -78,7 +78,7 @@ setup(
     name='pyDive',
     version=pyDive.__version__,
     url='http://github.com/ComputationalRadiationPhysics/pyDive',
-    license='GNU Affero General Public License v3',
+    license='GNU Library or Lesser General Public License (LGPL) v3+',
     author='Heiko Burau',
     tests_require=['pytest'],
     install_requires=requirements,
