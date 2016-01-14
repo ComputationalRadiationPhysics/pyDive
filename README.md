@@ -3,6 +3,10 @@ pyDive
 
 Distributed Interactive Visualization and Exploration of large datasets.
 
+[![pypi version](https://img.shields.io/pypi/v/pyDive.svg)](https://pypi.python.org/pypi/pyDive)
+[![Number of pyDive Downloads](https://img.shields.io/pypi/dm/pyDive.svg)](https://pypi.python.org/pypi/pyDive/)
+[![pyDive license](https://img.shields.io/pypi/l/pyDive.svg)](#software-license)
+
 ## What is pyDive?
 
 Use pyDive to work with homogeneous, n-dimensional arrays that are too big to fit into your local machine's memory.
