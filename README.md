@@ -3,6 +3,10 @@ pyDive
 
 Distributed Interactive Visualization and Exploration of large datasets.
 
+[![pypi version](https://img.shields.io/pypi/v/pyDive.svg)](https://pypi.python.org/pypi/pyDive)
+[![Number of pyDive Downloads](https://img.shields.io/pypi/dm/pyDive.svg)](https://pypi.python.org/pypi/pyDive/)
+[![pyDive license](https://img.shields.io/pypi/l/pyDive.svg)](#software-license)
+
 ## What is pyDive?
 
 Use pyDive to work with homogeneous, n-dimensional arrays that are too big to fit into your local machine's memory.
@@ -43,5 +47,5 @@ and a [Quickstart](http://computationalradiationphysics.github.io/pyDive/start.h
 
 ## Software License
 
-pyDive is licensed under the **GPLv3+ and LGPLv3+** (it is *dual licensed*).
-Licences can be found in [GPL](COPYING) or [LGPL](COPYING.LESSER), respectively.
+pyDive is licensed under the **LGPLv3+**.
+Licences can be found in [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER), respectively.
