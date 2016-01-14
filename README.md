@@ -43,5 +43,5 @@ and a [Quickstart](http://computationalradiationphysics.github.io/pyDive/start.h
 
 ## Software License
 
-pyDive is licensed under the **GPLv3+ and LGPLv3+** (it is *dual licensed*).
-Licences can be found in [GPL](COPYING) or [LGPL](COPYING.LESSER), respectively.
+pyDive is licensed under the **LGPLv3+**.
+Licences can be found in [COPYING](COPYING) and [COPYING.LESSER](COPYING.LESSER), respectively.
