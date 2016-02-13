@@ -18,10 +18,10 @@ along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
-
 import adios as ad
 import pyDive.distribution.helper as helper
 import numpy as np
+
 
 class ad_ndarray(object):
 
@@ -83,12 +83,12 @@ class ad_ndarray(object):
 
         assert len(args) == len(self.shape),\
             "number of arguments (%d) does not correspond to the dimension (%d)"\
-                 % (len(args), len(self.shape))
+            % (len(args), len(self.shape))
 
         assert not all(type(arg) is int for arg in args),\
             "single data access is not supported by adios"
 
-        assert all(arg.step == 1 or arg.step == None for arg in args if type(arg) is slice),\
+        assert all(arg.step == 1 or arg.step is None for arg in args if type(arg) is slice),\
             "strided access in not supported by adios"
 
         result_shape, clean_view = helper.window_of_shape(self.shape, args)

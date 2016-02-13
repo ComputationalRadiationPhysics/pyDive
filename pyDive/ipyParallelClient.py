@@ -28,11 +28,12 @@ view = None
 #: number of processes per node
 ppn = None
 
+
 def init(profile='mpi'):
     """Initialize pyDive.
 
-    :param str profile: The name of the cluster profile of *ipyparallel*. Has to be an MPI-profile.\
-        Defaults to 'mpi'.
+    :param str profile: The name of the cluster profile of *ipyparallel*.
+                        Has to be an MPI-profile. Defaults to 'mpi'.
     """
     # init direct view
     global view
@@ -79,10 +80,12 @@ def init(profile='mpi'):
     all_ranks = view.apply(get_rank)
     view['target2rank'] = all_ranks
 
+
 def getView():
     global view
     assert view is not None, "pyDive.init() has not been called yet."
     return view
+
 
 def getPPN():
     global ppn

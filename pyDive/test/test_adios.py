@@ -9,6 +9,7 @@ input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "adios_tes
 
 adios_enabled = pytest.mark.skipif(not hasattr(pyDive, "adios"), reason="adios not installed")
 
+
 @adios_enabled
 def test_adios1(init_pyDive):
     import adios

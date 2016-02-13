@@ -25,7 +25,12 @@ import pyDive.ipyParallelClient as com
 from .. import structured
 import pyDive.arrays.local.h5_ndarray
 
-h5_ndarray = generic_array.distribute(pyDive.arrays.local.h5_ndarray.h5_ndarray, "h5_ndarray", "h5_ndarray", may_allocate=False)
+h5_ndarray = generic_array.distribute(
+    local_arraytype=pyDive.arrays.local.h5_ndarray.h5_ndarray,
+    newclassname="h5_ndarray",
+    target_modulename="h5_ndarray",
+    may_allocate=False)
+
 
 def load(self):
     """Load array from file into main memory of all engines in parallel.
@@ -38,6 +43,7 @@ def load(self):
     return result
 h5_ndarray.load = load
 del load
+
 
 def open_dset(filename, dataset_path, distaxes='all'):
     """Create a pyDive.h5.h5_ndarray instance from file.
@@ -61,10 +67,15 @@ def open_dset(filename, dataset_path, distaxes='all'):
     view = com.getView()
     view.scatter("shape", target_shapes, targets=result.decomposition.ranks)
     view.scatter("offset", target_offset_vectors, targets=result.decomposition.ranks)
-    view.execute("{0} = pyDive.arrays.local.h5_ndarray.h5_ndarray('{1}','{2}',shape=shape[0],offset=offset[0])"\
-        .format(result.name, filename, dataset_path), targets=result.decomposition.ranks)
+    view.execute(
+        """{0} = pyDive.arrays.local.h5_ndarray.h5_ndarray(
+            '{1}', '{2}',
+            shape=shape[0],
+            offset=offset[0])""".format(result.name, filename, dataset_path),
+        targets=result.decomposition.ranks)
 
     return result
+
 
 def open(filename, datapath, distaxes='all'):
     """Create an pyDive.h5.h5_ndarray instance respectively a structure of

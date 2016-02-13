@@ -16,12 +16,14 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
 """
+__doc__ = None
 
 import numpy as np
 from itertools import product
 from operator import mul
 import pyDive.ipyParallelClient as com
 from . import helper
+
 
 class completeDC:
 
@@ -56,14 +58,19 @@ class completeDC:
             patch_edge_length = pow(patch_volume, 1.0/len(self.distaxes))
 
             def factorize(n):
-                if n == 1: yield 1; return
-                for f in list(range(2,n//2+1)) + [n]:
-                    while n%f == 0:
+                if n == 1:
+                    yield 1
+                    return
+                for f in list(range(2, n//2+1)) + [n]:
+                    while n % f == 0:
                         n //= f
                         yield f
-            prime_factors = list(factorize(num_patches))[::-1] # get prime factors of number of engines in descending order
+            # get prime factors of number of engines in descending order
+            prime_factors = list(factorize(num_patches))[::-1]
 
-            sorted_distaxes = sorted(self.distaxes, key=lambda axis: self.shape[axis]) # sort distributed axes in ascending order
+            # sort distributed axes in ascending order
+            sorted_distaxes = sorted(self.distaxes, key=lambda axis: self.shape[axis])
+
             # calculate number of available targets (engines) per distributed axis
             # This value should be close to array_edge_length / patch_edge_length
             num_targets_av = [1] * len(self.shape)
@@ -82,10 +89,12 @@ class completeDC:
                 localshape[distaxis] = (self.shape[distaxis] - 1) // num_targets_av[distaxis] + 1
 
             # number of occupied targets for each distributed axis by this ndarray instance
-            num_targets = [(self.shape[distaxis] - 1) // localshape[distaxis] + 1 for distaxis in self.distaxes]
+            num_targets = [(self.shape[distaxis] - 1) // localshape[distaxis] + 1
+                           for distaxis in self.distaxes]
 
             # calculate offsets
-            offsets = [np.arange(num_targets[i]) * localshape[self.distaxes[i]] for i in range(len(self.distaxes))]
+            offsets = [np.arange(num_targets[i]) * localshape[self.distaxes[i]]
+                       for i in range(len(self.distaxes))]
 
         self.offsets = offsets
         # to be safe, recalculate the number of patches
@@ -113,7 +122,7 @@ class completeDC:
         new_slices = [(arg,) for arg in args]
         new_offsets = []
         new_distaxes = []
-        new_rank_ids_aa = [] # aa = all (distributed) axes
+        new_rank_ids_aa = []  # aa = all (distributed) axes
 
         for distaxis, offsets_sa in zip(self.distaxes, self.offsets):
 
@@ -131,7 +140,7 @@ class completeDC:
                 continue
 
             # determine properties of the new, sliced ndarray
-            new_slices_sa = [] # sa = single axis
+            new_slices_sa = []  # sa = single axis
             new_offsets_sa = []
             new_rank_ids_sa = []
             total_ids = 0
@@ -146,7 +155,8 @@ class completeDC:
                 end = offsets_sa[i+1] if i < len(offsets_sa)-1 else self.shape[distaxis]
                 # first slice index within [begin, end)
                 firstSliceIdx = helper.getFirstSliceIdx(distaxis_slice, begin, end)
-                if firstSliceIdx is None: continue
+                if firstSliceIdx is None:
+                    continue
                 # calculate last slice index of distaxis_slice
                 tmp = (distaxis_slice.stop-1 - distaxis_slice.start) // distaxis_slice.step
                 lastIdx = distaxis_slice.start + tmp * distaxis_slice.step
@@ -155,7 +165,9 @@ class completeDC:
                 lastSliceIdx = firstSliceIdx + tmp * distaxis_slice.step
                 lastSliceIdx = min(lastSliceIdx, lastIdx)
                 # slice object for current target
-                new_slices_sa.append(slice(firstSliceIdx - begin, lastSliceIdx+1 - begin, distaxis_slice.step))
+                new_slices_sa.append(slice(firstSliceIdx - begin,
+                                           lastSliceIdx+1 - begin,
+                                           distaxis_slice.step))
                 # number of indices remaining on the current target after slicing
                 num_ids = (lastSliceIdx - firstSliceIdx) // distaxis_slice.step + 1
                 # new offset for current target
@@ -183,7 +195,7 @@ class completeDC:
         return completeDC(new_shape, new_distaxes, new_offsets, new_ranks), new_slices
 
     def __str__(self):
-        return "shape: {}\ndistaxes: {}\noffsets: {}\nranks: {}".format(\
+        return "shape: {}\ndistaxes: {}\noffsets: {}\nranks: {}".format(
             self.shape, self.distaxes, self.offsets, self.ranks)
 
     def patches(self, nd_idx=False, offsets=False, next_offsets=False, position=False):
@@ -203,11 +215,12 @@ class completeDC:
         if offsets:
             properties.append(product(*self.offsets))
         if next_offsets:
-            next_offsets = [tuple(offsets_pa[1:]) + (self.shape[distaxis],) \
-                for offsets_pa, distaxis in zip(self.offsets, self.distaxes)]
+            next_offsets = [tuple(offsets_pa[1:]) + (self.shape[distaxis],)
+                            for offsets_pa, distaxis in zip(self.offsets, self.distaxes)]
             properties.append(product(*next_offsets))
         if position:
-            position = [self.offsets[self.distaxes.index(axis)] if axis in self.distaxes else [0] for axis in range(len(self.shape))]
+            position = [self.offsets[self.distaxes.index(axis)] if axis in self.distaxes else [0]
+                        for axis in range(len(self.shape))]
             properties.append(product(*position))
 
         if len(properties) > 1:
@@ -216,10 +229,14 @@ class completeDC:
             return properties[0]
 
     def __eq__(self, other):
-        if self.shape != other.shape: return False
-        if self.distaxes != other.distaxes: return False
-        if any(not np.array_equal(a, b) for a, b in zip(self.offsets, other.offsets)): return False
-        if self.ranks != other.ranks: return False
+        if self.shape != other.shape:
+            return False
+        if self.distaxes != other.distaxes:
+            return False
+        if any(not np.array_equal(a, b) for a, b in zip(self.offsets, other.offsets)):
+            return False
+        if self.ranks != other.ranks:
+            return False
         return True
 
     def __ne__(self, other):
@@ -227,9 +244,11 @@ class completeDC:
 
 # ============================ end of completeDC ==================================================
 
+
 def common_axes(dcA, dcB):
     # remove double axes
     return sorted(list(set(dcA.distaxes + dcB.distaxes)))
+
 
 def common_decomposition(dcA, dcB):
     """Compute the common (total) decomposition of two individual decompositions
@@ -254,20 +273,26 @@ def common_decomposition(dcA, dcB):
             new_offsets.append(offsets_sa)
             # partition indices of A and B
             ids = list(range(len(offsets_sa)))
-            nd_idx_AB.append((ids,[None]*len(ids)) if id(dc) == id(dcA) else ([None]*len(ids),ids))
+            nd_idx_AB.append(
+                (ids, [None]*len(ids))
+                if id(dc) == id(dcA)
+                else ([None]*len(ids), ids))
             # offsets of A and B
-            offsets_AB.append((offsets_sa, np.zeros(len(offsets_sa),dtype=int)) if id(dc) == id(dcA) else (np.zeros(len(offsets_sa),dtype=int),offsets_sa) )
+            offsets_AB.append(
+                (offsets_sa, np.zeros(len(offsets_sa), dtype=int))
+                if id(dc) == id(dcA)
+                else (np.zeros(len(offsets_sa), dtype=int), offsets_sa))
             continue
 
         offsetsA_sa = dcA.offsets[dcA.distaxes.index(axis)]
         offsetsB_sa = dcB.offsets[dcB.distaxes.index(axis)]
 
-        offsets_sa = [] # sa = single axis
+        offsets_sa = []  # sa = single axis
         offsetsA_com = []
         offsetsB_com = []
         A_ids = []
         B_ids = []
-        A_idx = 0 # partition index
+        A_idx = 0  # partition index
         B_idx = 0
         begin = 0
         # loop the common decomposition of A and B along ``axis``.
@@ -298,7 +323,13 @@ def common_decomposition(dcA, dcB):
 
     return completeDC(dcA.shape, axes, new_offsets), nd_idx_AB, offsets_AB
 
-def common_patches(dcA, dcB, nd_idx=False, offsets=False, next_offsets=False, ranks_AB = False, offsets_AB=False):
+
+def common_patches(dcA, dcB,
+                   nd_idx=False,
+                   offsets=False,
+                   next_offsets=False,
+                   ranks_AB=False,
+                   offsets_AB=False):
     """Iterator looping all common patches of two decompositions returning a tuple
         of enabled properties for each common patch.
 

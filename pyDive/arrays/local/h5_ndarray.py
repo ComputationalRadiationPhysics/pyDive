@@ -22,6 +22,7 @@ import h5py as h5
 import pyDive.distribution.helper as helper
 import numpy as np
 
+
 class h5_ndarray(object):
 
     def __init__(self, filename, dataset_path, shape=None, window=None, offset=None):
@@ -30,7 +31,7 @@ class h5_ndarray(object):
 
         fileHandle = h5.File(filename, "r")
         dataset = fileHandle[dataset_path]
-        #self.attrs = dataset.attrs
+        # self.attrs = dataset.attrs
         #: datatype of a single data value
         self.dtype = dataset.dtype
         if shape is None:
@@ -50,11 +51,16 @@ class h5_ndarray(object):
 
     def load(self):
         window = list(self.window)
+
+        # shift window by offset
         for i in range(len(window)):
             if type(window[i]) is int:
                 window[i] += self.offset[i]
             else:
-                window[i] = slice(window[i].start + self.offset[i], window[i].stop + self.offset[i], window[i].step)
+                window[i] = slice(
+                    window[i].start + self.offset[i],
+                    window[i].stop + self.offset[i],
+                    window[i].step)
 
         fileHandle = h5.File(self.filename, "r")
         dataset = fileHandle[self.dataset_path]
@@ -72,7 +78,7 @@ class h5_ndarray(object):
 
         assert len(args) == len(self.shape),\
             "number of arguments (%d) does not correspond to the dimension (%d)"\
-                 % (len(args), len(self.shape))
+            % (len(args), len(self.shape))
 
         assert not all(type(arg) is int for arg in args),\
             "single data access is not supported"

@@ -5,6 +5,7 @@ import os
 
 input_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample.h5")
 
+
 def test_h5_ndarray1(init_pyDive):
     dataset = "particles/pos/x"
 
@@ -13,6 +14,7 @@ def test_h5_ndarray1(init_pyDive):
     ref_array = h5.File(input_file, "r")[dataset][:]
 
     assert np.array_equal(ref_array, test_array.load().gather())
+
 
 def test_h5_ndarray2(init_pyDive):
     window = np.s_[31:201:3, 2:233:5]
@@ -23,6 +25,7 @@ def test_h5_ndarray2(init_pyDive):
     ref_array = h5.File(input_file, "r")[dataset][window]
 
     assert np.array_equal(ref_array, test_array[window].load().gather())
+
 
 def test_h5(init_pyDive):
     test_array = pyDive.h5.open(input_file, "particles/pos")

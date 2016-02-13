@@ -18,14 +18,18 @@ along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
 """
 __doc__ = None
 
+
 def getFirstSliceIdx(slice_obj, begin, end):
     if slice_obj.start > begin:
-        if slice_obj.start >= end: return None
+        if slice_obj.start >= end:
+            return None
         return slice_obj.start
     i = (begin-1 - slice_obj.start) // slice_obj.step + 1
     idx = slice_obj.start + i * slice_obj.step
-    if idx >= end or idx >= slice_obj.stop: return None
+    if idx >= end or idx >= slice_obj.stop:
+        return None
     return idx
+
 
 def window_of_shape(shape, window):
     new_shape = []
@@ -40,6 +44,7 @@ def window_of_shape(shape, window):
         # new size of axis i
         new_shape.append((clean_slice.stop-1 - clean_slice.start) // clean_slice.step + 1)
     return new_shape, clean_view
+
 
 def window_of_view(view, window):
     result_view = []

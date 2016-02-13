@@ -34,6 +34,7 @@ import math
 #: list of array types that store their elements on hard disk
 hdd_arraytypes = (h5_ndarray, ad_ndarray)
 
+
 def __bestStepSize(arrays, axis, memory_limit):
     view = com.getView()
 
@@ -56,6 +57,7 @@ def __bestStepSize(arrays, axis, memory_limit):
     # round 'step_size' down to nearest power of two
     return pow(2, int(math.log(step_size, 2)))
 
+
 def fragment(*arrays, **kwargs):
     """Create fragments of *arrays* so that each fragment will fit into the combined
     main memory of all engines when calling ``load()``. The fragmentation is done by array slicing
@@ -64,13 +66,14 @@ def fragment(*arrays, **kwargs):
 
     :param array: distributed arrays (e.g. pyDive.ndarray, pyDive.h5_ndarray, ...)
     :param kwargs: optional keyword arguments are: ``memory_limit`` and ``offset``.
-    :param float memory_limit: fraction of the combined main memory of all engines reserved for fragmentation.
-        Defaults to ``0.25``.
-    :param bool offset: If ``True`` the returned tuple is extended by the fragments' offset (along the distributed axis).
-        Defaults to ``False``.
+    :param float memory_limit: fraction of the combined main memory of all engines
+                               reserved for fragmentation. Defaults to ``0.25``.
+    :param bool offset: If ``True`` the returned tuple is extended by the fragments' offset
+                        (along the distributed axis). Defaults to ``False``.
     :raises AssertionError: If not all arrays have the same shape.
     :raises AssertionError: If not all arrays are distributed along the same axis.
-    :return: generator object (list) of tuples. Each tuple consists of one fragment for each array in *arrays*.
+    :return: generator object (list) of tuples. Each tuple consists of one fragment
+             for each array in *arrays*.
 
     Note that *arrays* may contain an arbitrary number of distributed arrays of any type.
     While the fragments' size is solely calculated based on the memory consumption of
@@ -90,15 +93,19 @@ def fragment(*arrays, **kwargs):
     memory_limit = kwargs.get("memory_limit", 0.25)
     offset = kwargs.get("offset", False)
 
-    if not arrays: return
+    if not arrays:
+        return
 
     assert all(a.shape == arrays[0].shape for a in arrays), \
         "all arrays must have the same shape"
 
     # calculate the best suitable step size (-> fragment's edge size) according to the amount
     # of available memory on the engines
-    hdd_arrays = [a for a in arrays if (hasattr(a, "arraytype") and a.arraytype in hdd_arraytypes) or type(a) in hdd_arraytypes]
-    longest_axis = max(range(len(arrays[0].shape)), key=lambda axis : arrays[0].shape[axis])
+    hdd_arrays = [a for a in arrays if
+                  (hasattr(a, "arraytype") and a.arraytype in hdd_arraytypes) or
+                  type(a) in hdd_arraytypes]
+
+    longest_axis = max(range(len(arrays[0].shape)), key=lambda axis: arrays[0].shape[axis])
     step = __bestStepSize(hdd_arrays, longest_axis, memory_limit)
 
     shape = arrays[0].shape

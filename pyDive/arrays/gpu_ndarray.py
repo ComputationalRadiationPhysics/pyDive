@@ -23,8 +23,11 @@ import pyDive.distribution.generic_array as generic_array
 from pyDive.distribution.interengine import GPU_copier
 import pyDive.arrays.local.gpu_ndarray
 
-gpu_ndarray = generic_array.distribute(pyDive.arrays.local.gpu_ndarray.gpu_ndarray, "gpu_ndarray",\
-    "pyDive.arrays.local.gpu_ndarray", interengine_copier=GPU_copier)
+gpu_ndarray = generic_array.distribute(
+    local_arraytype=pyDive.arrays.local.gpu_ndarray.gpu_ndarray,
+    newclassname="gpu_ndarray",
+    target_modulename="pyDive.arrays.local.gpu_ndarray",
+    interengine_copier=GPU_copier)
 
 factories = generic_array.generate_factories(gpu_ndarray, ("empty", "zeros"), np.float)
 factories.update(generic_array.generate_factories_like(gpu_ndarray, ("empty_like", "zeros_like")))
@@ -34,10 +37,12 @@ zeros = factories["zeros"]
 empty_like = factories["empty_like"]
 zeros_like = factories["zeros_like"]
 
+
 def ones(shape, dtype=np.float, distaxes='all', **kwargs):
     result = zeros(shape, dtype, distaxes, **kwargs)
     result += 1
     return result
+
 
 def ones_like(other, **kwargs):
     result = zeros_like(other, **kwargs)
@@ -46,6 +51,7 @@ def ones_like(other, **kwargs):
 
 import pyDive.ipyParallelClient as com
 import pyDive.arrays.ndarray
+
 
 def to_cpu(self):
     """Copy array data to cpu main memory.
@@ -59,6 +65,7 @@ def to_cpu(self):
 gpu_ndarray.to_cpu = to_cpu
 del to_cpu
 
+
 def hollow(shape, dtype=np.float, distaxes='all'):
     """Create a pyDive.gpu_ndarray instance distributed across all engines without allocating a local
     gpu-array.
@@ -69,11 +76,13 @@ def hollow(shape, dtype=np.float, distaxes='all'):
     """
     return gpu_ndarray(shape, dtype, distaxes, None, None, True)
 
+
 def hollow_like(other):
     """Create a pyDive.gpu_ndarray instance with the same
     shape, distribution and type as ``other`` without allocating a local gpu-array.
     """
     return gpu_ndarray(other.shape, other.dtype, other.distaxes, other.decomposition, True)
+
 
 def array(array_like, distaxes='all'):
     """Create a pyDive.gpu_ndarray instance from an array-like object.
@@ -84,12 +93,15 @@ def array(array_like, distaxes='all'):
     result_cpu = pyDive.arrays.ndarray.array(array_like, distaxes)
     result = hollow_like(result_cpu)
     view = com.getView()
-    view.execute("{0} = pyDive.arrays.local.gpu_ndarray.gpu_ndarray_cast(pycuda.gpuarray.to_gpu({1}))"\
-        .format(repr(result), repr(result_cpu)), targets=result.decomposition.ranks)
+    view.execute(
+        """{0} = pyDive.arrays.local.gpu_ndarray.gpu_ndarray_cast(
+            pycuda.gpuarray.to_gpu({1}))""".format(repr(result), repr(result_cpu)),
+        targets=result.decomposition.ranks)
 
     return result
 
-#ufunc_names = [key for key, value in np.__dict__.items() if isinstance(value, np.ufunc)]
-#ufuncs = generic_array.generate_ufuncs(ufunc_names, "np")
+# TODO:
+# ufunc_names = [key for key, value in np.__dict__.items() if isinstance(value, np.ufunc)]
+# ufuncs = generic_array.generate_ufuncs(ufunc_names, "np")
 
-#globals().update(ufuncs)
+# globals().update(ufuncs)

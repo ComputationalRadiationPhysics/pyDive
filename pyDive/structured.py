@@ -17,48 +17,49 @@ You should have received a copy of the GNU Lesser General Public License
 along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__doc__ =\
-"""The *structured* module addresses the common problem when dealing with
-structured data: While the user likes an array-of-structures layout the machine prefers a structure-of-arrays.
-In pyDive the method of choice is a *virtual* *array-of-structures*-object. It holds array-like attributes
-such as shape and dtype and allows for slicing but is operating on a structure-of-arrays internally.
+__doc__ = \
+    """The *structured* module addresses the common problem when dealing with
+    structured data: While the user likes an array-of-structures layout the machine
+    prefers a structure-of-arrays. In pyDive the method of choice is a
+    *virtual* *array-of-structures*-object. It holds array-like attributes such as
+    shape and dtype and allows for slicing but is operating on a structure-of-arrays internally.
 
-Example: ::
+    Example: ::
 
-    ...
-    treeOfArrays = {"FieldE" :
-                        {"x" : fielde_x,
-                         "y" : fielde_y,
-                         "z" : fielde_z},
-                    "FieldB" :
-                        {"x" : fieldb_x,
-                         "y" : fieldb_y,
-                         "z" : fieldb_z}
-                    }
+        ...
+        treeOfArrays = {"FieldE" :
+                            {"x" : fielde_x,
+                             "y" : fielde_y,
+                             "z" : fielde_z},
+                        "FieldB" :
+                            {"x" : fieldb_x,
+                             "y" : fieldb_y,
+                             "z" : fieldb_z}
+                        }
 
-    fields = pyDive.structured(treeOfArrays)
+        fields = pyDive.structured(treeOfArrays)
 
-    half = fields[::2]["FieldE/x"]
-    # equivalent to
-    half = fields["FieldE/x"][::2]
-    # equivalent to
-    half = fields["FieldE"]["x"][::2]
-    # equivalent to
-    half = fields["FieldE"][::2]["x"]
+        half = fields[::2]["FieldE/x"]
+        # equivalent to
+        half = fields["FieldE/x"][::2]
+        # equivalent to
+        half = fields["FieldE"]["x"][::2]
+        # equivalent to
+        half = fields["FieldE"][::2]["x"]
 
-    # equivalent to
-    half = fields.FieldE.x[::2]
+        # equivalent to
+        half = fields.FieldE.x[::2]
 
-The example shows that in fact *fields* can be treated as an array-of-structures
-**or** a structure-of-arrays depending on what is more appropriate.
+    The example shows that in fact *fields* can be treated as an array-of-structures
+    **or** a structure-of-arrays depending on what is more appropriate.
 
-The goal is to make the virtual *array-of-structs*-object look like a real array. Therefore
-every method call or operation is forwarded to the individual arrays.::
+    The goal is to make the virtual *array-of-structs*-object look like a real array. Therefore
+    every method call or operation is forwarded to the individual arrays.::
 
-    new_field = fields.FieldE.astype(np.int) + fields.FieldB.astype(np.float)
+        new_field = fields.FieldE.astype(np.int) + fields.FieldB.astype(np.float)
 
-Here the forwarded method calls are ``astype`` and ``__add__``.
-"""
+    Here the forwarded method calls are ``astype`` and ``__add__``.
+    """
 
 import os
 # check whether this code is executed on target or not
@@ -69,6 +70,7 @@ import operator
 
 arrayOfStructs_id = 0
 
+
 class VirtualArrayOfStructs(object):
     def __init__(self, structOfArrays):
         self.structOfArrays = structOfArrays
@@ -78,10 +80,10 @@ class VirtualArrayOfStructs(object):
         self.arraytype = type(self.firstArray)
         assert all(type(a) == self.arraytype for name, a in items),\
             "all arrays in 'structOfArrays' must be of the same type: " +\
-            str({name : type(a) for name, a in items})
+            str({name: type(a) for name, a in items})
         assert all(a.shape == self.firstArray.shape for name, a in items),\
             "all arrays in 'structOfArrays' must have the same shape: " +\
-            str({name : a.shape for name, a in items})
+            str({name: a.shape for name, a in items})
 
         self.shape = self.firstArray.shape
         self.dtype = self.map(lambda a: a.dtype)
@@ -95,19 +97,18 @@ class VirtualArrayOfStructs(object):
 
     def __getattr__(self, name):
         if hasattr(self.firstArray, name):
-            #method = getattr(self.firstArray, name)
-            #assert callable(method),\
-            #    "Unlike method access, attribute access of individual arrays is not supported."
-
             attr_tree = self.map(lambda a: getattr(a, name))
 
             if not callable(getattr(self.firstArray, name)):
                 return attr_tree
 
             def foreachLeafCall(*args, **kwargs):
-                aos = tuple(arg.structOfArrays for arg in args if type(arg).__name__ is "VirtualArrayOfStructs")
+                aos = tuple(arg.structOfArrays for arg in args
+                            if type(arg).__name__ is "VirtualArrayOfStructs")
                 misc_args = tuple(arg for arg in args if type(arg) is not VirtualArrayOfStructs)
-                return structured(map_trees(lambda method, *a: method(*(a + misc_args), **kwargs), *((attr_tree,) + aos)))
+                return structured(
+                    map_trees(lambda method, *a: method(*(a + misc_args), **kwargs),
+                              *((attr_tree,) + aos)))
 
             return foreachLeafCall
 
@@ -116,8 +117,9 @@ class VirtualArrayOfStructs(object):
     def __special_operation__(self, op, *args):
         if args:
             if type(args[0]) is VirtualArrayOfStructs:
-                return structured(map_trees(lambda a,b: getattr(a, op)(b),\
-                    self.structOfArrays, args[0].structOfArrays))
+                return structured(
+                    map_trees(lambda a, b: getattr(a, op)(b),
+                              self.structOfArrays, args[0].structOfArrays))
             else:
                 return structured(self.map(lambda a: getattr(a, op)(args[0])))
         else:
@@ -127,7 +129,8 @@ class VirtualArrayOfStructs(object):
         # if arrays are distributed create a local representation of this object on engine
         if onTarget == 'False' and not self.has_local_instance and hasattr(self.firstArray, "decomposition"):
             assert all(self.firstArray.is_distributed_like(a) for name, a in self.items()),\
-                "Cannot create a local virtual array-of-structs because not all arrays are distributed equally."
+                """Cannot create a local virtual array-of-structs because
+                not all arrays are distributed equally."""
 
             self.distaxes = self.firstArray.distaxes
             self.decomposition = self.firstArray.decomposition
@@ -142,12 +145,12 @@ class VirtualArrayOfStructs(object):
             # create a VirtualArrayOfStructs object containing the local arrays on the targets in use
             names_tree = self.map(repr)
 
-            view.push({'names_tree' : names_tree}, targets=self.decomposition.ranks)
+            view.push({'names_tree': names_tree}, targets=self.decomposition.ranks)
 
             view.execute('''\
-                structOfArrays = structured.map_trees(globals().get, names_tree)
-                %s = structured.structured(structOfArrays)''' % self.name,\
-                targets=self.decomposition.ranks)
+                         structOfArrays = structured.map_trees(globals().get, names_tree)
+                         %s = structured.structured(structOfArrays)''' % self.name,
+                         targets=self.decomposition.ranks)
 
             self.has_local_instance = True
 
@@ -192,7 +195,7 @@ class VirtualArrayOfStructs(object):
         def mapTree(tree):
             if type(tree) is not dict:
                 return f(tree)
-            return {k : mapTree(v) for k,v in tree.items()}
+            return {k: mapTree(v) for k, v in tree.items()}
 
         return mapTree(self.structOfArrays)
 
@@ -200,7 +203,7 @@ class VirtualArrayOfStructs(object):
         # component access
         # ----------------
         if type(args) is str:
-            node = self.structOfArrays # root node
+            node = self.structOfArrays  # root node
             path = args.split('/')
             for node_name in path:
                 node = node[node_name]
@@ -227,7 +230,7 @@ class VirtualArrayOfStructs(object):
         # component access
         # ----------------
         if type(args) is str:
-            node = self.structOfArrays # root node
+            node = self.structOfArrays  # root node
             path = args.split('/')
             for node_name in path[:-1]:
                 node = node[node_name]
@@ -249,28 +252,33 @@ class VirtualArrayOfStructs(object):
 # forwarding them to the individual arrays.
 # All ordinary methods are forwarded by __getattr__
 
-binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow", "lshift", "rshift", "and", "xor", "or"]
+binary_ops = ["add", "sub", "mul", "floordiv", "div", "mod", "pow",
+              "lshift", "rshift", "and", "xor", "or"]
 
 binary_iops = ["__i" + op + "__" for op in binary_ops]
 binary_rops = ["__r" + op + "__" for op in binary_ops]
 binary_ops = ["__" + op + "__" for op in binary_ops]
-unary_ops = ["__neg__", "__pos__", "__abs__", "__invert__", "__complex__", "__int__", "__long__", "__float__", "__oct__", "__hex__"]
+unary_ops = ["__neg__", "__pos__", "__abs__", "__invert__", "__complex__",
+             "__int__", "__long__", "__float__", "__oct__", "__hex__"]
 comp_ops = ["__lt__", "__le__", "__eq__", "__ne__", "__ge__", "__gt__"]
 
 make_special_op = lambda op: lambda self, *args: self.__special_operation__(op, *args)
 
-special_ops_dict = {op : make_special_op(op) for op in binary_ops + binary_rops + unary_ops + comp_ops}
+special_ops_dict = {op: make_special_op(op) for op in
+                    binary_ops + binary_rops + unary_ops + comp_ops}
 
 # add everything to class
 for name, func in special_ops_dict.items():
     setattr(VirtualArrayOfStructs, name, func)
 
-#---------------------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------
+
 
 def map_trees(f, *trees):
     if type(trees[0]) is not dict:
         return f(*trees)
-    return {k : map_trees(f, *[t[k] for t in trees]) for k in trees[0]}
+    return {k: map_trees(f, *[t[k] for t in trees]) for k in trees[0]}
+
 
 def flat_values(tree):
     values = list(tree.values())
@@ -280,6 +288,7 @@ def flat_values(tree):
             values += list(value.values())
         else:
             yield value
+
 
 def structured(data):
     """Create a new virtual *array-of-structures*.

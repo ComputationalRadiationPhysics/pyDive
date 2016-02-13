@@ -18,10 +18,9 @@ along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 
-from setuptools import setup, find_packages
+from setuptools import setup
 from setuptools.command.test import test as TestCommand
 import io
-import codecs
 import os
 import sys
 import subprocess
@@ -30,6 +29,7 @@ import time
 import pyDive
 
 here = os.path.abspath(os.path.dirname(__file__))
+
 
 def read(*filenames, **kwargs):
     encoding = kwargs.get('encoding', 'utf-8')
@@ -40,8 +40,9 @@ def read(*filenames, **kwargs):
             buf.append(f.read())
     return sep.join(buf)
 
-long_description = read('README.md')#, 'CHANGES.txt')
+long_description = read('README.md')  # , 'CHANGES.txt')
 requirements = [line.rstrip('\n') for line in open('requirements.txt')]
+
 
 class PyTest(TestCommand):
     def finalize_options(self):
@@ -58,8 +59,8 @@ class PyTest(TestCommand):
 
         # start ipcluster
         print("Waiting for engines to start...")
-        subprocess.Popen(("ipcluster", "start", "--n=%s" % n_engines,\
-            "--profile=%s" % profile_name))
+        subprocess.Popen(("ipcluster", "start", "--n=%s" % n_engines,
+                          "--profile=%s" % profile_name))
         time.sleep(35)
 
         import pytest
@@ -85,11 +86,16 @@ setup(
     author_email='h.burau@hzdr.de',
     description='Distributed Interactive Visualization and Exploration of large datasets',
     long_description=long_description,
-    packages=['pyDive', 'pyDive/distribution', 'pyDive/arrays', 'pyDive/arrays/local', 'pyDive/cloned_ndarray', 'pyDive/test'],
+    packages=['pyDive',
+              'pyDive/distribution',
+              'pyDive/arrays',
+              'pyDive/arrays/local',
+              'pyDive/cloned_ndarray',
+              'pyDive/test'],
     include_package_data=True,
     platforms='any',
-    #test_suite='sandman.test.test_sandman',
-    classifiers = [
+    # test_suite='sandman.test.test_sandman',
+    classifiers=[
         'Programming Language :: Python',
         'Development Status :: 4 - Beta',
         'Natural Language :: English',
@@ -100,5 +106,5 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Scientific/Engineering :: Information Analysis'
         ],
-    extras_require={'testing': ['pytest'],}
+    extras_require={'testing': ['pytest'], }
 )

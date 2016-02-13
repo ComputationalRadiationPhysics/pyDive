@@ -7,9 +7,10 @@ import pytest
 gpu_enabled = pytest.mark.skipif(not hasattr(pyDive, "gpu"), reason="pycuda not installed")
 
 sizes = ((1,), (5,), (29,), (64,),
-        (1, 1), (1, 5), (5, 29), (64, 1), (64, 64),
-        (1, 1, 1), (8, 8, 8), (1, 2, 3), (12, 37, 50), (64,64,64))
+         (1, 1), (1, 5), (5, 29), (64, 1), (64, 64),
+         (1, 1, 1), (8, 8, 8), (1, 2, 3), (12, 37, 50), (64, 64, 64))
 dtypes = (np.float,)
+
 
 @gpu_enabled
 def test_basics(init_pyDive):
@@ -38,6 +39,7 @@ def test_basics(init_pyDive):
 
                 np.testing.assert_array_almost_equal(test_array.to_cpu().gather(), ref)
 
+
 @gpu_enabled
 def test_interengine(init_pyDive):
     for size in sizes:
@@ -49,7 +51,8 @@ def test_interengine(init_pyDive):
             test_array[:] = test_array_cpu
 
             for i in range(len(size)):
-                if size[i] < 5: continue
+                if size[i] < 5:
+                    continue
 
                 slicesA = [slice(None)] * len(size)
                 slicesB = list(slicesA)
@@ -71,21 +74,22 @@ def test_interengine(init_pyDive):
 
                 assert np.array_equal(test_array.to_cpu().gather(), ref)
 
+
 @gpu_enabled
 def test_misc(init_pyDive):
-    sizes = ((10,20,30), (30,20,10), (16,16,16), (16,32,48), (13,29,37))
+    sizes = ((10, 20, 30), (30, 20, 10), (16, 16, 16), (16, 32, 48), (13, 29, 37))
 
     def do_funny_stuff(a, b):
-        a[1:,1:,1:] = b[:-1,:-1,:-1]
-        b[1:,1:,1:] = a[1:,:-1,:-1]
-        a[1:,1:,1:] = b[1:,1:,:-1]
-        b[1:,1:,1:] = a[1:,:-1,1:]
-        a[:-1,:-3,:-4] = b[1:,3:,4:]
-        b[0,:,0] += a[-2,:,-2]
-        a[4:-3,2:-1,5:-2] = b[4:-3,2:-1,5:-2]
-        b[1:3,1:4,1:5] *= a[-3:-1,-4:-1,-5:-1]
-        #a[1,2,3] -= b[3,2,1]
-        b[:,:,0] = a[:,:,1]
+        a[1:, 1:, 1:] = b[:-1, :-1, :-1]
+        b[1:, 1:, 1:] = a[1:, :-1, :-1]
+        a[1:, 1:, 1:] = b[1:, 1:, :-1]
+        b[1:, 1:, 1:] = a[1:, :-1, 1:]
+        a[:-1, :-3, :-4] = b[1:, 3:, 4:]
+        b[0, :, 0] += a[-2, :, -2]
+        a[4:-3, 2:-1, 5:-2] = b[4:-3, 2:-1, 5:-2]
+        b[1:3, 1:4, 1:5] *= a[-3:-1, -4:-1, -5:-1]
+        # TODO: a[1, 2, 3] -= b[3, 2, 1]
+        b[:, :, 0] = a[:, :, 1]
 
     for size in sizes:
         cpu_a = (np.random.rand(*size) * 100.0).astype(np.int)
@@ -99,13 +103,3 @@ def test_misc(init_pyDive):
 
         assert np.array_equal(gpu_a.to_cpu(), cpu_a)
         assert np.array_equal(gpu_b.to_cpu(), cpu_b)
-
-
-
-
-
-
-
-
-
-

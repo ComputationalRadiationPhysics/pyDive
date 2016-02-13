@@ -17,40 +17,40 @@ You should have received a copy of the GNU Lesser General Public License
 along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__doc__=\
-"""Make most used functions and modules directly accessable from pyDive."""
+__doc__ = \
+    """Make most used functions and modules directly accessable from pyDive."""
 
 # ndarray
 from .arrays import ndarray as ndarray_mod
 globals().update(ndarray_mod.factories)
 globals().update(ndarray_mod.ufuncs)
-from .arrays.ndarray import ndarray
+from .arrays.ndarray import ndarray  # noqa
 
 # hdf5
 try:
-    from .arrays import h5_ndarray as h5
+    from .arrays import h5_ndarray as h5  # noqa
 except ImportError:
     pass
 
 # adios
 try:
-    from .arrays import ad_ndarray as adios
+    from .arrays import ad_ndarray as adios  # noqa
 except ImportError:
     pass
 
 # gpu
 try:
-    from .arrays import gpu_ndarray as gpu
+    from .arrays import gpu_ndarray as gpu  # noqa
 except ImportError:
     pass
 
 # cloned_ndarray
-from .cloned_ndarray import factories as cloned
+from .cloned_ndarray import factories as cloned  # noqa
 
 # fragmentation
-from .fragment import fragment
+from .fragment import fragment  # noqa
 
-## algorithm
+# algorithm
 from . import algorithm
 map = algorithm.map
 reduce = algorithm.reduce
@@ -65,8 +65,7 @@ from . import structured
 structured = structured.structured
 
 # picongpu
-from . import picongpu
-picongpu = picongpu
+from . import picongpu  # noqa
 
 # init
 from . import ipyParallelClient
@@ -77,12 +76,12 @@ init = ipyParallelClient.init
 items = [item for item in globals().items() if not item[0].startswith("__")]
 items.sort(key=lambda item: item[0])
 
-fun_names = [":obj:`" + item[0] + "<" + item[1].__module__ + "." + item[0] + ">`"\
-    for item in items if hasattr(item[1], "__module__")]
+fun_names = [":obj:`" + item[0] + "<" + item[1].__module__ + "." + item[0] + ">`"
+             for item in items if hasattr(item[1], "__module__")]
 
 import inspect
-module_names = [":mod:`" + item[0] + "<" + item[1].__name__ + ">`"\
-    for item in items if inspect.ismodule(item[1])]
+module_names = [":mod:`" + item[0] + "<" + item[1].__name__ + ">`"
+                for item in items if inspect.ismodule(item[1])]
 
 __doc__ += "\n\n**Functions**:\n\n" + "\n\n".join(fun_names)\
     + "\n\n**Modules**:\n\n" + "\n\n".join(module_names)

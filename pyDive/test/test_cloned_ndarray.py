@@ -3,8 +3,9 @@ import numpy as np
 from pyDive import ipyParallelClient as com
 
 sizes = ((1,), (5,),
-        (5, 29), (64, 1), (64, 64),
-        (1, 1, 1), (12, 37, 50))
+         (5, 29), (64, 1), (64, 64),
+         (1, 1, 1), (12, 37, 50))
+
 
 def test_cloned_ndarray(init_pyDive):
     view = com.getView()

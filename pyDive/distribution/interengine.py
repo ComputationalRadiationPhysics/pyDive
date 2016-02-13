@@ -24,7 +24,8 @@ try:
 except ImportError:
     pass
 
-#----------- cpu -> cpu ----------------
+# ----------- cpu -> cpu ----------------
+
 
 def scatterArrayMPI_async(in_array, commData, target2rank):
     tasks = []
@@ -32,6 +33,7 @@ def scatterArrayMPI_async(in_array, commData, target2rank):
         tasks.append(MPI.COMM_WORLD.Isend(in_array[window].copy(), dest=target2rank[dest_target], tag=tag))
 
     return tasks
+
 
 def gatherArraysMPI_async(out_array, commData, target2rank):
     recv_bufs = []
@@ -42,11 +44,13 @@ def gatherArraysMPI_async(out_array, commData, target2rank):
 
     return tasks, recv_bufs
 
+
 def finish_MPIcommunication(out_array, commData, recv_bufs):
     for (src_target, window, tag), recv_buf in zip(commData, recv_bufs):
         out_array[window] = recv_buf
 
-#----------- gpu -> cpu -> cpu -> gpu ----------------
+# ----------- gpu -> cpu -> cpu -> gpu ----------------
+
 
 def scatterArrayGPU_async(in_array, commData, target2rank):
     tasks = []
@@ -54,6 +58,7 @@ def scatterArrayGPU_async(in_array, commData, target2rank):
         tasks.append(MPI.COMM_WORLD.Isend(in_array[window].to_cpu(), dest=target2rank[dest_target], tag=tag))
 
     return tasks
+
 
 def gatherArraysGPU_async(out_array, commData, target2rank):
     recv_bufs = []
@@ -64,6 +69,7 @@ def gatherArraysGPU_async(out_array, commData, target2rank):
         tasks.append(MPI.COMM_WORLD.Irecv(recv_bufs[-1], source=target2rank[src_target], tag=tag))
 
     return tasks, recv_bufs
+
 
 def finish_GPUcommunication(out_array, commData, recv_bufs):
     for (src_target, window, tag), recv_buf in zip(commData, recv_bufs):
@@ -80,48 +86,60 @@ if onTarget == 'False':
         view = com.getView()
 
         # send
-        view.execute('{0}_send_tasks = interengine.scatterArrayMPI_async({0}, src_commData[0], target2rank)'\
-            .format(source.name), targets=source.decomposition.ranks)
+        view.execute("""{0}_send_tasks = interengine.scatterArrayMPI_async(
+                            {0},
+                            src_commData[0],
+                            target2rank)
+                     """.format(source.name),
+                     targets=source.decomposition.ranks)
 
         # receive
-        view.execute("""\
-            {0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysMPI_async({1}, dest_commData[0], target2rank)
-            """.format(source.name, dest.name),\
-            targets=dest.decomposition.ranks)
+        view.execute("""{0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysMPI_async(
+                            {1},
+                            dest_commData[0],
+                            target2rank)
+                     """.format(source.name, dest.name),
+                     targets=dest.decomposition.ranks)
 
         # finish communication
-        view.execute('''\
-            if "{0}_send_tasks" in locals():
-                MPI.Request.Waitall({0}_send_tasks)
-                del {0}_send_tasks
-            if "{0}_recv_tasks" in locals():
-                MPI.Request.Waitall({0}_recv_tasks)
-                interengine.finish_MPIcommunication({1}, dest_commData[0], {0}_recv_bufs)
-                del {0}_recv_tasks, {0}_recv_bufs
-            '''.format(source.name, dest.name),
-            targets=tuple(set(source.decomposition.ranks + dest.decomposition.ranks)))
+        view.execute("""\
+                     if "{0}_send_tasks" in locals():
+                         MPI.Request.Waitall({0}_send_tasks)
+                         del {0}_send_tasks
+                     if "{0}_recv_tasks" in locals():
+                         MPI.Request.Waitall({0}_recv_tasks)
+                         interengine.finish_MPIcommunication({1}, dest_commData[0], {0}_recv_bufs)
+                         del {0}_recv_tasks, {0}_recv_bufs
+                     """.format(source.name, dest.name),
+                     targets=tuple(set(source.decomposition.ranks + dest.decomposition.ranks)))
 
     def GPU_copier(source, dest):
         view = com.getView()
 
         # send
-        view.execute('{0}_send_tasks = interengine.scatterArrayGPU_async({0}, src_commData[0], target2rank)'\
-            .format(source.name), targets=source.decomposition.ranks)
+        view.execute("""{0}_send_tasks = interengine.scatterArrayGPU_async(
+                            {0},
+                            src_commData[0],
+                            target2rank)
+                     """.format(source.name),
+                     targets=source.decomposition.ranks)
 
         # receive
-        view.execute("""\
-            {0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysGPU_async({1}, dest_commData[0], target2rank)
-            """.format(source.name, dest.name),\
-            targets=dest.decomposition.ranks)
+        view.execute("""{0}_recv_tasks, {0}_recv_bufs = interengine.gatherArraysGPU_async(
+                            {1},
+                            dest_commData[0],
+                            target2rank)
+                     """.format(source.name, dest.name),
+                     targets=dest.decomposition.ranks)
 
         # finish communication
-        view.execute('''\
-            if "{0}_send_tasks" in locals():
-                MPI.Request.Waitall({0}_send_tasks)
-                del {0}_send_tasks
-            if "{0}_recv_tasks" in locals():
-                MPI.Request.Waitall({0}_recv_tasks)
-                interengine.finish_GPUcommunication({1}, dest_commData[0], {0}_recv_bufs)
-                del {0}_recv_tasks, {0}_recv_bufs
-            '''.format(source.name, dest.name),
-            targets=tuple(set(source.decomposition.ranks + dest.decomposition.ranks)))
+        view.execute("""\
+                     if "{0}_send_tasks" in locals():
+                         MPI.Request.Waitall({0}_send_tasks)
+                         del {0}_send_tasks
+                     if "{0}_recv_tasks" in locals():
+                         MPI.Request.Waitall({0}_recv_tasks)
+                         interengine.finish_GPUcommunication({1}, dest_commData[0], {0}_recv_bufs)
+                         del {0}_recv_tasks, {0}_recv_bufs
+                     """.format(source.name, dest.name),
+                     targets=tuple(set(source.decomposition.ranks + dest.decomposition.ranks)))

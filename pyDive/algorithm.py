@@ -23,6 +23,7 @@ from ipyparallel import interactive
 from .structured import VirtualArrayOfStructs, flat_values
 from .distribution.generic_array import record
 
+
 def map(f, *arrays, **kwargs):
     """Applies *f* on local arrays of *arrays*. It is very similar
     to python's' builtin ``map()`` except that the iteration is done over local arrays (in parallel)
@@ -70,7 +71,7 @@ def map(f, *arrays, **kwargs):
     ref_array = arrays[0].firstArray if type(arrays[0]) == VirtualArrayOfStructs else arrays[0]
 
     view = com.getView()
-    tmp_targets = view.targets # save current target list
+    tmp_targets = view.targets  # save current target list
     view.targets = ref_array.ranks()
 
     array_names = [repr(a) for a in arrays]
@@ -83,12 +84,14 @@ def map(f, *arrays, **kwargs):
         result = array_type(ref_array.shape, dtype, ref_array.distaxes, ref_array.decomposition, True)
         view.execute("{} = map_result; del map_result".format(repr(result)))
 
-    view.targets = tmp_targets # restore target list
+    view.targets = tmp_targets  # restore target list
     return result
 
+
 def reduce(op, array, op_array=None):
-    """Perform a reduction over all axes of *array*. It is done in two steps: first all local arrays are reduced
-    by *op_array*, then the results are reduced further by *op*.
+    """Perform a reduction over all axes of *array*. It is done in two steps:
+    first all local arrays are reduced by *op_array*,
+    then the results are reduced further by *op*.
 
     :param op: binary reduce function.
     :param array: distributed array to be reduced.
@@ -104,15 +107,15 @@ def reduce(op, array, op_array=None):
 
     def reduce_wrapper(array_name, op):
         array = globals()[array_name]
-        return op.reduce(array, axis=None) # reduction over all axes
+        return op.reduce(array, axis=None)  # reduction over all axes
 
     def reduce_wrapper_generic(array_name, op_array):
         array = globals()[array_name]
-        return op_array(array, axis=None) # reduction over all axes
+        return op_array(array, axis=None)  # reduction over all axes
 
     view = com.getView()
 
-    tmp_targets = view.targets # save current target list
+    tmp_targets = view.targets  # save current target list
     if type(array) == VirtualArrayOfStructs:
         view.targets = array.firstArray.ranks()
     else:
@@ -126,7 +129,7 @@ def reduce(op, array, op_array=None):
         targets_results = view.apply(interactive(reduce_wrapper_generic), array_name, op_array)
 
     import functools
-    result = functools.reduce(op, targets_results) # reduce over targets' results
+    result = functools.reduce(op, targets_results)  # reduce over targets' results
 
-    view.targets = tmp_targets # restore target list
+    view.targets = tmp_targets  # restore target list
     return result

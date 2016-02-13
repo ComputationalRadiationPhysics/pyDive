@@ -17,16 +17,17 @@ You should have received a copy of the GNU Lesser General Public License
 along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__doc__=\
-"""If `numba <http://numba.pydata.org/>`_ is installed the particle shape functions will
-be compiled which gives an appreciable speedup.
-"""
+__doc__ = \
+    """If `numba <http://numba.pydata.org/>`_ is installed the particle shape functions will
+    be compiled which gives an appreciable speedup.
+    """
 
 import numpy as np
 try:
     from numba import vectorize
 except ImportError:
     vectorize = None
+
 
 class NGP:
     """Nearest-Grid-Point
@@ -39,6 +40,7 @@ class NGP:
             return 1.0
         return 0.0
 
+
 class CIC:
     """Cloud-in-Cell
     """
@@ -49,6 +51,7 @@ class CIC:
         if abs(x) < 1.0:
             return 1.0 - abs(x)
         return 0.0
+
 
 def __apply_MapOp(mesh, particles_pos, shape_function, mapOp):
     half_supp = 0.5 * shape_function.support
@@ -113,6 +116,7 @@ def mesh2particles(mesh, particles_pos, shape_function=CIC):
     __apply_MapOp(mesh, particles_pos, shape_function, mapOp)
 
     return particles
+
 
 def particles2mesh(mesh, particles, particles_pos, shape_function=CIC):
     """

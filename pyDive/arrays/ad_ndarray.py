@@ -25,7 +25,12 @@ import pyDive.ipyParallelClient as com
 from pyDive.structured import structured
 import pyDive.arrays.local.ad_ndarray
 
-ad_ndarray = generic_array.distribute(pyDive.arrays.local.ad_ndarray.ad_ndarray, "ad_ndarray", "ad_ndarray", may_allocate=False)
+ad_ndarray = generic_array.distribute(
+    local_arraytype=pyDive.arrays.local.ad_ndarray.ad_ndarray,
+    newclassname="ad_ndarray",
+    target_modulename="ad_ndarray",
+    may_allocate=False)
+
 
 def load(self):
     """Load array from file into main memory of all engines in parallel.
@@ -38,6 +43,7 @@ def load(self):
     return result
 ad_ndarray.load = load
 del load
+
 
 def open_variable(filename, variable_path, distaxes='all'):
     """Create a pyDive.adios.ad_ndarray instance from file.
@@ -61,10 +67,15 @@ def open_variable(filename, variable_path, distaxes='all'):
     view = com.getView()
     view.scatter("shape", target_shapes, targets=result.ranks())
     view.scatter("offset", target_offset_vectors, targets=result.ranks())
-    view.execute("{0} = pyDive.arrays.local.ad_ndarray.ad_ndarray('{1}','{2}',shape=shape[0],offset=offset[0])"\
-        .format(repr(result), filename, variable_path), targets=result.ranks())
+    view.execute(
+        """{0} = pyDive.arrays.local.ad_ndarray.ad_ndarray(
+            '{1}','{2}',
+            shape=shape[0],
+            offset=offset[0])""".format(repr(result), filename, variable_path),
+        targets=result.ranks())
 
     return result
+
 
 def open(filename, datapath, distaxes='all'):
     """Create a pyDive.adios.ad_ndarray instance respectively a structure of
