@@ -64,7 +64,7 @@ def test_interengine(init_pyDive):
 
                 assert np.array_equal(test_array.to_cpu().gather(), ref)
 
-                slicesA = [s/2 for s in size]
+                slicesA = [s / 2 for s in size]
                 slicesB = list(slicesA)
                 slicesA[i] = slice(0, 5)
                 slicesB[i] = slice(-5, None)

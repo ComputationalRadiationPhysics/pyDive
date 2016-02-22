@@ -1,26 +1,24 @@
-"""
-Copyright 2015-2016 Heiko Burau
-
-This file is part of pyDive.
-
-pyDive is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-pyDive is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
-"""
-__doc__ = None
+# Copyright 2015-2016 Heiko Burau
+#
+# This file is part of pyDive.
+#
+# pyDive is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pyDive is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
 
 import pycuda.gpuarray
 import pycuda.driver as cuda
 import numpy as np
+from functools import wraps
 
 
 def copy_non_contiguous(dst, src):
@@ -211,7 +209,6 @@ def empty(shape, dtype):
 pycuda_factories = ("zeros", "empty_like", "zeros_like")
 
 # wrap all factory functions from pycuda so that they return a `gpu_ndarray` instance
-from functools import wraps
 make_factory = lambda func:\
     wraps(func)(lambda *args, **kwargs:
                 gpu_ndarray_cast(func(*args, **kwargs)))

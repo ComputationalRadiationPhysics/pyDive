@@ -1,24 +1,20 @@
-"""
-Copyright 2014-2016 Heiko Burau
+# Copyright 2014-2016 Heiko Burau
+#
+# This file is part of pyDive.
+#
+# pyDive is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# pyDive is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
 
-This file is part of pyDive.
-
-pyDive is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-pyDive is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with pyDive.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-__doc__ = \
-    """Make most used functions and modules directly accessable from pyDive."""
 
 # ndarray
 from .arrays import ndarray as ndarray_mod
@@ -51,35 +47,38 @@ from .cloned_ndarray import factories as cloned  # noqa
 from .fragment import fragment  # noqa
 
 # algorithm
-from . import algorithm
+from . import algorithm  # noqa
 map = algorithm.map
 reduce = algorithm.reduce
 
 # particle-mesh mappings
-from . import mappings
+from . import mappings  # noqa
 mesh2particles = mappings.mesh2particles
 particles2mesh = mappings.particles2mesh
 
 # structured
-from . import structured
+from . import structured  # noqa
 structured = structured.structured
 
 # picongpu
 from . import picongpu  # noqa
 
 # init
-from . import ipyParallelClient
+from . import ipyParallelClient  # noqa
 init = ipyParallelClient.init
 
 
 # module doc
+__doc__ = \
+    """Make most used functions and modules directly accessable from pyDive."""
+
 items = [item for item in globals().items() if not item[0].startswith("__")]
 items.sort(key=lambda item: item[0])
 
 fun_names = [":obj:`" + item[0] + "<" + item[1].__module__ + "." + item[0] + ">`"
              for item in items if hasattr(item[1], "__module__")]
 
-import inspect
+import inspect  # noqa
 module_names = [":mod:`" + item[0] + "<" + item[1].__name__ + ">`"
                 for item in items if inspect.ismodule(item[1])]
 
