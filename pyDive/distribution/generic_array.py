@@ -131,6 +131,9 @@ class DistributedGenericArray(object):
         array_id += 1
 
         if no_allocation:
+            if not self.decomposition.ranks:
+                print("shape: ", self.shape)
+                print("distaxes: ", self.distaxes)
             self.view.push({self.name: None}, targets=self.decomposition.ranks)
         else:
             target_shapes = self.target_shapes()
@@ -184,6 +187,9 @@ class DistributedGenericArray(object):
                 targets=self.decomposition.ranks)
             sizes = self.view.pull("tmp_size", targets=self.decomposition.ranks)
             new_target_ranks = [rank for rank, size in zip(self.decomposition.ranks, sizes) if size > 0]
+            # if all bits are false, create a zero-shaped array on the first rank
+            if not new_target_ranks:
+                new_target_ranks = [self.decomposition.ranks[0]]
             new_sizes = [size for size in sizes if size > 0]
             partial_sum = lambda a, b: a + [a[-1] + b]
             new_target_offsets = [[0] + reduce(partial_sum, new_sizes[1:-1], new_sizes[0:1])]
@@ -192,6 +198,7 @@ class DistributedGenericArray(object):
                                                              distaxes=0,
                                                              offsets=new_target_offsets,
                                                              ranks=new_target_ranks)
+
             # create resulting ndarray
             result = self.__class__(new_shape,
                                     self.dtype,
@@ -476,6 +483,7 @@ class DistributedGenericArray(object):
     def info(self, name):
         print(name + " info:")
         print("{}.name".format(name), self.name)
+        print("{}.shape".format(name), self.shape)
         print("{}.target_ranks".format(name), self.decomposition.ranks)
         print("{}.target_offsets".format(name), self.decomposition.offsets)
         print("{}.distaxes".format(name), self.distaxes)
