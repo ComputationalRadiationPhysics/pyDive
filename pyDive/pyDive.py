@@ -50,11 +50,6 @@ from . import algorithm  # noqa
 map = algorithm.map
 reduce = algorithm.reduce
 
-# particle-mesh mappings
-from . import mappings  # noqa
-mesh2particles = mappings.mesh2particles
-particles2mesh = mappings.particles2mesh
-
 # picongpu
 from . import picongpu  # noqa
 
