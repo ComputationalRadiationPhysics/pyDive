@@ -40,9 +40,6 @@ try:
 except ImportError:
     pass
 
-# cloned_ndarray
-from .cloned_ndarray import factories as cloned  # noqa
-
 # fragmentation
 from .fragment import fragment  # noqa
 
