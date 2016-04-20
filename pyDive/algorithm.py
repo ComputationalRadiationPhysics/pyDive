@@ -78,14 +78,14 @@ def map(f, *arrays, **kwargs):
     return result
 
 
-def reduce(op, array, op_array=None):
+def reduce(op, array, array_reducer=None):
     """Perform a reduction over all axes of *array*. It is done in two steps:
-    first all local arrays are reduced by *op_array*,
+    first all local arrays are reduced by *array_reducer*,
     then the results are reduced further by *op*.
 
     :param op: binary reduce function.
     :param array: distributed array to be reduced.
-    :param op_array: unary function which reduces the local array. If left to ``None`` it will be set
+    :param array_reducer: unary function which reduces the local array. If left to ``None`` it will be set
     to *op.reduce*. This is valid e.g. for all numpy operations (*np.add*, ...).
 
     Example: ::
@@ -99,9 +99,9 @@ def reduce(op, array, op_array=None):
         array = globals()[array_name]
         return op.reduce(array, axis=None)  # reduction over all axes
 
-    def reduce_wrapper_generic(array_name, op_array):
+    def reduce_wrapper_generic(array_name, array_reducer):
         array = globals()[array_name]
-        return op_array(array, axis=None)  # reduction over all axes
+        return array_reducer(array, axis=None)  # reduction over all axes
 
     view = com.getView()
 
@@ -111,10 +111,10 @@ def reduce(op, array, op_array=None):
 
     array_name = repr(array)
 
-    if op_array is None:
+    if array_reducer is None:
         targets_results = view.apply(interactive(reduce_wrapper), array_name, op)
     else:
-        targets_results = view.apply(interactive(reduce_wrapper_generic), array_name, op_array)
+        targets_results = view.apply(interactive(reduce_wrapper_generic), array_name, array_reducer)
 
     import functools
     result = functools.reduce(op, targets_results)  # reduce over targets' results
