@@ -47,7 +47,6 @@ def init(profile='mpi'):
         import psutil
         import math
         os.environ["onTarget"] = 'True'
-        from pyDive import structured
         from pyDive.distribution import interengine
         try:
             import pyDive.arrays.local.h5_ndarray

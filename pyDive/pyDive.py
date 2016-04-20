@@ -53,10 +53,6 @@ from . import mappings  # noqa
 mesh2particles = mappings.mesh2particles
 particles2mesh = mappings.particles2mesh
 
-# structured
-from . import structured  # noqa
-structured = structured.structured
-
 # picongpu
 from . import picongpu  # noqa
 

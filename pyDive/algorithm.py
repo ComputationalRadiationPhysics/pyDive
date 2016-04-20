@@ -17,14 +17,12 @@
 
 from . import ipyParallelClient as com
 from ipyparallel import interactive
-from .structured import VirtualArrayOfStructs, flat_values
 from .distribution.generic_array import record
 
 
 def map(f, *arrays, **kwargs):
-    """Applies *f* on local arrays of *arrays*. It is very similar
-    to python's' builtin ``map()`` except that the iteration is done over local arrays (in parallel)
-    and not over single data values.
+    """Applies *f* on local arrays of *arrays*. It is similar
+    to python's' builtin ``map()`` except that the iteration is done over local arrays and not over single data values.
 
     :param callable f: function to be called on :term:`engine`.
     :param arrays: distributed arrays
@@ -45,15 +43,7 @@ def map(f, *arrays, **kwargs):
      - ``f`` must not return a *VirtualArrayOfStructs* yet.
     """
 
-    with_decomposition = [a for a in arrays if hasattr(a, "decomposition")]
-    decompositions = []
-    for a in with_decomposition:
-        decomp = a.decomposition
-        if type(decomp) is dict:
-            # `decomp` is a tree (dict of dicts), so flatten it first
-            decompositions += list(flat_values(decomp))
-        else:
-            decompositions.append(decomp)
+    decompositions = [a.decomposition for a in arrays if hasattr(a, "decomposition")]
 
     assert all(decompositions[0] == d for d in decompositions),\
         "All arrays must have the same decomposition."
@@ -65,7 +55,7 @@ def map(f, *arrays, **kwargs):
         return (type(map_result), map_result.dtype) if map_result is not None else None
 
     # reference array.
-    ref_array = arrays[0].firstArray if type(arrays[0]) == VirtualArrayOfStructs else arrays[0]
+    ref_array = arrays[0]
 
     view = com.getView()
     tmp_targets = view.targets  # save current target list
@@ -113,10 +103,8 @@ def reduce(op, array, op_array=None):
     view = com.getView()
 
     tmp_targets = view.targets  # save current target list
-    if type(array) == VirtualArrayOfStructs:
-        view.targets = array.firstArray.ranks()
-    else:
-        view.targets = array.ranks()
+
+    view.targets = array.ranks()
 
     array_name = repr(array)
 

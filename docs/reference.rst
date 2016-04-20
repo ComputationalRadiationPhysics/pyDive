@@ -10,7 +10,6 @@ Arrays
    pyDive.h5
    pyDive.adios
    pyDive.gpu
-   pyDive.cloned_ndarray
 
 Modules
 -------

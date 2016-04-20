@@ -18,19 +18,22 @@
 from . import ipyParallelClient as com
 from ipyparallel import interactive
 import psutil
-try:
-    from .arrays.h5_ndarray import h5_ndarray
-except ImportError:
-    h5_ndarray = None
-try:
-    from .arrays.ad_ndarray import ad_ndarray
-except ImportError:
-    ad_ndarray = None
 import math
 
 #: list of array types that store their elements on hard disk
-hdd_arraytypes = (h5_ndarray, ad_ndarray)
+hdd_arraytypes = []
 
+try:
+    from .arrays.h5_ndarray import h5_ndarray
+    hdd_arraytypes.append(h5_ndarray)
+except ImportError:
+    pass
+
+try:
+    from .arrays.ad_ndarray import ad_ndarray
+    hdd_arraytypes.append(ad_ndarray)
+except ImportError:
+    pass
 
 def __bestStepSize(arrays, axis, memory_limit):
     view = com.getView()
@@ -98,9 +101,7 @@ def fragment(*arrays, **kwargs):
 
     # calculate the best suitable step size (-> fragment's edge size) according to the amount
     # of available memory on the engines
-    hdd_arrays = [a for a in arrays if
-                  (hasattr(a, "arraytype") and a.arraytype in hdd_arraytypes) or
-                  type(a) in hdd_arraytypes]
+    hdd_arrays = [a for a in arrays if type(a) in hdd_arraytypes]
 
     longest_axis = max(range(len(arrays[0].shape)), key=lambda axis: arrays[0].shape[axis])
     step = __bestStepSize(hdd_arrays, longest_axis, memory_limit)

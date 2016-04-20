@@ -19,7 +19,6 @@ import h5py as h5
 from pyDive.arrays.ndarray import hollow_like
 import pyDive.distribution.generic_array as generic_array
 import pyDive.ipyParallelClient as com
-from .. import structured
 import pyDive.arrays.local.h5_ndarray
 
 h5_ndarray = generic_array.distribute(
@@ -42,7 +41,7 @@ h5_ndarray.load = load
 del load
 
 
-def open_dset(filename, dataset_path, distaxes='all'):
+def open(filename, dataset_path, distaxes='all'):
     """Create a pyDive.h5.h5_ndarray instance from file.
 
     :param filename: name of hdf5 file.
@@ -72,35 +71,3 @@ def open_dset(filename, dataset_path, distaxes='all'):
         targets=result.decomposition.ranks)
 
     return result
-
-
-def open(filename, datapath, distaxes='all'):
-    """Create an pyDive.h5.h5_ndarray instance respectively a structure of
-    pyDive.h5.h5_ndarray instances from file.
-
-    :param filename: name of hdf5 file.
-    :param dataset_path: path within hdf5 file to a single dataset or hdf5 group.
-    :param distaxes ints: distributed axes. Defaults to 'all' meaning each axis is distributed.
-    :return: pyDive.h5.h5_ndarray instance / structure of pyDive.h5.h5_ndarray instances
-    """
-    hFile = h5.File(filename, 'r')
-    datapath = datapath.rstrip("/")
-    group_or_dataset = hFile[datapath]
-    if type(group_or_dataset) is not h5._hl.group.Group:
-        # dataset
-        return open_dset(filename, datapath, distaxes)
-
-    def create_tree(group, tree, dataset_path):
-        for key, value in group.items():
-            # group
-            if type(value) is h5._hl.group.Group:
-                tree[key] = {}
-                create_tree(value, tree[key], dataset_path + "/" + key)
-            # dataset
-            else:
-                tree[key] = open_dset(filename, dataset_path + "/" + key, distaxes)
-
-    group = group_or_dataset
-    structOfArrays = {}
-    create_tree(group, structOfArrays, datapath)
-    return structured.structured(structOfArrays)

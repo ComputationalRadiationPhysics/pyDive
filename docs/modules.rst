@@ -1,11 +1,5 @@
 .. note:: All functions of these modules are also directly accessable from the ``pyDive`` module.
 
-pyDive.arrayOfStructs module
-----------------------------
-
-.. automodule:: pyDive.arrayOfStructs
-    :members:
-
 pyDive.algorithm module
 -----------------------
 

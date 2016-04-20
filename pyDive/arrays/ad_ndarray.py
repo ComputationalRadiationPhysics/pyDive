@@ -19,7 +19,6 @@ import adios as ad
 from pyDive.arrays.ndarray import hollow_like
 import pyDive.distribution.generic_array as generic_array
 import pyDive.ipyParallelClient as com
-from pyDive.structured import structured
 import pyDive.arrays.local.ad_ndarray
 
 ad_ndarray = generic_array.distribute(
@@ -42,7 +41,7 @@ ad_ndarray.load = load
 del load
 
 
-def open_variable(filename, variable_path, distaxes='all'):
+def open(filename, variable_path, distaxes='all'):
     """Create a pyDive.adios.ad_ndarray instance from file.
 
     :param filename: name of adios file.
@@ -72,36 +71,3 @@ def open_variable(filename, variable_path, distaxes='all'):
         targets=result.ranks())
 
     return result
-
-
-def open(filename, datapath, distaxes='all'):
-    """Create a pyDive.adios.ad_ndarray instance respectively a structure of
-    pyDive.adios.ad_ndarray instances from file.
-
-    :param filename: name of adios file.
-    :param datapath: path within adios file to a single variable or a group of variables.
-    :param distaxes ints: distributed axes. Defaults to 'all' meaning each axis is distributed.
-    :return: pyDive.adios.ad_ndarray instance
-    """
-    fileHandle = ad.file(filename)
-    variable_paths = list(fileHandle.var.keys())
-    fileHandle.close()
-
-    pairs = []
-
-    datapath_nodes = datapath.strip("/").split("/")
-    for var_path in variable_paths:
-        var_path_nodes = var_path.strip("/").split("/")
-        # if lists matches exactly return a single *ad_ndarray* instance
-        if datapath_nodes == var_path_nodes:
-            return open_variable(filename, var_path, distaxes)
-
-        # if *var_path* includes *datapath* add it to the tree
-        if datapath_nodes == var_path_nodes[:len(datapath_nodes)]:
-            path = "/".join(var_path_nodes[len(datapath_nodes):])
-            array = open_variable(filename, var_path, distaxes)
-            pairs.append((path, array))
-
-    assert pairs, "{} does not have variable: {}".format(filename, datapath)
-
-    return structured(pairs)
