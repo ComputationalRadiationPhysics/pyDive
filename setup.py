@@ -88,7 +88,6 @@ setup(
               'pyDive/distribution',
               'pyDive/arrays',
               'pyDive/arrays/local',
-              'pyDive/cloned_ndarray',
               'pyDive/test'],
     include_package_data=True,
     platforms='any',
