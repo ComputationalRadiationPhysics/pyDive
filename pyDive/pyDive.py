@@ -46,9 +46,7 @@ except ImportError:
 from .fragment import fragment  # noqa
 
 # algorithm
-from . import algorithm  # noqa
-map = algorithm.map
-reduce = algorithm.reduce
+from .algorithm import *  # noqa
 
 # picongpu
 from . import picongpu  # noqa

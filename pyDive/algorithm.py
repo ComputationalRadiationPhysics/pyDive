@@ -121,3 +121,37 @@ def reduce(op, array, array_reducer=None):
 
     view.targets = tmp_targets  # restore target list
     return result
+
+
+def remote(f, *arrays, **kwargs):
+    """Executes function `f` on the engines and returns a list of the results.
+
+    :param callable f: function to be called on :term:`engine`.
+    :param arrays: distributed arrays
+    :param kwargs: keyword arguments are passed directly to *f*.
+    :return: list of results of the remote function call.
+    :raises AssertionError: if the shapes of *arrays* do not match
+    :raises AssertionError: if the decompositions of *arrays* do not match
+    """
+    decompositions = [a.decomposition for a in arrays]
+
+    assert all(decompositions[0] == d for d in decompositions),\
+        "All arrays must have the same decomposition."
+
+    def remote_wrapper(f, array_names, **kwargs):
+        arrays = tuple(map(globals().get, array_names))
+        return f(*arrays, **kwargs)
+
+    # reference array.
+    ref_array = arrays[0]
+
+    view = com.getView()
+    tmp_targets = view.targets  # save current target list
+    view.targets = ref_array.ranks()
+
+    array_names = [repr(a) for a in arrays]
+    results = view.apply(interactive(remote_wrapper), interactive(f), array_names, **kwargs)
+
+    view.targets = tmp_targets  # restore target list
+
+    return results
