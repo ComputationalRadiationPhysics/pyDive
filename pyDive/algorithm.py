@@ -66,10 +66,13 @@ def map(f, *arrays, **kwargs):
 
     result = None
     if all(r is not None for r in local_results):
-        array_type = record[local_results[0][0]]
-        dtype = local_results[0][1]
-        result = array_type(ref_array.shape, dtype, ref_array.distaxes, ref_array.decomposition, True)
-        view.execute("{} = map_result; del map_result".format(repr(result)))
+        try:
+            array_type = record[local_results[0][0]]
+            dtype = local_results[0][1]
+            result = array_type(ref_array.shape, dtype, ref_array.distaxes, ref_array.decomposition, True)
+            view.execute("{} = map_result; del map_result".format(repr(result)))
+        except KeyError:
+            result = view["map_result"]
 
     view.targets = tmp_targets  # restore target list
     return result
