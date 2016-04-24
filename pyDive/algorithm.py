@@ -22,7 +22,8 @@ from .distribution.generic_array import record
 
 def map(f, *arrays, **kwargs):
     """Applies *f* on local arrays of *arrays*. It is similar
-    to python's' builtin ``map()`` except that the iteration is done over local arrays and not over single data values.
+    to python's' builtin ``map()`` except that the iteration is done over local arrays and not
+    over single data values.
 
     :param callable f: function to be called on :term:`engine`.
     :param arrays: distributed arrays

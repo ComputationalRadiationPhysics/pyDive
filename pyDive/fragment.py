@@ -35,6 +35,7 @@ try:
 except ImportError:
     pass
 
+
 def __bestStepSize(arrays, axis, memory_limit):
     view = com.getView()
 
