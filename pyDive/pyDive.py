@@ -21,8 +21,6 @@ from .arrays import ndarray as ndarray_mod
 globals().update(ndarray_mod.factories)
 globals().update(ndarray_mod.ufuncs)
 from .arrays.ndarray import ndarray  # noqa
-# often used functions for ndarrays
-from .arrays.ndarray_funcs import *
 
 # hdf5
 try:
