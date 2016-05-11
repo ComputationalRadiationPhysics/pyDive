@@ -13,7 +13,7 @@ def test_h5_ndarray1(init_pyDive):
 
     ref_array = h5.File(input_file, "r")[dataset][:]
 
-    assert np.array_equal(ref_array, test_array.load().gather())
+    assert np.array_equal(ref_array, test_array.load())
 
 
 def test_h5_ndarray2(init_pyDive):
@@ -24,16 +24,15 @@ def test_h5_ndarray2(init_pyDive):
 
     ref_array = h5.File(input_file, "r")[dataset][window]
 
-    assert np.array_equal(ref_array, test_array[window].load().gather())
+    assert np.array_equal(ref_array, test_array[window].load())
 
 
 def test_h5(init_pyDive):
-    test_array = pyDive.h5.open(input_file, "particles/pos")
+    test_array_x = pyDive.h5.open(input_file, "particles/pos/x")
+    test_array_y = pyDive.h5.open(input_file, "particles/pos/y")
 
     ref_array_x = h5.File(input_file, "r")["particles/pos/x"][:]
     ref_array_y = h5.File(input_file, "r")["particles/pos/y"][:]
 
-    assert np.array_equal(ref_array_x, test_array["x"].load().gather())
-    assert np.array_equal(ref_array_y, test_array["y"].load().gather())
-    assert np.array_equal(ref_array_x, test_array.load()["x"].gather())
-    assert np.array_equal(ref_array_y, test_array.load()["y"].gather())
+    assert np.array_equal(ref_array_x, test_array_x.load())
+    assert np.array_equal(ref_array_y, test_array_y.load())
