@@ -18,11 +18,14 @@
 import pyDive
 import numpy as np
 
+
 def mean(a):
     return np.mean(np.array(pyDive.map(lambda a: np.mean(a), a)))
 
+
 def amin(a):
     return pyDive.reduce(min, a, np.amin)
+
 
 def amax(a):
     return pyDive.reduce(max, a, np.amax)
